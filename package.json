@@ -1,0 +1,26 @@
+{
+  "name": "medat-kff-trainer",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Ubungs-App fuer die vier KFF-Untertests des oesterreichischen MedAT (PWA, offline-faehig).",
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run icons && vite build",
+    "preview": "vite preview",
+    "icons": "node scripts/generate-icons.mjs",
+    "selftest": "node scripts/selftest.mjs"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^4.5.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "vite": "^5.4.11"
+  }
+}

@@ -1,0 +1,112 @@
+/**
+ * Tab "Statistik".
+ *
+ * Alles hier ist abgeleitet – gespeichert wird nur die Ergebnisliste
+ * (siehe store/useProgress.js). Das verhindert widersprüchliche Kennzahlen.
+ */
+import Screen from '../components/layout/Screen.jsx';
+import Icon from '../components/ui/Icon.jsx';
+import LineChart from '../components/charts/LineChart.jsx';
+import { TESTS, TEST_ORDER } from '../data/testConfig.js';
+import { useProgress } from '../store/useProgress.js';
+import { formatTime } from '../hooks/useCountdown.js';
+
+function StatCard({ icon, label, value, tint }) {
+  return (
+    <div className="ios-card flex flex-1 items-center gap-3 px-3.5 py-3">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: `${tint}1A`, color: tint }}>
+        <Icon name={icon} className="h-5 w-5" />
+      </span>
+      <span className="min-w-0">
+        <span className="block tabular text-[17px] font-bold leading-tight">{value}</span>
+        <span className="block truncate text-[12px] text-black/50 dark:text-white/50">{label}</span>
+      </span>
+    </div>
+  );
+}
+
+export default function StatsScreen() {
+  const history = useProgress((state) => state.history);
+  const streak = useProgress((state) => state.streak)();
+  const totalSeconds = useProgress((state) => state.totalSeconds)();
+
+  const perTest = TEST_ORDER.map((id) => {
+    const items = history.filter((item) => item.testId === id).slice(-30);
+    const percents = items.map((item) => (item.score / item.max) * 100);
+    const average = percents.length > 0 ? percents.reduce((a, b) => a + b, 0) / percents.length : null;
+    const best = percents.length > 0 ? Math.max(...percents) : null;
+    return { test: TESTS[id], items, percents, average, best };
+  });
+
+  const withData = perTest.filter((entry) => entry.average !== null);
+  const weakest = withData.length > 1
+    ? withData.reduce((min, entry) => (entry.average < min.average ? entry : min), withData[0])
+    : null;
+
+  return (
+    <Screen title="Statistik" subtitle={`${history.length} abgeschlossene Übungen`}>
+      <div className="space-y-4">
+        <div className="flex gap-3">
+          <StatCard icon="flame" tint="#FF9500" value={`${streak}`} label={streak === 1 ? 'Tag Streak' : 'Tage Streak'} />
+          <StatCard icon="clock" tint="#007AFF" value={formatTime(totalSeconds)} label="Gesamt geübt" />
+        </div>
+
+        {weakest && (
+          <section className="ios-card flex items-start gap-3 px-4 py-3.5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-ios-red/10 text-ios-red">
+              <Icon name="target" className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <h2 className="text-[15px] font-semibold">Schwächster Bereich</h2>
+              <p className="text-[13px] text-black/55 dark:text-white/55">
+                {weakest.test.name} – Schnitt {Math.round(weakest.average)} %. Hier lohnt sich das nächste Training.
+              </p>
+            </div>
+          </section>
+        )}
+
+        {perTest.map(({ test, items, percents, average, best }) => (
+          <section key={test.id} className="ios-card px-4 py-4">
+            <header className="mb-3 flex items-center gap-2.5">
+              <span
+                className="flex h-8 w-8 items-center justify-center rounded-lg"
+                style={{ backgroundColor: `${test.accent}1A`, color: test.accent }}
+              >
+                <Icon name={test.icon} className="h-4.5 w-4.5" />
+              </span>
+              <h2 className="flex-1 text-[15px] font-semibold">{test.short}</h2>
+              <span className="tabular text-[13px] text-black/50 dark:text-white/50">
+                {items.length} {items.length === 1 ? 'Übung' : 'Übungen'}
+              </span>
+            </header>
+
+            <LineChart values={percents} color={test.accent} label={`Verlauf ${test.name}`} />
+
+            <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
+              <div>
+                <dt className="text-[11px] text-black/45 dark:text-white/45">Schnitt</dt>
+                <dd className="tabular text-[15px] font-semibold">{average === null ? '–' : `${Math.round(average)} %`}</dd>
+              </div>
+              <div>
+                <dt className="text-[11px] text-black/45 dark:text-white/45">Bestwert</dt>
+                <dd className="tabular text-[15px] font-semibold">{best === null ? '–' : `${Math.round(best)} %`}</dd>
+              </div>
+              <div>
+                <dt className="text-[11px] text-black/45 dark:text-white/45">Zuletzt</dt>
+                <dd className="tabular text-[15px] font-semibold">
+                  {items.length === 0 ? '–' : `${items[items.length - 1].score}/${items[items.length - 1].max}`}
+                </dd>
+              </div>
+            </dl>
+          </section>
+        ))}
+
+        {history.length === 0 && (
+          <p className="px-2 pb-4 text-center text-[14px] text-black/45 dark:text-white/45">
+            Noch keine Daten. Sobald du einen Untertest abschließt, erscheint hier dein Verlauf.
+          </p>
+        )}
+      </div>
+    </Screen>
+  );
+}

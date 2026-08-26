@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Basis-Layer: iOS-typisches Verhalten.
+ * - keine Textauswahl/Callouts beim Antippen
+ * - kein Gummiband-Overscroll auf der Seite selbst
+ * - Safe-Area-Insets werden über CSS-Variablen verfügbar gemacht
+ */
+@layer base {
+  :root {
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    --tabbar-height: 56px;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-surface-grouped text-black antialiased dark:bg-night dark:text-white;
+    font-family: theme('fontFamily.sans');
+    overscroll-behavior-y: none;
+    touch-action: manipulation;
+  }
+
+  button,
+  [role='button'] {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Fokus nur für Tastatur-/VoiceOver-Navigation sichtbar */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ios-blue ring-offset-2 ring-offset-surface-grouped dark:ring-offset-night;
+  }
+}
+
+@layer components {
+  /* Karten-Grundform: 16px Radius, weiche Schatten, Dark-Mode-Fläche */
+  .ios-card {
+    @apply rounded-card bg-white shadow-card dark:bg-night-secondary;
+  }
+
+  /* Gruppierte Listen wie in den iOS-Einstellungen */
+  .ios-list {
+    @apply divide-y divide-black/5 overflow-hidden rounded-card bg-white shadow-card dark:divide-white/10 dark:bg-night-secondary;
+  }
+
+  .ios-row {
+    @apply flex min-h-[46px] w-full items-center justify-between gap-3 px-4 py-2.5 text-[15px];
+  }
+
+  .scroll-area {
+    -webkit-overflow-scrolling: touch;
+    @apply overflow-y-auto overscroll-contain;
+  }
+
+  /* Zahlen tabellarisch ausrichten (Timer, Punktestände) */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Scrollbars auf Desktop dezent halten */
+@media (pointer: fine) {
+  .scroll-area::-webkit-scrollbar {
+    width: 8px;
+  }
+  .scroll-area::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-black/15 dark:bg-white/15;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
