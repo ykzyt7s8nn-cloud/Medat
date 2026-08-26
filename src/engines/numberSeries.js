@@ -36,14 +36,29 @@ export const LEVELS = [
   { level: 7, label: 'Kombinierte Regeln' },
 ];
 
-/** Welche Level eine Schwierigkeitsstufe verwendet. */
+/**
+ * Welche Level eine Schwierigkeitsstufe verwendet (Mehrfachnennung = höheres
+ * Gewicht).
+ *
+ * "MedAT-Niveau" verzichtet bewusst auf Level 1 und 2: Konstante Addition und
+ * reine Multiplikation sind im echten Test höchstens Aufwärmaufgaben.
+ */
 export const DIFFICULTY_LEVELS = {
-  leicht: [1, 2, 3],
-  mittel: [2, 3, 4],
-  schwer: [4, 5, 6, 7],
-  medat: [1, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7],
+  leicht: [1, 2, 2, 3],
+  mittel: [3, 3, 4, 4, 5],
+  schwer: [5, 5, 6, 6, 7, 7],
+  medat: [4, 4, 5, 5, 6, 6, 7, 7, 7],
   gemischt: [1, 2, 3, 4, 5, 6, 7],
 };
+
+/**
+ * Startlevel im adaptiven Modus. Von hier aus geht es nach drei richtigen
+ * Aufgaben hoch und nach zwei falschen wieder herunter.
+ */
+export const START_LEVEL = { leicht: 1, mittel: 3, schwer: 5, medat: 5, gemischt: 4 };
+
+/** Untergrenze im adaptiven Modus – verhindert das Abrutschen ins Triviale. */
+export const MIN_LEVEL = { leicht: 1, mittel: 2, schwer: 4, medat: 3, gemischt: 1 };
 
 const sign = (n) => (n < 0 ? `− ${Math.abs(n)}` : `+ ${n}`);
 
@@ -75,9 +90,9 @@ function level2() {
 
 /* ------------------------------------------------------------------ Level 3 */
 function level3() {
-  const start = randInt(1, 25);
-  const firstDiff = randInt(1, 6);
-  const growth = pick([1, 2, 3, -1, -2]);
+  const start = randInt(1, 40);
+  const firstDiff = randInt(2, 11);
+  const growth = pick([2, 3, 4, 5, 6, -2, -3, -4]);
   const values = [start];
   let diff = firstDiff;
   for (let i = 1; i < SERIES_LENGTH; i += 1) {
@@ -94,11 +109,11 @@ function level3() {
 
 /* ------------------------------------------------------------------ Level 4 */
 function level4() {
-  const oddStart = randInt(1, 12);
-  const oddStep = pick([2, 3, 4, 5, -2, -3]);
-  const evenStart = randInt(5, 30);
-  const evenGeometric = chance(0.4);
-  const evenStep = evenGeometric ? pick([2, 3]) : pick([5, 8, 10, 12, -5, -7]);
+  const oddStart = randInt(1, 20);
+  const oddStep = pick([3, 4, 5, 6, 7, 9, -3, -4, -6]);
+  const evenStart = randInt(5, 40);
+  const evenGeometric = chance(0.65);
+  const evenStep = evenGeometric ? pick([2, 3, 4]) : pick([7, 9, 11, 13, -6, -8, -11]);
 
   const values = [];
   let odd = oddStart;
@@ -122,7 +137,7 @@ function level4() {
 
 /* ------------------------------------------------------------------ Level 5 */
 function level5() {
-  const variant = pick(['sum', 'sumPlus', 'doubleMinus']);
+  const variant = pick(['sum', 'sumPlus', 'weightedFib']);
   const a = randInt(1, 9);
   const b = randInt(1, 12);
   const values = [a, b];
@@ -135,13 +150,16 @@ function level5() {
     for (let i = 2; i < SERIES_LENGTH; i += 1) values.push(values[i - 1] + values[i - 2] + add);
     return { values, rule: `Jede Zahl ist die Summe der beiden vorherigen Zahlen ${sign(add)}.` };
   }
-  for (let i = 2; i < SERIES_LENGTH; i += 1) values.push(2 * values[i - 1] - values[i - 2]);
-  return { values, rule: 'Jede Zahl ist das Doppelte der vorherigen minus der vorvorherigen Zahl.' };
+  // Gewichtete Fibonacci-Folge – anders als 2·a(n−1) − a(n−2) ergibt das keine
+  // versteckte arithmetische Reihe.
+  const weight = pick([2, 3]);
+  for (let i = 2; i < SERIES_LENGTH; i += 1) values.push(values[i - 1] + weight * values[i - 2]);
+  return { values, rule: `Jede Zahl ist die vorherige plus das ${weight}-fache der vorvorherigen Zahl.` };
 }
 
 /* ------------------------------------------------------------------ Level 6 */
 function level6() {
-  const variant = pick(['squares', 'cubes', 'primes', 'primeSum', 'alternating']);
+  const variant = pick(['squares', 'cubes', 'primes', 'primeSum', 'alternating', 'alternating', 'squareDiff']);
   if (variant === 'squares') {
     const offset = randInt(1, 6);
     const shift = pick([0, 1, -1, 2]);
@@ -170,9 +188,21 @@ function level6() {
     const values = PRIMES.slice(start, start + SERIES_LENGTH).map((p) => p + base);
     return { values, rule: `Aufeinanderfolgende Primzahlen ${sign(base)}.` };
   }
-  const add = pick([1, 2, 3, 4, 5, -2]);
-  const factor = pick([2, 3]);
-  const start = randInt(1, 10);
+  if (variant === 'squareDiff') {
+    // Differenzen sind selbst Quadratzahlen, aber versetzt
+    const start = randInt(2, 20);
+    const offset = randInt(1, 3);
+    const values = [start];
+    for (let i = 1; i < SERIES_LENGTH; i += 1) values.push(values[i - 1] + (i + offset) ** 2);
+    return {
+      values,
+      rule: `Addiert werden die Quadratzahlen ab ${offset + 1}²: `
+        + `${(offset + 1) ** 2}, ${(offset + 2) ** 2}, ${(offset + 3) ** 2}, …`,
+    };
+  }
+  const add = pick([3, 4, 5, 7, 9, -3, -5]);
+  const factor = pick([2, 3, 4]);
+  const start = randInt(1, 12);
   const values = [start];
   for (let i = 1; i < SERIES_LENGTH; i += 1) {
     values.push(i % 2 === 1 ? values[i - 1] * factor : values[i - 1] + add);
@@ -182,10 +212,27 @@ function level6() {
 
 /* ------------------------------------------------------------------ Level 7 */
 function level7() {
-  const variant = pick(['linear', 'squareStep', 'diffGeometric']);
+  const variant = pick(['linear', 'squareStep', 'diffGeometric', 'indexed', 'weightedSum']);
+  if (variant === 'indexed') {
+    // Der Schritt haengt von der Position ab: × 2 + n
+    const start = randInt(1, 9);
+    const factor = pick([2, 3]);
+    const values = [start];
+    for (let i = 1; i < SERIES_LENGTH; i += 1) values.push(values[i - 1] * factor + i);
+    return { values, rule: `Jede Zahl ist die vorherige × ${factor} plus ihre Position (+1, +2, +3, …).` };
+  }
+  if (variant === 'weightedSum') {
+    // Gewichtete Fibonacci-Variante
+    const a = randInt(1, 6);
+    const b = randInt(2, 9);
+    const weight = pick([2, 3]);
+    const values = [a, b];
+    for (let i = 2; i < SERIES_LENGTH; i += 1) values.push(values[i - 1] * weight + values[i - 2]);
+    return { values, rule: `Jede Zahl ist die vorherige × ${weight} plus die vorvorherige Zahl.` };
+  }
   if (variant === 'linear') {
-    const factor = pick([2, 2, 3, -2]);
-    const add = pick([1, -1, 2, -2, 3, 5]);
+    const factor = pick([2, 3, 3, -2, -3]);
+    const add = pick([1, -1, 2, -2, 3, 5, 7, -4]);
     const start = randInt(1, 8);
     const values = [start];
     for (let i = 1; i < SERIES_LENGTH; i += 1) values.push(values[i - 1] * factor + add);
@@ -215,12 +262,29 @@ function level7() {
 
 const GENERATORS = { 1: level1, 2: level2, 3: level3, 4: level4, 5: level5, 6: level6, 7: level7 };
 
-/** Plausibilitätsprüfung: ganzzahlig, nicht zu groß, nicht konstant. */
-function isUsable(values) {
+/**
+ * Erkennt Folgen, die trotz komplizierter Bildungsvorschrift auf eine triviale
+ * Reihe hinauslaufen – etwa wenn zufällige Startwerte eine „schwere" Regel in
+ * eine konstante Differenz kippen lassen.
+ */
+function isTrivial(values) {
+  const diffs = values.slice(1).map((value, i) => value - values[i]);
+  const constantDifference = diffs.every((d) => d === diffs[0]);
+  if (constantDifference) return true;
+  const constantRatio = values.every((value, i) => i === 0 || (values[i - 1] !== 0 && value / values[i - 1] === values[1] / values[0]));
+  return constantRatio;
+}
+
+/** Plausibilitätsprüfung: ganzzahlig, nicht zu groß, nicht trivial. */
+function isUsable(values, level) {
   if (values.length !== SERIES_LENGTH) return false;
   if (!values.every((v) => Number.isInteger(v) && Math.abs(v) <= MAX_ABS)) return false;
   const visible = values.slice(0, VISIBLE_LENGTH);
-  return new Set(visible).size > 2;
+  if (new Set(visible).size <= 2) return false;
+  // Ab Level 3 darf die Folge nicht auf eine konstante Differenz oder einen
+  // konstanten Faktor hinauslaufen – das wären Level-1-/Level-2-Aufgaben.
+  if (level >= 3 && isTrivial(values)) return false;
+  return true;
 }
 
 /**
@@ -231,7 +295,7 @@ export function generateNumberSeriesTask(options = {}) {
   const level = options.level ?? pick(DIFFICULTY_LEVELS[options.difficulty] ?? DIFFICULTY_LEVELS.medat);
   for (let attempt = 0; attempt < 60; attempt += 1) {
     const { values, rule } = GENERATORS[level]();
-    if (!isUsable(values)) continue;
+    if (!isUsable(values, level)) continue;
     return {
       type: 'numberSeries',
       level,

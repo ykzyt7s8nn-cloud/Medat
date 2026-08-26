@@ -19,7 +19,8 @@ import ResultView from '../../components/ResultView.jsx';
 import TestIntro from '../../components/TestIntro.jsx';
 import { DIFFICULTIES, TESTS } from '../../data/testConfig.js';
 import {
-  DIFFICULTY_LEVELS,
+  MIN_LEVEL,
+  START_LEVEL,
   checkNumberSeriesAnswer,
   generateNumberSeriesTask,
 } from '../../engines/numberSeries.js';
@@ -30,9 +31,6 @@ import { useProgress } from '../../store/useProgress.js';
 import { useSettings } from '../../store/useSettings.js';
 
 const TEST = TESTS.numberSeries;
-
-/** Startlevel je Schwierigkeitsstufe für den adaptiven Modus. */
-const START_LEVEL = { leicht: 1, mittel: 3, schwer: 5, medat: 3, gemischt: 3 };
 
 export default function NumberSeriesTest({ embedded = false, onFinish }) {
   const closeScreen = useNavigation((state) => state.closeScreen);
@@ -56,8 +54,9 @@ export default function NumberSeriesTest({ embedded = false, onFinish }) {
   const useTimer = embedded ? true : timerSetting;
 
   const nextTask = useCallback(() => {
+    const floor = MIN_LEVEL[difficulty] ?? 1;
     const options = adaptive && difficulty !== 'gemischt'
-      ? { level: Math.min(7, Math.max(1, levelRef.current)) }
+      ? { level: Math.min(7, Math.max(floor, levelRef.current)) }
       : { difficulty };
     setTask(generateNumberSeriesTask(options));
     setAnswers(['', '']);
@@ -150,7 +149,7 @@ export default function NumberSeriesTest({ embedded = false, onFinish }) {
       streakRef.current.wrong += 1;
       streakRef.current.correct = 0;
       if (streakRef.current.wrong >= 2) {
-        levelRef.current = Math.max(1, levelRef.current - 1);
+        levelRef.current = Math.max(MIN_LEVEL[difficulty] ?? 1, levelRef.current - 1);
         streakRef.current.wrong = 0;
       }
     }

@@ -35,13 +35,38 @@ export const SOLVABLE_NOUNS = (() => {
   return [...buckets.values()].filter((group) => group.length === 1).map((group) => group[0]);
 })();
 
-/** Wortpool je Schwierigkeitsstufe. */
-export function wordPool(difficulty = 'medat') {
-  if (difficulty === 'gemischt' || difficulty === 'medat') return SOLVABLE_NOUNS;
-  const range = DIFFICULTY_RANGES[difficulty];
-  if (!range) return SOLVABLE_NOUNS;
-  const [min, max] = range;
+/** Wörter einer Längenstufe. */
+function poolForRange([min, max]) {
   return SOLVABLE_NOUNS.filter((word) => word.length >= min && word.length <= max);
+}
+
+/**
+ * Wortpool je Schwierigkeitsstufe.
+ *
+ * "MedAT-Niveau" verwendet bewusst keine 5- und 6-Buchstaben-Wörter: Ein Salat
+ * aus fünf Buchstaben ist meist auf einen Blick lesbar. Gefragt sind mittlere
+ * und lange Wörter, mit Übergewicht auf dem schweren Ende.
+ */
+export function wordPool(difficulty = 'medat') {
+  if (difficulty === 'gemischt') return SOLVABLE_NOUNS;
+  if (difficulty === 'medat') {
+    return [...poolForRange(DIFFICULTY_RANGES.mittel), ...poolForRange(DIFFICULTY_RANGES.schwer)];
+  }
+  const range = DIFFICULTY_RANGES[difficulty];
+  return range ? poolForRange(range) : SOLVABLE_NOUNS;
+}
+
+/**
+ * Wahl des Wortes. Auf MedAT-Niveau werden lange Wörter bevorzugt (60 % aus
+ * 10–14 Buchstaben), damit der Schwierigkeitsgrad nicht von der zufälligen
+ * Poolgröße abhängt.
+ */
+function pickWord(difficulty, available) {
+  if (difficulty !== 'medat') return pick(available);
+  const long = available.filter((word) => word.length >= DIFFICULTY_RANGES.schwer[0]);
+  const medium = available.filter((word) => word.length < DIFFICULTY_RANGES.schwer[0]);
+  if (long.length > 0 && (medium.length === 0 || chance(0.6))) return pick(long);
+  return pick(medium.length > 0 ? medium : long);
 }
 
 /**
@@ -49,20 +74,42 @@ export function wordPool(difficulty = 'medat') {
  * Positionen vom Original unterscheiden und der erste Buchstabe nicht der
  * gesuchte Anfangsbuchstabe ist.
  */
+/** Wie viele benachbarte Buchstabenpaare des Originals im Salat übrig sind. */
+function keptPairs(original, candidate) {
+  let count = 0;
+  for (let i = 0; i < candidate.length - 1; i += 1) {
+    if (original.includes(candidate[i] + candidate[i + 1])) count += 1;
+  }
+  return count;
+}
+
 export function scrambleWord(word) {
   const letters = word.toUpperCase().split('');
+  const original = letters.join('');
   const first = letters[0];
   const distinct = new Set(letters).size;
+  const minDifferences = Math.min(MIN_SHUFFLE_DIFFERENCES, letters.length);
 
-  for (let attempt = 0; attempt < 200; attempt += 1) {
+  let best = null;
+  let bestPairs = Infinity;
+  for (let attempt = 0; attempt < 120; attempt += 1) {
     const candidate = shuffle(letters);
     const differences = candidate.reduce((sum, letter, i) => sum + (letter === letters[i] ? 0 : 1), 0);
-    if (differences < Math.min(MIN_SHUFFLE_DIFFERENCES, letters.length)) continue;
+    if (differences < minDifferences) continue;
     if (distinct > 1 && candidate[0] === first) continue;
-    return candidate;
+
+    // Von allen gültigen Mischungen die nehmen, die am wenigsten
+    // Original-Buchstabenpaare stehen lässt: "SCHNEE" soll nicht als
+    // "SCHNEE"-Fragment erkennbar bleiben.
+    const pairs = keptPairs(original, candidate);
+    if (pairs < bestPairs) {
+      best = candidate;
+      bestPairs = pairs;
+      if (pairs === 0) break;
+    }
   }
-  // Fallback für Extremfälle (sehr kurze Wörter mit vielen gleichen Buchstaben)
-  return shuffle(letters);
+  // Fallback für Extremfälle (kurze Wörter mit vielen gleichen Buchstaben)
+  return best ?? shuffle(letters);
 }
 
 /** Buchstaben, die als Distraktor infrage kommen: aus dem Wort, ohne Lösung. */
@@ -80,7 +127,7 @@ export function generateWordFluencyTask(options = {}) {
   const { difficulty = 'medat', usedWords } = options;
   const pool = wordPool(difficulty);
   const available = usedWords ? pool.filter((word) => !usedWords.has(word)) : pool;
-  const word = pick(available.length > 0 ? available : pool);
+  const word = pickWord(difficulty, available.length > 0 ? available : pool);
   if (usedWords) usedWords.add(word);
 
   const correctLetter = word[0].toUpperCase();

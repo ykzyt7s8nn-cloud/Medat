@@ -22,11 +22,18 @@ import {
 } from '../src/engines/syllogism.js';
 import {
   DIFFICULTY_LEVELS,
+  MIN_LEVEL,
+  START_LEVEL,
   checkNumberSeriesAnswer,
   generateNumberSeriesSet,
   generateNumberSeriesTask,
 } from '../src/engines/numberSeries.js';
-import { SOLVABLE_NOUNS, generateWordFluencySet, generateWordFluencyTask } from '../src/engines/wordFluency.js';
+import {
+  SOLVABLE_NOUNS,
+  generateWordFluencySet,
+  generateWordFluencyTask,
+  wordPool,
+} from '../src/engines/wordFluency.js';
 import { generateMemorySession } from '../src/engines/memory.js';
 
 let failures = 0;
@@ -181,6 +188,27 @@ for (const difficulty of Object.keys(DIFFICULTY_LEVELS)) {
     set.length === 10 && set.every((task) => allowed.has(task.level)));
 }
 
+check('MedAT-Niveau enthält keine Level-1/2-Aufgaben',
+  DIFFICULTY_LEVELS.medat.every((level) => level >= 3), DIFFICULTY_LEVELS.medat.join(','));
+check('Adaptives Startlevel liegt bei MedAT-Niveau bei mindestens 4', START_LEVEL.medat >= 4);
+check('Adaptive Untergrenze verhindert Abrutschen unter Level 3 (MedAT)', MIN_LEVEL.medat >= 3);
+
+// Ab Level 3 darf keine Folge auf eine konstante Differenz oder einen
+// konstanten Faktor hinauslaufen – das wären verkappte Level-1/2-Aufgaben.
+let trivialCount = 0;
+for (const level of [3, 4, 5, 6, 7]) {
+  for (let i = 0; i < 500; i += 1) {
+    const { full } = generateNumberSeriesTask({ level });
+    const diffs = full.slice(1).map((value, index) => value - full[index]);
+    if (diffs.every((d) => d === diffs[0])) trivialCount += 1;
+    const ratio = full[0] !== 0 ? full[1] / full[0] : null;
+    if (ratio !== null && full.every((v, i2) => i2 === 0 || (full[i2 - 1] !== 0 && v / full[i2 - 1] === ratio))) {
+      trivialCount += 1;
+    }
+  }
+}
+check('Ab Level 3 entstehen keine verkappt trivialen Folgen', trivialCount === 0, `${trivialCount} Fälle`);
+
 /* --------------------------------------------------------- Wortflüssigkeit */
 section('Wortflüssigkeit');
 
@@ -213,6 +241,30 @@ check(`Anteil "Keine Antwort ist richtig" liegt bei ~20 % (${wordNoneRate.toFixe
 const wordSet = generateWordFluencySet(TESTS.wordFluency.questionCount, 'medat');
 check('Aufgabensatz hat 15 Aufgaben ohne Wortwiederholung',
   wordSet.length === 15 && new Set(wordSet.map((task) => task.word)).size === 15);
+
+const medatPool = wordPool('medat');
+check('MedAT-Wortpool enthält keine 5- und 6-Buchstaben-Wörter',
+  medatPool.every((word) => word.length >= 7), `kürzestes ${Math.min(...medatPool.map((w) => w.length))}`);
+
+// Der Salat soll das Wort nicht in Fragmenten durchscheinen lassen.
+let pairSum = 0;
+let pairTotal = 0;
+let longWords = 0;
+const MEDAT_SAMPLES = 2000;
+for (let i = 0; i < MEDAT_SAMPLES; i += 1) {
+  const task = generateWordFluencyTask({ difficulty: 'medat' });
+  const original = task.word.toUpperCase();
+  const scrambled = task.scrambled.join('');
+  if (task.word.length >= 10) longWords += 1;
+  for (let j = 0; j < scrambled.length - 1; j += 1) {
+    pairTotal += 1;
+    if (original.includes(scrambled.slice(j, j + 2))) pairSum += 1;
+  }
+}
+const pairRate = (pairSum / pairTotal) * 100;
+check(`Höchstens 3 % der Buchstabenpaare bleiben erhalten (${pairRate.toFixed(1)} %)`, pairRate <= 3);
+const longRate = (longWords / MEDAT_SAMPLES) * 100;
+check(`Mindestens 45 % der MedAT-Wörter haben 10+ Buchstaben (${longRate.toFixed(0)} %)`, longRate >= 45);
 
 /* ------------------------------------------------------------- Gedächtnis */
 section('Gedächtnis & Merkfähigkeit');
