@@ -6,7 +6,7 @@
   "description": "Ubungs-App fuer die vier KFF-Untertests des oesterreichischen MedAT (PWA, offline-faehig).",
   "scripts": {
     "dev": "vite",
-    "build": "npm run icons && vite build",
+    "build": "npm run icons && vite build && node scripts/build-precache.mjs",
     "preview": "vite preview",
     "icons": "node scripts/generate-icons.mjs",
     "selftest": "node scripts/selftest.mjs"

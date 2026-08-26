@@ -15,16 +15,29 @@ const VERSION = 'kff-v1';
 const SHELL_CACHE = `${VERSION}-shell`;
 const ASSET_CACHE = `${VERSION}-assets`;
 
-const SHELL_URLS = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png'];
+// Relativ zur Position des Service Workers – so funktioniert die App auch
+// unter einem Unterpfad (z. B. https://user.github.io/Medat/).
+const SHELL_URLS = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png'];
+
+/**
+ * Beim Installieren wird die vom Build erzeugte Dateiliste geladen und komplett
+ * gecacht (inklusive der Lazy-Bundles der Untertests). Schlägt das fehl, wird
+ * zumindest die App-Shell abgelegt.
+ */
+async function precache() {
+  const cache = await caches.open(SHELL_CACHE);
+  try {
+    const response = await fetch(new URL('precache.json', self.location), { cache: 'no-cache' });
+    if (!response.ok) throw new Error('precache.json nicht erreichbar');
+    const urls = await response.json();
+    await cache.addAll(urls);
+  } catch {
+    await cache.addAll(SHELL_URLS).catch(() => {});
+  }
+}
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches
-      .open(SHELL_CACHE)
-      .then((cache) => cache.addAll(SHELL_URLS))
-      .then(() => self.skipWaiting())
-      .catch(() => self.skipWaiting()),
-  );
+  event.waitUntil(precache().finally(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (event) => {
@@ -54,10 +67,10 @@ self.addEventListener('fetch', (event) => {
       fetch(request)
         .then((response) => {
           const copy = response.clone();
-          caches.open(SHELL_CACHE).then((cache) => cache.put('/index.html', copy));
+          caches.open(SHELL_CACHE).then((cache) => cache.put('./index.html', copy));
           return response;
         })
-        .catch(() => caches.match('/index.html').then((hit) => hit || caches.match('/'))),
+        .catch(() => caches.match('./index.html').then((hit) => hit || caches.match('./'))),
     );
     return;
   }

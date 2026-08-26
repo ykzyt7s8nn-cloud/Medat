@@ -28,7 +28,7 @@ KFF-Prozentrang ausgibt.
 ```bash
 npm install
 npm run dev        # Entwicklungsserver
-npm run build      # Icons erzeugen + Produktionsbuild nach dist/
+npm run build      # Icons + Produktionsbuild nach dist/ + Precache-Liste
 npm run preview    # Produktionsbuild lokal ansehen
 npm run selftest   # Daten- und Engine-Prüfungen (46 Checks)
 npm run icons      # PWA-Icons neu generieren
@@ -103,12 +103,41 @@ ist e) „Keine Antwort ist richtig“ korrekt.
 Tatsache eindeutig ist (z. B. wird nach einem Allergen nur gefragt, wenn genau
 eine Person es hat). In ~15 % der Fragen ist e) korrekt.
 
-## PWA / Installation auf dem iPhone
+## Veröffentlichen
 
-1. `npm run build` und `dist/` auf einem beliebigen Static-Host ausliefern (HTTPS).
-2. Seite in Safari öffnen → Teilen → „Zum Home-Bildschirm“.
-3. Nach dem ersten Laden funktioniert die App offline; der Service Worker nutzt
-   network-first für die App-Shell und stale-while-revalidate für Assets.
+Der Build verwendet relative Pfade (`base: './'`), läuft also auf jedem Host –
+auch in einem Unterverzeichnis wie `https://name.github.io/Medat/`.
+
+**Vercel oder Netlify** (funktioniert auch mit privaten Repositories):
+
+1. Auf vercel.com bzw. netlify.com mit GitHub anmelden und dieses Repository
+   importieren.
+2. Build-Befehl `npm run build`, Ausgabeverzeichnis `dist` (wird meist
+   automatisch erkannt).
+3. Nach dem Deploy gibt es eine HTTPS-Adresse – diese auf dem iPhone öffnen.
+
+**GitHub Pages**: `.github/workflows/deploy-pages.yml` ist vorbereitet. Unter
+Settings → Pages als Source „GitHub Actions“ wählen. Für private Repositories
+ist Pages allerdings kostenpflichtig; das Repo müsste also öffentlich sein.
+
+## Installation auf dem iPhone
+
+1. Die HTTPS-Adresse **in Safari** öffnen (nicht in Chrome – nur Safari kann
+   Web-Apps auf den Home-Bildschirm legen).
+2. Teilen-Symbol → „Zum Home-Bildschirm“ → Hinzufügen.
+3. Die App startet danach im Vollbild ohne Safari-Leiste.
+
+Nach dem ersten Laden ist alles offline verfügbar: Der Service Worker cacht beim
+Installieren sämtliche Dateien aus `dist/precache.json`, also auch die
+nachgeladenen Bundles der einzelnen Untertests.
+
+Hinweis zum Fortschritt: Die Daten liegen im lokalen Speicher des jeweiligen
+Browsers. Übungen, die vorher im Safari-Tab gemacht wurden, tauchen in der
+installierten Web-App unter Umständen nicht auf.
+
+Zum Ausprobieren im eigenen WLAN reicht `npm run dev -- --host` – „Zum
+Home-Bildschirm“ funktioniert dann zwar, Offline-Betrieb jedoch nicht, weil
+Safari Service Worker nur über HTTPS zulässt.
 
 ## Hinweis
 
