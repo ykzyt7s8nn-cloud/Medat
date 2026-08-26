@@ -19,6 +19,9 @@ import { DIFFICULTY_RANGES, NOUNS } from '../data/nouns.js';
 const MIN_SHUFFLE_DIFFERENCES = 3;
 export const NO_ANSWER_LABEL = 'Keine Antwort ist richtig';
 
+/** Ab wie vielen plausiblen Fehlanfängen ein Wort als schwer gilt. */
+const MIN_DISTRACTION = 4;
+
 /**
  * Sicherheitsnetz: Wörter, die mit einem anderen Eintrag ein Anagramm bilden,
  * werden ausgeschlossen – sonst gäbe es mehr als eine Lösung.
@@ -35,6 +38,38 @@ export const SOLVABLE_NOUNS = (() => {
   return [...buckets.values()].filter((group) => group.length === 1).map((group) => group[0]);
 })();
 
+/**
+ * Häufigkeit der Anfangsbuchstaben in der eigenen Wortdatenbank.
+ *
+ * Daraus ergibt sich, welche Buchstaben im Deutschen überhaupt als Wortanfang
+ * in Frage kommen. Das ist der eigentliche Schwierigkeitshebel dieses
+ * Untertests: Ein Salat ist nicht deshalb schwer, weil das Wort lang ist,
+ * sondern weil mehrere seiner Buchstaben ein glaubwürdiger Anfang wären.
+ */
+const INITIAL_COUNTS = NOUNS.reduce((counts, word) => {
+  const initial = word[0].toUpperCase();
+  counts[initial] = (counts[initial] ?? 0) + 1;
+  return counts;
+}, {});
+
+/** Buchstaben, die mindestens 2 % aller Substantive anführen. */
+const COMMON_INITIALS = new Set(
+  Object.entries(INITIAL_COUNTS)
+    .filter(([, count]) => count >= NOUNS.length * 0.02)
+    .map(([letter]) => letter),
+);
+
+/**
+ * Ablenkbarkeit eines Wortes: Wie viele seiner übrigen Buchstaben wären selbst
+ * ein glaubwürdiger Wortanfang? "Anker" (N, K, E, R) ist damit schwerer als
+ * manches längere Wort.
+ */
+export function distractionScore(word) {
+  const letters = new Set(word.toUpperCase().split(''));
+  letters.delete(word[0].toUpperCase());
+  return [...letters].filter((letter) => COMMON_INITIALS.has(letter)).length;
+}
+
 /** Wörter einer Längenstufe. */
 function poolForRange([min, max]) {
   return SOLVABLE_NOUNS.filter((word) => word.length >= min && word.length <= max);
@@ -43,30 +78,31 @@ function poolForRange([min, max]) {
 /**
  * Wortpool je Schwierigkeitsstufe.
  *
- * "MedAT-Niveau" verwendet bewusst keine 5- und 6-Buchstaben-Wörter: Ein Salat
- * aus fünf Buchstaben ist meist auf einen Blick lesbar. Gefragt sind mittlere
- * und lange Wörter, mit Übergewicht auf dem schweren Ende.
+ * Leicht/Mittel/Schwer richten sich nach der Wortlänge (wie in der
+ * MedAT-Literatur üblich). "MedAT-Niveau" geht bewusst einen anderen Weg und
+ * wählt nach Ablenkbarkeit: entscheidend ist nicht, wie lang das Wort ist,
+ * sondern wie viele seiner Buchstaben als Anfang in Frage kämen. Dadurch sind
+ * auch kurze, aber knifflige Wörter wie "Anker" oder "Apfel" dabei.
  */
 export function wordPool(difficulty = 'medat') {
   if (difficulty === 'gemischt') return SOLVABLE_NOUNS;
   if (difficulty === 'medat') {
-    return [...poolForRange(DIFFICULTY_RANGES.mittel), ...poolForRange(DIFFICULTY_RANGES.schwer)];
+    return SOLVABLE_NOUNS.filter((word) => distractionScore(word) >= MIN_DISTRACTION);
   }
   const range = DIFFICULTY_RANGES[difficulty];
   return range ? poolForRange(range) : SOLVABLE_NOUNS;
 }
 
 /**
- * Wahl des Wortes. Auf MedAT-Niveau werden lange Wörter bevorzugt (60 % aus
- * 10–14 Buchstaben), damit der Schwierigkeitsgrad nicht von der zufälligen
- * Poolgröße abhängt.
+ * Wahl des Wortes. Auf MedAT-Niveau bekommen besonders ablenkungsreiche Wörter
+ * zusätzliches Gewicht, damit der Schwierigkeitsgrad nicht von der zufälligen
+ * Poolzusammensetzung abhängt.
  */
 function pickWord(difficulty, available) {
   if (difficulty !== 'medat') return pick(available);
-  const long = available.filter((word) => word.length >= DIFFICULTY_RANGES.schwer[0]);
-  const medium = available.filter((word) => word.length < DIFFICULTY_RANGES.schwer[0]);
-  if (long.length > 0 && (medium.length === 0 || chance(0.6))) return pick(long);
-  return pick(medium.length > 0 ? medium : long);
+  const tricky = available.filter((word) => distractionScore(word) >= MIN_DISTRACTION + 1);
+  if (tricky.length > 0 && chance(0.5)) return pick(tricky);
+  return pick(available);
 }
 
 /**
@@ -112,11 +148,23 @@ export function scrambleWord(word) {
   return best ?? shuffle(letters);
 }
 
-/** Buchstaben, die als Distraktor infrage kommen: aus dem Wort, ohne Lösung. */
+/**
+ * Buchstaben, die als Distraktor infrage kommen.
+ *
+ * Reihenfolge der Bevorzugung:
+ *   1. Buchstaben aus dem Wort, die häufig Wörter anführen (echte Fallen)
+ *   2. übrige Buchstaben aus dem Wort
+ *   3. sonstige häufige Anfangsbuchstaben
+ *
+ * Ein Distraktor wie "Y" wäre wertlos – man könnte ihn ohne Nachdenken
+ * ausschließen.
+ */
 function distractorLetters(word, exclude) {
-  const fromWord = [...new Set(word.toUpperCase().split(''))].filter((l) => !exclude.has(l));
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').filter((l) => !exclude.has(l));
-  return { fromWord, alphabet };
+  const inWord = [...new Set(word.toUpperCase().split(''))].filter((l) => !exclude.has(l));
+  const plausible = inWord.filter((l) => COMMON_INITIALS.has(l));
+  const others = inWord.filter((l) => !COMMON_INITIALS.has(l));
+  const fallback = [...COMMON_INITIALS].filter((l) => !exclude.has(l) && !inWord.includes(l));
+  return { plausible, others, fallback };
 }
 
 /**
@@ -134,12 +182,11 @@ export function generateWordFluencyTask(options = {}) {
   const noneCorrect = options.forceNone ?? chance(0.2);
 
   const exclude = new Set([correctLetter]);
-  const { fromWord, alphabet } = distractorLetters(word, exclude);
+  const { plausible, others, fallback } = distractorLetters(word, exclude);
   const needed = noneCorrect ? 4 : 3;
-  // Zuerst Buchstaben aus dem Wort (plausibel), dann bei Bedarf aus dem Alphabet
-  // auffüllen – immer ohne Dopplungen.
+  // Erst die echten Fallen, dann auffüllen – immer ohne Dopplungen.
   const distractors = [];
-  for (const letter of [...sample(fromWord, fromWord.length), ...shuffle(alphabet)]) {
+  for (const letter of [...shuffle(plausible), ...shuffle(others), ...shuffle(fallback)]) {
     if (distractors.length >= needed) break;
     if (!distractors.includes(letter)) distractors.push(letter);
   }

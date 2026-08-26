@@ -101,9 +101,18 @@ Faktor hinauslaufen.
 **Wortflüssigkeit** – Der Buchstabensalat weicht an mindestens 3 Positionen vom
 Original ab, beginnt nie mit dem gesuchten Buchstaben und wird aus mehreren
 Mischungen so gewählt, dass möglichst wenige benachbarte Buchstabenpaare des
-Originals übrig bleiben (in der Praxis unter 1 %). „MedAT-Niveau“ nutzt nur
-Wörter ab 7 Buchstaben, davon 60 % aus dem Bereich 10–14. In ~20 % der Aufgaben
-ist e) „Keine Antwort ist richtig“ korrekt.
+Originals übrig bleiben (in der Praxis unter 1 %).
+
+Der Schwierigkeitsgrad hängt dabei nicht an der Wortlänge, sondern an der
+*Ablenkbarkeit*: wie viele der übrigen Buchstaben selbst ein glaubwürdiger
+Wortanfang wären. Die dafür nötige Statistik der Anfangsbuchstaben wird aus der
+Wortdatenbank selbst berechnet. „MedAT-Niveau“ verlangt mindestens vier
+plausible Fehlanfänge – so sind auch kurze, knifflige Wörter wie „Anker“ dabei,
+während harmlose lange Wörter wegfallen. Aus demselben Grund stammen alle
+angebotenen Buchstaben aus dem Salat: Ein Distraktor wie „Y“ ließe sich ohne
+Nachdenken ausschließen. Leicht/Mittel/Schwer bleiben längenbasiert (5–6, 7–9,
+10–14 Buchstaben). In ~20 % der Aufgaben ist e) „Keine Antwort ist richtig“
+korrekt.
 
 **Gedächtnis** – Jeder Fragetyp prüft vor der Erzeugung, ob die zugrunde liegende
 Tatsache eindeutig ist (z. B. wird nach einem Allergen nur gefragt, wenn genau

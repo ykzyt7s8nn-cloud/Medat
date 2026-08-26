@@ -30,6 +30,7 @@ import {
 } from '../src/engines/numberSeries.js';
 import {
   SOLVABLE_NOUNS,
+  distractionScore,
   generateWordFluencySet,
   generateWordFluencyTask,
   wordPool,
@@ -242,29 +243,41 @@ const wordSet = generateWordFluencySet(TESTS.wordFluency.questionCount, 'medat')
 check('Aufgabensatz hat 15 Aufgaben ohne Wortwiederholung',
   wordSet.length === 15 && new Set(wordSet.map((task) => task.word)).size === 15);
 
+// Auf MedAT-Niveau zählt nicht die Wortlänge, sondern die Ablenkbarkeit:
+// wie viele Buchstaben des Wortes wären selbst ein glaubwürdiger Anfang.
 const medatPool = wordPool('medat');
-check('MedAT-Wortpool enthält keine 5- und 6-Buchstaben-Wörter',
-  medatPool.every((word) => word.length >= 7), `kürzestes ${Math.min(...medatPool.map((w) => w.length))}`);
+check('Jedes Wort im MedAT-Pool hat mindestens 4 plausible Fehlanfänge',
+  medatPool.length > 300 && medatPool.every((word) => distractionScore(word) >= 4),
+  `${medatPool.length} Wörter`);
 
-// Der Salat soll das Wort nicht in Fragmenten durchscheinen lassen.
 let pairSum = 0;
 let pairTotal = 0;
-let longWords = 0;
+let scoreSum = 0;
+let outsideSalad = 0;
+let optionTotal = 0;
 const MEDAT_SAMPLES = 2000;
 for (let i = 0; i < MEDAT_SAMPLES; i += 1) {
   const task = generateWordFluencyTask({ difficulty: 'medat' });
   const original = task.word.toUpperCase();
   const scrambled = task.scrambled.join('');
-  if (task.word.length >= 10) longWords += 1;
+  scoreSum += distractionScore(task.word);
+  // Der Salat soll das Wort nicht in Fragmenten durchscheinen lassen.
   for (let j = 0; j < scrambled.length - 1; j += 1) {
     pairTotal += 1;
     if (original.includes(scrambled.slice(j, j + 2))) pairSum += 1;
   }
+  // Kein angebotener Buchstabe darf per Ausschluss wegfallen.
+  for (const option of task.options.slice(0, 4)) {
+    optionTotal += 1;
+    if (!original.includes(option.text)) outsideSalad += 1;
+  }
 }
 const pairRate = (pairSum / pairTotal) * 100;
 check(`Höchstens 3 % der Buchstabenpaare bleiben erhalten (${pairRate.toFixed(1)} %)`, pairRate <= 3);
-const longRate = (longWords / MEDAT_SAMPLES) * 100;
-check(`Mindestens 45 % der MedAT-Wörter haben 10+ Buchstaben (${longRate.toFixed(0)} %)`, longRate >= 45);
+const averageScore = scoreSum / MEDAT_SAMPLES;
+check(`Durchschnittliche Ablenkbarkeit liegt bei mindestens 4,5 (${averageScore.toFixed(1)})`, averageScore >= 4.5);
+const outsideRate = (outsideSalad / optionTotal) * 100;
+check(`Alle angebotenen Buchstaben kommen im Salat vor (${outsideRate.toFixed(1)} % Ausreißer)`, outsideRate <= 1);
 
 /* ------------------------------------------------------------- Gedächtnis */
 section('Gedächtnis & Merkfähigkeit');
