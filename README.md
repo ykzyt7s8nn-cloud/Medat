@@ -108,17 +108,18 @@ eine Person es hat). In ~15 % der Fragen ist e) korrekt.
 Der Build verwendet relative Pfade (`base: './'`), läuft also auf jedem Host –
 auch in einem Unterverzeichnis wie `https://name.github.io/Medat/`.
 
-**Vercel oder Netlify** (funktioniert auch mit privaten Repositories):
+**GitHub Pages** (eingerichtet): Bei jedem Push auf den Standard-Branch läuft
+`.github/workflows/deploy-pages.yml` – Selbsttest, Build und Deploy. Pages wird
+dabei automatisch aktiviert. Ergebnis:
+`https://ykzyt7s8nn-cloud.github.io/Medat/`
+
+**Alternativ Vercel oder Netlify** (nötig, falls das Repository privat ist):
 
 1. Auf vercel.com bzw. netlify.com mit GitHub anmelden und dieses Repository
    importieren.
 2. Build-Befehl `npm run build`, Ausgabeverzeichnis `dist` (wird meist
    automatisch erkannt).
 3. Nach dem Deploy gibt es eine HTTPS-Adresse – diese auf dem iPhone öffnen.
-
-**GitHub Pages**: `.github/workflows/deploy-pages.yml` ist vorbereitet. Unter
-Settings → Pages als Source „GitHub Actions“ wählen. Für private Repositories
-ist Pages allerdings kostenpflichtig; das Repo müsste also öffentlich sein.
 
 ## Installation auf dem iPhone
 
