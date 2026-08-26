@@ -108,9 +108,9 @@ eine Person es hat). In ~15 % der Fragen ist e) korrekt.
 Der Build verwendet relative Pfade (`base: './'`), läuft also auf jedem Host –
 auch in einem Unterverzeichnis wie `https://name.github.io/Medat/`.
 
-**GitHub Pages** (eingerichtet): Bei jedem Push auf den Standard-Branch läuft
-`.github/workflows/deploy-pages.yml` – Selbsttest, Build und Deploy. Pages wird
-dabei automatisch aktiviert. Ergebnis:
+**GitHub Pages** (eingerichtet): Einmalig unter Settings → Pages als Source
+„GitHub Actions" wählen. Danach läuft bei jedem Push auf den Standard-Branch
+`.github/workflows/deploy-pages.yml` – Selbsttest, Build und Deploy. Ergebnis:
 `https://ykzyt7s8nn-cloud.github.io/Medat/`
 
 **Alternativ Vercel oder Netlify** (nötig, falls das Repository privat ist):

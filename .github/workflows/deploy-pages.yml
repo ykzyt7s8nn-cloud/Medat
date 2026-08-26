@@ -1,7 +1,7 @@
 # Baut die App und veröffentlicht sie auf GitHub Pages.
 #
-# Pages wird vom Schritt "configure-pages" mit enablement: true automatisch
-# aktiviert – es ist keine Einstellung im Repository nötig.
+# Einmalig nötig: Repository -> Settings -> Pages -> Source = "GitHub Actions".
+# (Das Workflow-Token darf die Pages-Site nicht selbst anlegen.)
 # Hinweis: Für private Repositories ist GitHub Pages kostenpflichtig (Pro/Team);
 # in dem Fall stattdessen Vercel oder Netlify nutzen (siehe README).
 name: Deploy to GitHub Pages
@@ -27,9 +27,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-        with:
-          enablement: true
       - uses: actions/setup-node@v4
         with:
           node-version: 20
