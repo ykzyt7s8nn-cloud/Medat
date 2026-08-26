@@ -93,10 +93,16 @@ Erklärungsgrafik.
 **Zahlenfolgen** – Sieben Generatoren (konstante Differenz, Multiplikation,
 wachsende Differenzen, verschachtelte Folgen, Fibonacci-artig, Quadrat-/Kubik-/
 Primzahlen, kombinierte Regeln) liefern je 9 ganzzahlige Werte plus die
-Regelbeschreibung, die nach dem Prüfen als Erklärung erscheint.
+Regelbeschreibung, die nach dem Prüfen als Erklärung erscheint. „MedAT-Niveau“
+verwendet nur die Level 4–7; ein Filter verwirft außerdem Folgen, die trotz
+komplizierter Vorschrift auf eine konstante Differenz oder einen konstanten
+Faktor hinauslaufen.
 
 **Wortflüssigkeit** – Der Buchstabensalat weicht an mindestens 3 Positionen vom
-Original ab und beginnt nie mit dem gesuchten Buchstaben. In ~20 % der Aufgaben
+Original ab, beginnt nie mit dem gesuchten Buchstaben und wird aus mehreren
+Mischungen so gewählt, dass möglichst wenige benachbarte Buchstabenpaare des
+Originals übrig bleiben (in der Praxis unter 1 %). „MedAT-Niveau“ nutzt nur
+Wörter ab 7 Buchstaben, davon 60 % aus dem Bereich 10–14. In ~20 % der Aufgaben
 ist e) „Keine Antwort ist richtig“ korrekt.
 
 **Gedächtnis** – Jeder Fragetyp prüft vor der Erzeugung, ob die zugrunde liegende
