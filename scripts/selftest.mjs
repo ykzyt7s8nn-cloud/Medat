@@ -10,6 +10,7 @@
  */
 import { DIFFICULTY_RANGES, NOUNS } from '../src/data/nouns.js';
 import { ALLERGENS, BLOOD_TYPES } from '../src/data/allergens.js';
+import { FOREIGN_OR_TECHNICAL } from '../src/data/nouns.js';
 import { FEMALE_FIRST_NAMES, LAST_NAMES, MALE_FIRST_NAMES } from '../src/data/names.js';
 import { TERM_TRIPLES } from '../src/data/syllogismTerms.js';
 import { TESTS } from '../src/data/testConfig.js';
@@ -30,6 +31,7 @@ import {
 } from '../src/engines/numberSeries.js';
 import {
   SOLVABLE_NOUNS,
+  decipherScore,
   distractionScore,
   generateWordFluencySet,
   generateWordFluencyTask,
@@ -168,6 +170,23 @@ check('Aufgabensatz hat 10 Aufgaben', syllogismSet.length === TESTS.implications
 /* ------------------------------------------------------------ Zahlenfolgen */
 section('Zahlenfolgen');
 
+// Jede Stufe muss mehrere Regelfamilien anbieten – sonst sieht man im
+// adaptiven Modus mehrere Aufgaben hintereinander nach demselben Schema.
+for (const level of [1, 2, 3, 4, 5, 6, 7]) {
+  const families = new Set();
+  for (let i = 0; i < 300; i += 1) families.add(generateNumberSeriesTask({ level }).family);
+  check(`Stufe ${level} mischt mindestens 3 Regelfamilien (${[...families].join(', ')})`, families.size >= 3);
+}
+
+const mixedSet = generateNumberSeriesSet(10, 'medat');
+const setFamilies = new Set(mixedSet.map((task) => task.family));
+check(`Ein MedAT-Durchgang nutzt mindestens 4 Regelfamilien (${setFamilies.size})`, setFamilies.size >= 4);
+let repeats = 0;
+for (let i = 1; i < mixedSet.length; i += 1) {
+  if (mixedSet[i].family === mixedSet[i - 1].family) repeats += 1;
+}
+check('Keine zwei gleichen Regelfamilien direkt hintereinander', repeats === 0, `${repeats} Wiederholungen`);
+
 for (const level of [1, 2, 3, 4, 5, 6, 7]) {
   let issues = 0;
   for (let i = 0; i < 300; i += 1) {
@@ -243,12 +262,19 @@ const wordSet = generateWordFluencySet(TESTS.wordFluency.questionCount, 'medat')
 check('Aufgabensatz hat 15 Aufgaben ohne Wortwiederholung',
   wordSet.length === 15 && new Set(wordSet.map((task) => task.word)).size === 15);
 
-// Auf MedAT-Niveau zählt nicht die Wortlänge, sondern die Ablenkbarkeit:
-// wie viele Buchstaben des Wortes wären selbst ein glaubwürdiger Anfang.
+// MedAT-Niveau: 8–9 Buchstaben, sperrige Buchstabenfolge, mehrere plausible
+// Fehlanfänge, keine Fremd- oder Fachwörter.
 const medatPool = wordPool('medat');
-check('Jedes Wort im MedAT-Pool hat mindestens 4 plausible Fehlanfänge',
-  medatPool.length > 300 && medatPool.every((word) => distractionScore(word) >= 4),
+check('MedAT-Wortpool umfasst nur Wörter mit 8–9 Buchstaben',
+  medatPool.length > 150 && medatPool.every((word) => word.length >= 8 && word.length <= 9),
   `${medatPool.length} Wörter`);
+check('Jedes Wort im MedAT-Pool hat mindestens 4 plausible Fehlanfänge',
+  medatPool.every((word) => distractionScore(word) >= 4));
+check('Jedes Wort im MedAT-Pool hat eine sperrige Buchstabenfolge',
+  medatPool.every((word) => decipherScore(word) >= 2));
+check('Keine Fremd- oder Fachwörter im MedAT-Pool',
+  medatPool.every((word) => !FOREIGN_OR_TECHNICAL.has(word)),
+  medatPool.filter((word) => FOREIGN_OR_TECHNICAL.has(word)).join(', '));
 
 let pairSum = 0;
 let pairTotal = 0;

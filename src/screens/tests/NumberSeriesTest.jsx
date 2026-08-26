@@ -24,6 +24,7 @@ import {
   checkNumberSeriesAnswer,
   generateNumberSeriesTask,
 } from '../../engines/numberSeries.js';
+import { pick } from '../../lib/random.js';
 import { useCountdown } from '../../hooks/useCountdown.js';
 import { useFeedback } from '../../hooks/useFeedback.js';
 import { useNavigation } from '../../store/useNavigation.js';
@@ -48,6 +49,7 @@ export default function NumberSeriesTest({ embedded = false, onFinish }) {
   const [results, setResults] = useState([]);
   const levelRef = useRef(START_LEVEL[difficulty] ?? 3);
   const streakRef = useRef({ correct: 0, wrong: 0 });
+  const lastFamilyRef = useRef(null);
   const startedAt = useRef(Date.now());
 
   // In der Simulation gilt immer das Originalzeitlimit.
@@ -55,10 +57,15 @@ export default function NumberSeriesTest({ embedded = false, onFinish }) {
 
   const nextTask = useCallback(() => {
     const floor = MIN_LEVEL[difficulty] ?? 1;
+    // Im adaptiven Modus schwankt die Stufe um ±1 um den aktuellen Stand –
+    // sonst kämen mehrere Aufgaben am Stück aus demselben Schwierigkeitsband.
+    const jitter = pick([-1, 0, 0, 1]);
     const options = adaptive && difficulty !== 'gemischt'
-      ? { level: Math.min(7, Math.max(floor, levelRef.current)) }
-      : { difficulty };
-    setTask(generateNumberSeriesTask(options));
+      ? { level: Math.min(7, Math.max(floor, levelRef.current + jitter)), excludeFamily: lastFamilyRef.current }
+      : { difficulty, excludeFamily: lastFamilyRef.current };
+    const task = generateNumberSeriesTask(options);
+    lastFamilyRef.current = task.family;
+    setTask(task);
     setAnswers(['', '']);
     setActiveField(0);
     setChecked(null);
@@ -163,6 +170,7 @@ export default function NumberSeriesTest({ embedded = false, onFinish }) {
       givenText: answers.some((value) => value !== '') ? answers.map((v) => v || '–').join(', ') : 'keine Eingabe',
       explanation: task.rule,
       level: task.level,
+      familyLabel: task.familyLabel,
     };
     setResults((current) => [...current, entry]);
   };
@@ -211,7 +219,9 @@ export default function NumberSeriesTest({ embedded = false, onFinish }) {
                 <span className="text-ios-green">{item.correctText}</span>
               </p>
               <p className="text-[14px] text-black/60 dark:text-white/60">Regel: {item.explanation}</p>
-              <p className="text-[12px] text-black/40 dark:text-white/40">Level {item.level}</p>
+              <p className="text-[12px] text-black/40 dark:text-white/40">
+                Stufe {item.level} · {item.familyLabel}
+              </p>
             </div>
           )}
           onRestart={start}
@@ -231,7 +241,7 @@ export default function NumberSeriesTest({ embedded = false, onFinish }) {
           total={TEST.testSeconds}
           enabled={useTimer}
           accent={TEST.accent}
-          progressLabel={`Aufgabe ${Math.min(complete + 1, TEST.questionCount)} von ${TEST.questionCount} · Level ${task?.level ?? '–'}`}
+          progressLabel={`Aufgabe ${Math.min(complete + 1, TEST.questionCount)} von ${TEST.questionCount} · Stufe ${task?.level ?? '–'}`}
         />
       }
       footer={

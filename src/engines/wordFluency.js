@@ -14,13 +14,21 @@
  *     plausibel
  */
 import { chance, pick, sample, shuffle } from '../lib/random.js';
-import { DIFFICULTY_RANGES, NOUNS } from '../data/nouns.js';
+import { DIFFICULTY_RANGES, FOREIGN_OR_TECHNICAL, NOUNS } from '../data/nouns.js';
 
 const MIN_SHUFFLE_DIFFERENCES = 3;
 export const NO_ANSWER_LABEL = 'Keine Antwort ist richtig';
 
 /** Ab wie vielen plausiblen Fehlanfängen ein Wort als schwer gilt. */
 const MIN_DISTRACTION = 4;
+
+/**
+ * Vorgaben für "MedAT-Niveau": 8–9 Buchstaben (kürzer ist zu schnell gelesen,
+ * länger verrät sich zu leicht über die Wortstruktur) und eine Buchstabenfolge,
+ * die sich nicht flüssig lesen lässt.
+ */
+const MEDAT_LENGTH = [8, 9];
+const MIN_DECIPHER = 2;
 
 /**
  * Sicherheitsnetz: Wörter, die mit einem anderen Eintrag ein Anagramm bilden,
@@ -70,6 +78,57 @@ export function distractionScore(word) {
   return [...letters].filter((letter) => COMMON_INITIALS.has(letter)).length;
 }
 
+/** Buchstabenhäufigkeit in der Datenbank – Basis für "seltener Buchstabe". */
+const LETTER_SHARE = (() => {
+  const counts = {};
+  let total = 0;
+  for (const word of NOUNS) {
+    for (const letter of word.toUpperCase()) {
+      counts[letter] = (counts[letter] ?? 0) + 1;
+      total += 1;
+    }
+  }
+  return Object.fromEntries(Object.entries(counts).map(([letter, count]) => [letter, count / total]));
+})();
+
+/** Häufigkeit der Buchstabenpaare – Basis für "ungewöhnliche Kombination". */
+const BIGRAM_SHARE = (() => {
+  const counts = {};
+  let total = 0;
+  for (const word of NOUNS) {
+    const upper = word.toUpperCase();
+    for (let i = 0; i < upper.length - 1; i += 1) {
+      const pair = upper.slice(i, i + 2);
+      counts[pair] = (counts[pair] ?? 0) + 1;
+      total += 1;
+    }
+  }
+  return Object.fromEntries(Object.entries(counts).map(([pair, count]) => [pair, count / total]));
+})();
+
+const VOWELS = 'AEIOU';
+
+/**
+ * Wie sperrig ist die Buchstabenfolge?
+ *
+ * Zählt seltene Buchstabenpaare und seltene Einzelbuchstaben und belohnt einen
+ * niedrigen Vokalanteil. "Kerbholz" und "Jagdhorn" landen dadurch oben,
+ * "Marmelade" und "Teekanne" unten – genau der Unterschied zwischen einem
+ * Salat, den man auf einen Blick liest, und einem, den man wirklich sortieren
+ * muss.
+ */
+export function decipherScore(word) {
+  const upper = word.toUpperCase();
+  let rarePairs = 0;
+  for (let i = 0; i < upper.length - 1; i += 1) {
+    if ((BIGRAM_SHARE[upper.slice(i, i + 2)] ?? 0) < 0.0008) rarePairs += 1;
+  }
+  const rareLetters = [...new Set(upper)].filter((letter) => (LETTER_SHARE[letter] ?? 0) < 0.02).length;
+  const vowelRatio = [...upper].filter((letter) => VOWELS.includes(letter)).length / upper.length;
+  const vowelBonus = vowelRatio <= 0.34 ? 2 : vowelRatio <= 0.4 ? 1 : 0;
+  return rarePairs + rareLetters + vowelBonus;
+}
+
 /** Wörter einer Längenstufe. */
 function poolForRange([min, max]) {
   return SOLVABLE_NOUNS.filter((word) => word.length >= min && word.length <= max);
@@ -79,29 +138,35 @@ function poolForRange([min, max]) {
  * Wortpool je Schwierigkeitsstufe.
  *
  * Leicht/Mittel/Schwer richten sich nach der Wortlänge (wie in der
- * MedAT-Literatur üblich). "MedAT-Niveau" geht bewusst einen anderen Weg und
- * wählt nach Ablenkbarkeit: entscheidend ist nicht, wie lang das Wort ist,
- * sondern wie viele seiner Buchstaben als Anfang in Frage kämen. Dadurch sind
- * auch kurze, aber knifflige Wörter wie "Anker" oder "Apfel" dabei.
+ * MedAT-Literatur üblich). "MedAT-Niveau" kombiniert drei Kriterien:
+ *   - 8–9 Buchstaben
+ *   - sperrige Buchstabenfolge (decipherScore)
+ *   - mehrere glaubwürdige Fehlanfänge (distractionScore)
+ * Länge allein sagt wenig: "Marmelade" ist neun Buchstaben lang und trotzdem
+ * sofort lesbar.
  */
 export function wordPool(difficulty = 'medat') {
   if (difficulty === 'gemischt') return SOLVABLE_NOUNS;
   if (difficulty === 'medat') {
-    return SOLVABLE_NOUNS.filter((word) => distractionScore(word) >= MIN_DISTRACTION);
+    return poolForRange(MEDAT_LENGTH).filter(
+      (word) => !FOREIGN_OR_TECHNICAL.has(word)
+        && decipherScore(word) >= MIN_DECIPHER
+        && distractionScore(word) >= MIN_DISTRACTION,
+    );
   }
   const range = DIFFICULTY_RANGES[difficulty];
   return range ? poolForRange(range) : SOLVABLE_NOUNS;
 }
 
 /**
- * Wahl des Wortes. Auf MedAT-Niveau bekommen besonders ablenkungsreiche Wörter
- * zusätzliches Gewicht, damit der Schwierigkeitsgrad nicht von der zufälligen
- * Poolzusammensetzung abhängt.
+ * Wahl des Wortes. Auf MedAT-Niveau bekommen besonders sperrige Wörter
+ * zusätzliches Gewicht, damit nicht bei jedem Durchgang die zufällig glatteren
+ * Wörter dominieren.
  */
 function pickWord(difficulty, available) {
   if (difficulty !== 'medat') return pick(available);
-  const tricky = available.filter((word) => distractionScore(word) >= MIN_DISTRACTION + 1);
-  if (tricky.length > 0 && chance(0.5)) return pick(tricky);
+  const tricky = available.filter((word) => decipherScore(word) >= MIN_DECIPHER + 1);
+  if (tricky.length > 0 && chance(0.6)) return pick(tricky);
   return pick(available);
 }
 

@@ -30,13 +30,14 @@ npm install
 npm run dev        # Entwicklungsserver
 npm run build      # Icons + Produktionsbuild nach dist/ + Precache-Liste
 npm run preview    # Produktionsbuild lokal ansehen
-npm run selftest   # Daten- und Engine-Prüfungen (46 Checks)
+npm run selftest   # Daten- und Engine-Prüfungen (66 Checks)
 npm run icons      # PWA-Icons neu generieren
 ```
 
 `npm run selftest` prüft unter anderem, ob die Syllogismus-Engine exakt die 24
 klassisch gültigen Modi liefert, ob jede erzeugte MC-Frage genau eine richtige
-Antwort hat und ob die Wortdatenbank anagramm-eindeutig bleibt.
+Antwort hat, ob die Wortdatenbank anagramm-eindeutig bleibt und ob jede
+Zahlenfolgen-Stufe mehrere Regelfamilien mischt.
 
 ## Projektstruktur
 
@@ -49,12 +50,12 @@ src/
   data/            reine Datenlisten, keine Logik
     names.js           100 Vornamen + 100 Nachnamen, Avatar-Farben
     allergens.js       52 Allergene nach Kategorie, Blutgruppen
-    nouns.js           1274 Substantive ohne Umlaute/ß, anagramm-eindeutig
+    nouns.js           1427 Substantive ohne Umlaute/ß, anagramm-eindeutig
     syllogismTerms.js  70 Begriffstripel
     testConfig.js      Zeitlimits, Aufgabenzahlen, Simulationsablauf
   engines/         Aufgabengenerierung, frei von React
     memory.js          Allergieausweise + 13 Fragetypen
-    numberSeries.js    7 Level Zahlenfolgen mit Regelbeschreibung
+    numberSeries.js    30 Generatoren in 7 Stufen und 7 Regelfamilien
     wordFluency.js     Buchstabensalat mit Shuffle-Garantie
     syllogism.js       Venn-Modellprüfung über alle 128 Modelle
   store/           Zustand-Stores (settings/progress persistiert, navigation nicht)
@@ -90,29 +91,47 @@ Prämissen erfüllen. Verwendet wird die traditionelle Logik mit existenzieller
 Voraussetzung. Nebenprodukt ist der Status jeder Region – daraus entsteht die
 Erklärungsgrafik.
 
-**Zahlenfolgen** – Sieben Generatoren (konstante Differenz, Multiplikation,
-wachsende Differenzen, verschachtelte Folgen, Fibonacci-artig, Quadrat-/Kubik-/
-Primzahlen, kombinierte Regeln) liefern je 9 ganzzahlige Werte plus die
-Regelbeschreibung, die nach dem Prüfen als Erklärung erscheint. „MedAT-Niveau“
-verwendet nur die Level 4–7; ein Filter verwirft außerdem Folgen, die trotz
-komplizierter Vorschrift auf eine konstante Differenz oder einen konstanten
-Faktor hinauslaufen.
+**Zahlenfolgen** – 30 Generatoren liefern je 9 ganzzahlige Werte plus die
+Regelbeschreibung, die nach dem Prüfen als Erklärung erscheint. Jeder Generator
+trägt zwei Angaben: eine Schwierigkeitsstufe (1–7) und eine Regelfamilie
+(Addition, Multiplikation, Potenzen, Fibonacci, alternierend, verschachtelt,
+kombiniert).
+
+Entscheidend ist, dass eine Stufe **keine** Regelfamilie ist: Auf jeder Stufe
+mischen sich mindestens drei Familien. Andernfalls bekäme man – gerade im
+adaptiven Modus, der auf einer Stufe verweilt – mehrere Aufgaben hintereinander
+nach demselben Schema. Innerhalb eines Durchgangs wird zusätzlich verhindert,
+dass zwei Aufgaben derselben Familie direkt aufeinander folgen, und die adaptive
+Stufe schwankt um ±1.
+
+„MedAT-Niveau“ verwendet die Stufen 4–7; ein Filter verwirft außerdem Folgen,
+die trotz komplizierter Vorschrift auf eine konstante Differenz oder einen
+konstanten Faktor hinauslaufen.
 
 **Wortflüssigkeit** – Der Buchstabensalat weicht an mindestens 3 Positionen vom
 Original ab, beginnt nie mit dem gesuchten Buchstaben und wird aus mehreren
 Mischungen so gewählt, dass möglichst wenige benachbarte Buchstabenpaare des
 Originals übrig bleiben (in der Praxis unter 1 %).
 
-Der Schwierigkeitsgrad hängt dabei nicht an der Wortlänge, sondern an der
-*Ablenkbarkeit*: wie viele der übrigen Buchstaben selbst ein glaubwürdiger
-Wortanfang wären. Die dafür nötige Statistik der Anfangsbuchstaben wird aus der
-Wortdatenbank selbst berechnet. „MedAT-Niveau“ verlangt mindestens vier
-plausible Fehlanfänge – so sind auch kurze, knifflige Wörter wie „Anker“ dabei,
-während harmlose lange Wörter wegfallen. Aus demselben Grund stammen alle
-angebotenen Buchstaben aus dem Salat: Ein Distraktor wie „Y“ ließe sich ohne
-Nachdenken ausschließen. Leicht/Mittel/Schwer bleiben längenbasiert (5–6, 7–9,
-10–14 Buchstaben). In ~20 % der Aufgaben ist e) „Keine Antwort ist richtig“
-korrekt.
+„MedAT-Niveau“ stellt vier Bedingungen an ein Wort:
+
+1. **8–9 Buchstaben** – kürzer ist zu schnell gelesen, länger verrät sich über
+   die Wortstruktur.
+2. **Sperrige Buchstabenfolge** (`decipherScore`): seltene Buchstabenpaare,
+   seltene Einzelbuchstaben, niedriger Vokalanteil. Die nötigen Häufigkeiten
+   werden aus der Wortdatenbank selbst berechnet. „Kerbholz“ und „Grenzwall“
+   landen dadurch oben, „Marmelade“ und „Teekanne“ unten – Länge allein sagt
+   wenig.
+3. **Mehrere glaubwürdige Fehlanfänge** (`distractionScore`): wie viele der
+   übrigen Buchstaben selbst ein Wort anführen könnten. Aus derselben Statistik
+   werden die Distraktoren gewählt, und alle angebotenen Buchstaben stammen aus
+   dem Salat – ein Distraktor wie „Y“ ließe sich ohne Nachdenken ausschließen.
+4. **Keine Fremd- und Fachwörter** – gepflegt als Liste in
+   `FOREIGN_OR_TECHNICAL` (siehe `src/data/nouns.js`), bewusst nicht als
+   Endungsheuristik, die auch „Meinung“ oder „Musik“ träfe.
+
+Leicht/Mittel/Schwer bleiben rein längenbasiert (5–6, 7–9, 10–14 Buchstaben).
+In ~20 % der Aufgaben ist e) „Keine Antwort ist richtig“ korrekt.
 
 **Gedächtnis** – Jeder Fragetyp prüft vor der Erzeugung, ob die zugrunde liegende
 Tatsache eindeutig ist (z. B. wird nach einem Allergen nur gefragt, wenn genau
