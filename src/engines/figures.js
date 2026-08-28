@@ -4,10 +4,17 @@
  * Aufgabe: Aus mehreren Teilstücken entsteht genau eine der fünf gezeigten
  * Figuren. Die Teile dürfen gedreht, aber nicht gespiegelt werden.
  *
- * Formensprache wie im MedAT: Halb- und Viertelkreise, Fünf- bis Achtecke,
- * dazu Dreieck, Quadrat und Rechteck. Alle Grundformen sind konvex – dadurch
- * zerteilt jede Schnittgerade eine Figur in genau zwei gültige Teile, und die
- * Zerlegung ist per Konstruktion lösbar.
+ * Aufbau der Antworten wie im MedAT: A bis D zeigen immer Figuren, E lautet
+ * "Keine der Antwortmöglichkeiten ist richtig" – und ist in etwa jeder fünften
+ * Aufgabe tatsächlich die Lösung.
+ *
+ * Als Lösungsfigur kommen nur die beiden Kategorien des Tests vor: regelmäßige
+ * Vielecke (Fünf- bis Achteck) und Kreissegmente (Viertel-, Halb-,
+ * Dreiviertelkreis, ganzer Kreis). Dreieck, Quadrat, Rechteck und Trapez
+ * treten ausschließlich als Distraktor auf.
+ *
+ * Alle Grundformen sind konvex – dadurch zerteilt jede Schnittgerade eine Figur
+ * in genau zwei gültige Teile, und die Zerlegung ist per Konstruktion lösbar.
  *
  * Die Distraktoren sind nicht bloß "andere Formen": Für jeden ist beweisbar,
  * dass er sich aus den Teilstücken nicht legen lässt, denn seine Fläche weicht
@@ -57,7 +64,26 @@ export const SHAPES = {
   dreiviertelkreis: { label: 'Dreiviertelkreis', family: 'rund', build: () => circleSector(0.75) },
   kreis: { label: 'Kreis', family: 'rund', build: () => circleSector(1) },
   drittelkreis: { label: 'Drittelkreis', family: 'rund', build: () => circleSector(1 / 3) },
+  trapez: {
+    label: 'Trapez',
+    family: 'eckig',
+    build: () => [[-1, -0.55], [1, -0.55], [0.52, 0.55], [-0.52, 0.55]],
+  },
 };
+
+/**
+ * Figuren, die als Lösung vorkommen – die beiden Kategorien des echten Tests.
+ */
+export const SOLUTION_SHAPES = [
+  'fuenfeck', 'sechseck', 'siebeneck', 'achteck',
+  'viertelkreis', 'halbkreis', 'dreiviertelkreis', 'kreis',
+];
+
+/**
+ * Figuren, die nur als Distraktor auftauchen. Trapez, Dreieck, Quadrat und
+ * Rechteck sind im Test nie die gesuchte Figur.
+ */
+export const DISTRACTOR_ONLY_SHAPES = ['dreieck', 'quadrat', 'rechteck', 'trapez', 'drittelkreis'];
 
 /** Grundform auf Einheitsfläche, im Ursprung zentriert. */
 function baseShape(id) {
@@ -145,14 +171,47 @@ function trimmedVariant(shape, minDrop, maxDrop) {
   return null;
 }
 
+/**
+ * Dieselbe Figur, aber gestaucht oder gestreckt.
+ * Das Strecken allein ändert die Fläche nicht – deshalb wird anschließend auf
+ * die gewünschte, abweichende Fläche skaliert.
+ */
+function stretchedVariant(shape, targetArea, gapRange) {
+  const stretch = 1.12 + Math.random() * 0.16;
+  const factor = chance(0.5) ? stretch : 1 / stretch;
+  const distorted = shape.map(([x, y]) => [x * factor, y / factor]);
+  return center(withArea(distorted, targetArea * gapFactor(gapRange)));
+}
+
+/**
+ * Kreissegment mit leicht anderem Öffnungswinkel – die im Test beschriebene
+ * "andere Krümmung". Nur sinnvoll, wenn die Lösung selbst rund ist.
+ */
+function sectorVariant(portion, targetArea, gapRange) {
+  const shift = (0.05 + Math.random() * 0.08) * (chance(0.5) ? 1 : -1);
+  const changed = Math.min(0.97, Math.max(0.12, portion + shift));
+  return center(withArea(circleSector(changed), targetArea * gapFactor(gapRange)));
+}
+
+/** Öffnungsanteil einer runden Grundform. */
+const SECTOR_PORTION = {
+  viertelkreis: 0.25,
+  drittelkreis: 1 / 3,
+  halbkreis: 0.5,
+  dreiviertelkreis: 0.75,
+  kreis: 1,
+};
+
 /** Andere Grundform, bevorzugt aus derselben Familie. */
 function otherShape(targetId, usedIds) {
   const family = SHAPES[targetId].family;
-  const sameFamily = Object.keys(SHAPES).filter(
-    (id) => SHAPES[id].family === family && id !== targetId && !usedIds.has(id),
-  );
-  const others = Object.keys(SHAPES).filter((id) => id !== targetId && !usedIds.has(id));
-  const pool = sameFamily.length > 0 && chance(0.75) ? sameFamily : others;
+  // Trapez, Dreieck & Co. nur gelegentlich – im Test sind sie die Ausnahme.
+  const catalogue = chance(0.2)
+    ? [...SOLUTION_SHAPES, ...DISTRACTOR_ONLY_SHAPES]
+    : SOLUTION_SHAPES;
+  const available = catalogue.filter((id) => id !== targetId && !usedIds.has(id));
+  const sameFamily = available.filter((id) => SHAPES[id].family === family);
+  const pool = sameFamily.length > 0 && chance(0.75) ? sameFamily : available;
   return pool.length > 0 ? pick(pool) : null;
 }
 
@@ -165,32 +224,14 @@ function otherShape(targetId, usedIds) {
  * betrachten.
  */
 export const DIFFICULTY_SETUP = {
-  leicht: {
-    pieces: [2, 3],
-    areaGap: [0.12, 0.22],
-    shapes: ['dreieck', 'quadrat', 'rechteck', 'halbkreis', 'sechseck'],
-  },
-  mittel: {
-    pieces: [3, 4],
-    areaGap: [0.08, 0.15],
-    shapes: ['quadrat', 'rechteck', 'fuenfeck', 'sechseck', 'halbkreis', 'viertelkreis'],
-  },
-  schwer: {
-    pieces: [4, 5],
-    areaGap: [0.04, 0.09],
-    shapes: Object.keys(SHAPES),
-  },
-  medat: {
-    pieces: [4, 5],
-    areaGap: [0.04, 0.10],
-    shapes: Object.keys(SHAPES),
-  },
-  gemischt: {
-    pieces: [2, 5],
-    areaGap: [0.05, 0.18],
-    shapes: Object.keys(SHAPES),
-  },
+  leicht: { pieces: [2, 3], areaGap: [0.12, 0.22], noneRate: 0.10 },
+  mittel: { pieces: [3, 4], areaGap: [0.08, 0.15], noneRate: 0.15 },
+  schwer: { pieces: [4, 5], areaGap: [0.04, 0.09], noneRate: 0.20 },
+  medat: { pieces: [4, 5], areaGap: [0.04, 0.10], noneRate: 0.18 },
+  gemischt: { pieces: [2, 5], areaGap: [0.05, 0.18], noneRate: 0.15 },
 };
+
+export const NO_ANSWER_LABEL = 'Keine der Antwortmöglichkeiten ist richtig';
 
 /** Kleinste zulässige Flächenabweichung – darunter wäre der Beweis wacklig. */
 export const MIN_AREA_GAP = 0.03;
@@ -207,26 +248,39 @@ function gapFactor([min, max]) {
 export function generateFigureTask(options = {}) {
   const setup = DIFFICULTY_SETUP[options.difficulty] ?? DIFFICULTY_SETUP.medat;
   const pieceCount = options.pieceCount ?? randInt(setup.pieces[0], setup.pieces[1]);
+  const noneCorrect = options.forceNone ?? chance(setup.noneRate);
 
   for (let attempt = 0; attempt < 40; attempt += 1) {
-    const targetId = pick(setup.shapes);
+    const targetId = pick(SOLUTION_SHAPES);
     const target = baseShape(targetId);
     const placements = dissect(target, pieceCount);
     if (!placements) continue;
 
     const pieceArea = placements.reduce((sum, piece) => sum + polygonArea(piece), 0);
 
-    // Vier Distraktoren: teils abgewandelte Zielfigur, teils andere Grundform.
+    // Ist e) die Lösung, werden vier Distraktoren gebraucht, sonst drei.
+    const needed = noneCorrect ? 4 : 3;
     const distractors = [];
     const usedIds = new Set([targetId]);
+    const portion = SECTOR_PORTION[targetId];
     let guard = 0;
-    while (distractors.length < 4 && guard < 60) {
+
+    while (distractors.length < needed && guard < 80) {
       guard += 1;
-      const wantTrim = distractors.length < 2 ? chance(0.6) : chance(0.35);
+      // Vier Sorten Distraktor, wie im Test beschrieben: andere Eckenzahl bzw.
+      // anderes Kreissegment, abgeschnittene Ecke, andere Proportionen und –
+      // bei runden Lösungen – eine leicht andere Krümmung.
+      const kinds = ['andereForm', 'andereForm', 'gestutzt', 'proportion'];
+      if (portion) kinds.push('kruemmung');
+      const kind = pick(kinds);
 
       let candidate = null;
-      if (wantTrim) {
+      if (kind === 'gestutzt') {
         candidate = trimmedVariant(target, setup.areaGap[0], setup.areaGap[1]);
+      } else if (kind === 'proportion') {
+        candidate = stretchedVariant(target, pieceArea, setup.areaGap);
+      } else if (kind === 'kruemmung') {
+        candidate = sectorVariant(portion, pieceArea, setup.areaGap);
       } else {
         const id = otherShape(targetId, usedIds);
         if (id) {
@@ -241,18 +295,21 @@ export function generateFigureTask(options = {}) {
       if (relativeGap < MIN_AREA_GAP) continue;
       distractors.push(candidate);
     }
-    if (distractors.length < 4) continue;
+    if (distractors.length < needed) continue;
 
-    const letters = ['a', 'b', 'c', 'd', 'e'];
-    const shuffled = shuffle([
-      { points: target, correct: true },
-      ...distractors.map((points) => ({ points, correct: false })),
-    ]);
-    const answerOptions = shuffled.map((option, index) => ({
+    const letters = ['a', 'b', 'c', 'd'];
+    const figures = shuffle(
+      noneCorrect
+        ? distractors.map((points) => ({ points, correct: false }))
+        : [{ points: target, correct: true }, ...distractors.map((points) => ({ points, correct: false }))],
+    );
+    const answerOptions = figures.map((figure, index) => ({
       letter: letters[index],
-      points: option.points,
-      correct: option.correct,
+      points: figure.points,
+      correct: figure.correct,
     }));
+    // e) ist immer die Textoption – sie zeigt nie eine Figur.
+    answerOptions.push({ letter: 'e', text: NO_ANSWER_LABEL, correct: noneCorrect });
 
     return {
       type: 'figures',
@@ -265,6 +322,8 @@ export function generateFigureTask(options = {}) {
       placements,
       target,
       pieceArea,
+      /** true, wenn die gesuchte Figur bewusst nicht unter a–d steht. */
+      noneCorrect,
       options: answerOptions,
       correctLetter: answerOptions.find((option) => option.correct).letter,
     };
@@ -274,6 +333,14 @@ export function generateFigureTask(options = {}) {
 
 /** Aufgabensatz für einen kompletten Durchgang. */
 export function generateFigureSet(count, difficulty = 'medat', options = {}) {
+  const setup = DIFFICULTY_SETUP[difficulty] ?? DIFFICULTY_SETUP.medat;
+  // Anteil der Aufgaben, bei denen e) stimmt, über den Durchgang festlegen –
+  // sonst schwankt er von Durchgang zu Durchgang zu stark.
+  const noneFlags = shuffle([
+    ...Array.from({ length: Math.round(count * setup.noneRate) }, () => true),
+    ...Array.from({ length: count - Math.round(count * setup.noneRate) }, () => false),
+  ]);
+
   const tasks = [];
   let lastShape = null;
   let guard = 0;
@@ -281,6 +348,7 @@ export function generateFigureSet(count, difficulty = 'medat', options = {}) {
     guard += 1;
     const task = generateFigureTask({
       difficulty,
+      forceNone: noneFlags[tasks.length],
       pieceCount: options.pieceCounts?.length ? Number(pick(options.pieceCounts)) : undefined,
     });
     if (!task) continue;

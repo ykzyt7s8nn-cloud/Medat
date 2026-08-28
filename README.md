@@ -15,7 +15,7 @@ Alle fünf KFF-Untertests des MedAT:
 
 | Untertest | Aufgaben | Zeit | Besonderheit |
 |---|---|---|---|
-| Figuren zusammensetzen | 15 | 15 min | Halb-/Viertelkreise und Vielecke aus Teilstücken erkennen |
+| Figuren zusammensetzen | 15 | 15 min | Vielecke und Kreissegmente aus Teilstücken erkennen; e) = „keine ist richtig“ |
 | Gedächtnis & Merkfähigkeit | 8 Ausweise + 25 Fragen | 8 min lernen, 15 min prüfen | Pause dazwischen einstellbar (2/5/10/20/40 min) |
 | Zahlenfolgen | 10 | 15 min | 7 Zahlen sichtbar, 2 gesucht; 7 Stufen, optional adaptiv |
 | Wortflüssigkeit | 15 | 20 min | Buchstabensalat, Anfangsbuchstabe gesucht |
@@ -57,7 +57,7 @@ npm install
 npm run dev        # Entwicklungsserver
 npm run build      # Icons + Produktionsbuild nach dist/ + Precache-Liste
 npm run preview    # Produktionsbuild lokal ansehen
-npm run selftest   # Daten- und Engine-Prüfungen (80 Checks)
+npm run selftest   # Daten- und Engine-Prüfungen (84 Checks)
 npm run icons      # PWA-Icons neu generieren
 ```
 
@@ -166,18 +166,25 @@ In ~20 % der Aufgaben ist e) „Keine Antwort ist richtig“ korrekt.
 Tatsache eindeutig ist (z. B. wird nach einem Allergen nur gefragt, wenn genau
 eine Person es hat). In ~15 % der Fragen ist e) korrekt.
 
-**Figuren zusammensetzen** – Grundformen wie im Testbild: Halb-, Drittel- und
-Viertelkreise, Fünf- bis Achtecke, Dreieck, Quadrat, Rechteck. Runde Ränder sind
-mit 96 Segmenten pro Vollkreis angenähert; alle Formen sind konvex, weshalb jede
-Schnittgerade sie in genau zwei gültige Teile zerlegt. Die Zerlegung schneidet
-immer das größte Teil, damit keine Splitter entstehen und die Teile sich in der
-Größe ähneln.
+**Figuren zusammensetzen** – Antwortaufbau wie im Test: a bis d zeigen Figuren,
+e lautet immer „Keine der Antwortmöglichkeiten ist richtig“ und trifft in etwa
+jeder fünften Aufgabe tatsächlich zu.
 
-Die vier Distraktoren sind entweder eine andere Grundform oder die Zielfigur mit
-abgeschnittener Ecke. Für jeden ist beweisbar, dass er sich nicht legen lässt:
-Seine Fläche weicht von der Summe der Teilflächen ab, und eine Fläche, die nicht
-passt, lässt sich in keiner Anordnung lückenlos auslegen. Der Unterschied liegt
-bei 4–10 % und ist mit dem Auge nicht messbar – gelöst wird über die Form.
+Als Lösung kommen nur die beiden Kategorien des Tests vor: regelmäßige Vielecke
+(Fünf- bis Achteck) und Kreissegmente (Viertel-, Halb-, Dreiviertel-,
+Vollkreis). Trapez, Dreieck, Quadrat und Rechteck treten ausschließlich als
+Distraktor auf. Runde Ränder sind mit 96 Segmenten pro Vollkreis angenähert;
+alle Formen sind konvex, weshalb jede Schnittgerade sie in genau zwei gültige
+Teile zerlegt. Die Zerlegung schneidet immer das größte Teil, damit keine
+Splitter entstehen.
+
+Die Distraktoren bilden die vier im Test üblichen Sorten ab: andere Eckenzahl
+bzw. anderes Kreissegment, abgeschnittene Ecke, andere Proportionen und – bei
+runden Lösungen – eine leicht andere Krümmung. Für jeden ist beweisbar, dass er
+sich nicht legen lässt: Seine Fläche weicht von der Summe der Teilflächen ab,
+und eine Fläche, die nicht passt, lässt sich in keiner Anordnung lückenlos
+auslegen. Der Unterschied liegt bei 4–10 % und ist mit dem Auge nicht messbar –
+gelöst wird über die Form.
 
 Teilstücke und Antwortfiguren werden mit demselben Faktor gezeichnet. Ohne das
 liesse sich die Aufgabe über die Größe statt über die Form entscheiden.

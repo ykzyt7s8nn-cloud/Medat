@@ -5,8 +5,10 @@
  * sich genau eine der fünf Figuren lückenlos zusammensetzen. Die Teile dürfen
  * gedreht, aber nicht gespiegelt werden.
  *
- * Die Formen entsprechen dem Testbild: Halb-, Drittel- und Viertelkreise sowie
- * Fünf- bis Achtecke, dazu Dreieck, Quadrat und Rechteck.
+ * Aufbau wie im Test: a bis d zeigen Figuren, e lautet immer "Keine der
+ * Antwortmöglichkeiten ist richtig" – und stimmt in etwa jeder fünften Aufgabe.
+ * Als Lösung kommen nur regelmäßige Vielecke (Fünf- bis Achteck) und
+ * Kreissegmente (Viertel-, Halb-, Dreiviertelkreis, Kreis) vor.
  *
  * Nach einer Antwort zeigt der Übungsmodus die Auflösung: die richtige Figur
  * mit farbig eingezeichneten Teilen – daran sieht man, wo man falsch gedacht
@@ -17,6 +19,7 @@ import Screen from '../../components/layout/Screen.jsx';
 import Button from '../../components/ui/Button.jsx';
 import Icon from '../../components/ui/Icon.jsx';
 import Tappable from '../../components/ui/Tappable.jsx';
+import AnswerOption from '../../components/ui/AnswerOption.jsx';
 import TimerBar from '../../components/ui/TimerBar.jsx';
 import ExamNavigator from '../../components/ExamNavigator.jsx';
 import FigureShape, {
@@ -100,8 +103,10 @@ export default function FiguresTest({ embedded = false, onFinish, focusTags = nu
         number: i + 1,
         correct: given === item.correctLetter,
         prompt: `${item.shapeLabel} aus ${item.pieceCount} Teilstücken`,
-        correctText: `Figur ${item.correctLetter.toUpperCase()}`,
-        givenText: given ? `Figur ${given.toUpperCase()}` : 'keine Antwort',
+        correctText: item.noneCorrect
+          ? 'e) Keine der Antwortmöglichkeiten ist richtig'
+          : `Figur ${item.correctLetter.toUpperCase()}`,
+        givenText: given ? (given === 'e' ? 'e) Keine ist richtig' : `Figur ${given.toUpperCase()}`) : 'keine Antwort',
         pieceCount: item.pieceCount,
         seconds: timings[i] ?? 0,
         task: item,
@@ -154,8 +159,10 @@ export default function FiguresTest({ embedded = false, onFinish, focusTags = nu
         number: index + 1,
         correct: option.correct,
         prompt: `${task.shapeLabel} aus ${task.pieceCount} Teilstücken`,
-        correctText: `Figur ${task.correctLetter.toUpperCase()}`,
-        givenText: `Figur ${option.letter.toUpperCase()}`,
+        correctText: task.noneCorrect
+          ? 'e) Keine der Antwortmöglichkeiten ist richtig'
+          : `Figur ${task.correctLetter.toUpperCase()}`,
+        givenText: option.letter === 'e' ? 'e) Keine ist richtig' : `Figur ${option.letter.toUpperCase()}`,
         pieceCount: task.pieceCount,
         seconds: secondsSince(taskStartedAt.current),
         task,
@@ -181,10 +188,10 @@ export default function FiguresTest({ embedded = false, onFinish, focusTags = nu
           difficultyLabel={DIFFICULTIES.find((d) => d.id === difficulty)?.label}
           facts={[
             '15 Aufgaben in 15 Minuten',
-            'Aus allen Teilstücken entsteht genau eine der fünf Figuren',
-            'Halb- und Viertelkreise, Fünf- bis Achtecke – wie im echten Test',
+            'a bis d zeigen Figuren, e lautet „Keine der Antwortmöglichkeiten ist richtig“',
+            'In etwa jeder fünften Aufgabe ist die gesuchte Figur nicht dabei',
+            'Lösungsfiguren: Fünf- bis Achteck und Viertel-/Halb-/Dreiviertel-/Vollkreis',
             'Die Teile dürfen gedreht, aber nicht gespiegelt werden',
-            'Kein Teil bleibt übrig, keine Lücke bleibt offen',
           ]}
           onStart={start}
         />
@@ -205,7 +212,11 @@ export default function FiguresTest({ embedded = false, onFinish, focusTags = nu
           limitSeconds={TEST.testSeconds}
           renderReview={(item) => (
             <div className="space-y-2">
-              <p className="text-[13px] text-black/55 dark:text-white/55">So liegen die Teile:</p>
+              <p className="text-[13px] text-black/55 dark:text-white/55">
+                {item.task.noneCorrect
+                  ? `Aus den Teilen entsteht ein ${item.task.shapeLabel} – der stand nicht zur Auswahl:`
+                  : 'So liegen die Teile:'}
+              </p>
               <div className="flex justify-center">
                 <SolutionShape
                   placements={item.task.placements}
@@ -228,7 +239,8 @@ export default function FiguresTest({ embedded = false, onFinish, focusTags = nu
   const chosenLetter = examMode ? exam.answers[index] : selected;
   const revealed = !examMode && Boolean(selected);
   // Ein Maßstab für Teilstücke und alle fünf Antwortfiguren
-  const extent = viewExtent([...task.options.map((option) => option.points), task.target, ...task.pieces]);
+  const figureOptions = task.options.filter((option) => option.points);
+  const extent = viewExtent([...figureOptions.map((option) => option.points), task.target, ...task.pieces]);
   const optionSize = 128;
   const scaleFactor = pixelsPerUnit(optionSize, extent);
 
@@ -292,7 +304,7 @@ export default function FiguresTest({ embedded = false, onFinish, focusTags = nu
         </h2>
 
         <div className="grid grid-cols-2 gap-2">
-          {task.options.map((option) => {
+          {figureOptions.map((option) => {
             const state = !revealed
               ? 'idle'
               : option.correct
@@ -344,12 +356,42 @@ export default function FiguresTest({ embedded = false, onFinish, focusTags = nu
           })}
         </div>
 
+        {(() => {
+          const noneOption = task.options[task.options.length - 1];
+          const state = !revealed
+            ? 'idle'
+            : noneOption.correct
+              ? 'correct'
+              : noneOption.letter === selected
+                ? 'wrong'
+                : 'idle';
+          return (
+            <AnswerOption
+              letter={noneOption.letter}
+              state={state}
+              selected={noneOption.letter === chosenLetter}
+              disabled={revealed}
+              onClick={() => answer(noneOption)}
+            >
+              {noneOption.text}
+            </AnswerOption>
+          );
+        })()}
+
         {revealed && (
           <section className="ios-card animate-slide-up space-y-2 px-4 py-4">
             <h3 className="text-[15px] font-semibold">
-              {results[results.length - 1]?.correct ? 'Richtig' : `Richtig wäre Figur ${task.correctLetter.toUpperCase()}`}
+              {results[results.length - 1]?.correct
+                ? 'Richtig'
+                : task.noneCorrect
+                  ? 'Richtig wäre e) – die Figur war nicht dabei'
+                  : `Richtig wäre Figur ${task.correctLetter.toUpperCase()}`}
             </h3>
-            <p className="text-[13px] text-black/55 dark:text-white/55">So liegen die Teile in der Figur:</p>
+            <p className="text-[13px] text-black/55 dark:text-white/55">
+              {task.noneCorrect
+                ? `Aus den Teilen entsteht ein ${task.shapeLabel} – keine der gezeigten Figuren:`
+                : 'So liegen die Teile in der Figur:'}
+            </p>
             <div className="flex justify-center pt-1">
               <SolutionShape
                 placements={task.placements}

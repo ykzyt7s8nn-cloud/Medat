@@ -11,10 +11,11 @@ import { formatTime } from '../hooks/useCountdown.js';
 
 const DETAILS = {
   figures: [
-    '15 Aufgaben in 15 Minuten. Aus allen gezeigten Teilstücken lässt sich genau eine der fünf Figuren lückenlos zusammensetzen.',
-    'Die Teile dürfen gedreht, aber nicht gespiegelt werden. Es bleibt kein Teil übrig und keine Lücke offen.',
-    'Die Formen entsprechen dem Testbild: Halb-, Drittel- und Viertelkreise sowie Fünf- bis Achtecke, dazu Dreieck, Quadrat und Rechteck.',
-    'Teilstücke und Antwortfiguren sind im selben Maßstab gezeichnet – Größen lassen sich direkt vergleichen.',
+    '15 Aufgaben in 15 Minuten. Die Antworten a bis d zeigen Figuren, e lautet immer „Keine der Antwortmöglichkeiten ist richtig“.',
+    'In etwa jeder fünften Aufgabe ist e) tatsächlich die Lösung – die gesuchte Figur steht dann gar nicht zur Auswahl.',
+    'Als Lösung kommen nur zwei Kategorien vor: regelmäßige Vielecke (Fünf- bis Achteck) und Kreissegmente (Viertel-, Halb-, Dreiviertel-, Vollkreis). Trapez, Dreieck und Quadrat tauchen nur als Distraktor auf.',
+    'Die falschen Figuren unterscheiden sich in der Eckenzahl, in den Proportionen oder in der Krümmung – oft nur geringfügig.',
+    'Die Teile dürfen gedreht, aber nicht gespiegelt werden. Teilstücke und Antwortfiguren sind im selben Maßstab gezeichnet.',
   ],
   memory: [
     '8 Allergieausweise mit je 8 Feldern: Foto, Name, Geburtsdatum (TT.MM.), Blutgruppe, Medikamenteneinnahme, Allergien, Blutdruck, Brille.',

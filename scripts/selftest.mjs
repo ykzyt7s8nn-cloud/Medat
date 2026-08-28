@@ -40,8 +40,11 @@ import {
 import { generateMemorySession } from '../src/engines/memory.js';
 import {
   DIFFICULTY_SETUP,
+  DISTRACTOR_ONLY_SHAPES,
   MIN_AREA_GAP,
+  NO_ANSWER_LABEL,
   SHAPES,
+  SOLUTION_SHAPES,
   dissect,
   generateFigureSet,
   generateFigureTask,
@@ -375,20 +378,29 @@ function centeredUnitShape(id) {
 let figureIssues = 0;
 let figureFailures = 0;
 let smallestGap = 1;
+let noneCount = 0;
 const usedShapes = new Set();
-const FIGURE_SAMPLES = 300;
+const FIGURE_SAMPLES = 400;
 for (let i = 0; i < FIGURE_SAMPLES; i += 1) {
   const task = generateFigureTask({ difficulty: 'medat' });
   if (!task) { figureFailures += 1; continue; }
   usedShapes.add(task.shapeId);
+  if (task.correctLetter === 'e') noneCount += 1;
+
+  // Aufbau wie im Test: a–d zeigen Figuren, e ist immer die Textoption.
+  const figures = task.options.slice(0, 4);
+  if (task.options.length !== 5) figureIssues += 1;
+  if (!figures.every((option) => option.points && !option.text)) figureIssues += 1;
+  const last = task.options[4];
+  if (last.letter !== 'e' || last.text !== NO_ANSWER_LABEL || last.points) figureIssues += 1;
+  if (task.options.filter((option) => option.correct).length !== 1) figureIssues += 1;
 
   // Die Teile ergeben exakt die Zielfigur – die Aufgabe ist per Konstruktion lösbar.
   const pieceSum = task.placements.reduce((sum, piece) => sum + polygonArea(piece), 0);
   if (Math.abs(pieceSum - polygonArea(task.target)) > 1e-9) figureIssues += 1;
 
-  // Der Beweis für die Distraktoren: abweichende Fläche lässt sich nicht
-  // lückenlos auslegen, egal wie man die Teile anordnet.
-  for (const option of task.options) {
+  // Der Beweis für jede gezeigte Figur, die nicht die Lösung ist.
+  for (const option of figures) {
     const gap = Math.abs(polygonArea(option.points) - pieceSum) / pieceSum;
     if (option.correct) {
       if (gap > 1e-9) figureIssues += 1;
@@ -397,22 +409,31 @@ for (let i = 0; i < FIGURE_SAMPLES; i += 1) {
       smallestGap = Math.min(smallestGap, gap);
     }
   }
+  // Ist e) richtig, darf keine der gezeigten Figuren passen.
+  if (task.noneCorrect && figures.some((option) => option.correct)) figureIssues += 1;
 
-  if (task.options.length !== 5) figureIssues += 1;
-  if (task.options.filter((option) => option.correct).length !== 1) figureIssues += 1;
   if (task.pieces.length !== task.pieceCount) figureIssues += 1;
   // Keine Splitter: jedes Teil mindestens 8 % der Gesamtfläche
   if (task.placements.some((piece) => polygonArea(piece) < pieceSum * 0.08)) figureIssues += 1;
-  // Jedes Teil ist ein echtes Polygon
   if (task.pieces.some((piece) => piece.length < 3)) figureIssues += 1;
 }
-check(`${FIGURE_SAMPLES} Aufgaben: Teile ergeben exakt die Lösung, jeder Distraktor ist widerlegt`,
+check(`${FIGURE_SAMPLES} Aufgaben: Aufbau a–d Figuren, e Textoption, genau eine richtige Antwort`,
   figureIssues === 0, `${figureIssues} Abweichungen`);
 check('Alle Aufgaben konnten erzeugt werden', figureFailures === 0, `${figureFailures} Fehlversuche`);
 check(`Kleinster Flächenabstand der Distraktoren über ${Math.round(MIN_AREA_GAP * 100)} % (${(smallestGap * 100).toFixed(1)} %)`,
   smallestGap >= MIN_AREA_GAP);
-check(`Alle ${Object.keys(SHAPES).length} Grundformen kommen vor (${usedShapes.size})`,
-  usedShapes.size === Object.keys(SHAPES).length);
+
+const figureNoneRate = (noneCount / FIGURE_SAMPLES) * 100;
+check(`In 12–25 % der Aufgaben ist e) die Lösung (${figureNoneRate.toFixed(1)} %)`,
+  figureNoneRate >= 12 && figureNoneRate <= 25);
+
+check(`Alle ${SOLUTION_SHAPES.length} Lösungsfiguren kommen vor (${usedShapes.size})`,
+  usedShapes.size === SOLUTION_SHAPES.length);
+check('Nur Vielecke (5–8 Ecken) und Kreissegmente sind Lösung',
+  [...usedShapes].every((id) => SOLUTION_SHAPES.includes(id)),
+  [...usedShapes].filter((id) => !SOLUTION_SHAPES.includes(id)).join(', '));
+check('Trapez, Dreieck, Quadrat und Rechteck sind nie die Lösung',
+  DISTRACTOR_ONLY_SHAPES.every((id) => !usedShapes.has(id)));
 
 // Die Zerlegung muss für jede Grundform zuverlässig gelingen. Ein sehr
 // seltener Fehlversuch ist unkritisch – generateFigureTask erzeugt dann eine
@@ -433,7 +454,7 @@ for (const [level, setup] of Object.entries(DIFFICULTY_SETUP)) {
   const tasks = Array.from({ length: 15 }, () => generateFigureTask({ difficulty: level })).filter(Boolean);
   const inRange = tasks.every((task) =>
     task.pieceCount >= setup.pieces[0] && task.pieceCount <= setup.pieces[1]
-    && setup.shapes.includes(task.shapeId));
+    && SOLUTION_SHAPES.includes(task.shapeId));
   check(`Schwierigkeit "${level}" hält Teilezahl und Formenauswahl ein`, tasks.length === 15 && inRange);
 }
 
@@ -443,6 +464,8 @@ const figureSet = generateFigureSet(TESTS.figures.questionCount, 'medat');
 check('Aufgabensatz hat 15 Aufgaben ohne direkte Formwiederholung',
   figureSet.length === 15
   && figureSet.every((task, i) => i === 0 || task.shapeId !== figureSet[i - 1].shapeId));
+const setNone = figureSet.filter((task) => task.correctLetter === 'e').length;
+check(`Im Durchgang sind 2–4 Aufgaben mit e) als Lösung (${setNone})`, setNone >= 2 && setNone <= 4);
 
 /* ---------------------------------------------------------- Konfiguration */
 section('Konfiguration (MedAT-Vorgaben)');
