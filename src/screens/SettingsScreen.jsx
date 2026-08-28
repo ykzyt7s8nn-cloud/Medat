@@ -4,6 +4,7 @@
  * Alle Werte landen über store/useSettings.js direkt im localStorage.
  */
 import { useState } from 'react';
+import BackupSection from '../components/BackupSection.jsx';
 import Screen from '../components/layout/Screen.jsx';
 import Button from '../components/ui/Button.jsx';
 import Icon from '../components/ui/Icon.jsx';
@@ -112,6 +113,10 @@ export default function SettingsScreen() {
             </span>
             <Toggle checked={settings.haptics} onChange={() => settings.toggle('haptics')} label="Haptisches Feedback" />
           </div>
+        </Section>
+
+        <Section title="Datensicherung">
+          <BackupSection />
         </Section>
 
         <Section title="Daten">
