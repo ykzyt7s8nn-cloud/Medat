@@ -7,6 +7,17 @@
  */
 
 export const TESTS = {
+  figures: {
+    id: 'figures',
+    name: 'Figuren zusammensetzen',
+    short: 'Figuren',
+    tagline: 'Teilstücke zu einer Figur zusammensetzen',
+    icon: 'shapes',
+    accent: '#5856D6',
+    questionCount: 15,
+    optionCount: 5,
+    testSeconds: 15 * 60,
+  },
   memory: {
     id: 'memory',
     name: 'Gedächtnis & Merkfähigkeit',
@@ -59,15 +70,14 @@ export const TESTS = {
 };
 
 /** Reihenfolge auf dem Startbildschirm. */
-export const TEST_ORDER = ['memory', 'numberSeries', 'wordFluency', 'implications'];
+export const TEST_ORDER = ['figures', 'memory', 'numberSeries', 'wordFluency', 'implications'];
 
-/**
- * Ablauf der MedAT-Simulation in der echten Testreihenfolge.
- * "Figuren zusammensetzen" ist nicht Teil dieser App und wird nur als Hinweis
- * eingeblendet.
- */
+/** Zeitlimit von "Figuren zusammensetzen" – vor der Liste gebraucht. */
+const TESTS_SECONDS_FIGURES = TESTS.figures.testSeconds;
+
+/** Ablauf der MedAT-Simulation in der echten Testreihenfolge. */
 export const SIMULATION_STEPS = [
-  { kind: 'notice', id: 'figures', title: 'Figuren zusammensetzen', seconds: 15 * 60 },
+  { kind: 'test', id: 'figures', title: 'Figuren zusammensetzen', seconds: TESTS_SECONDS_FIGURES },
   { kind: 'memoryLearn', id: 'memoryLearn', title: 'Gedächtnis – Lernphase', seconds: TESTS.memory.learnSeconds },
   { kind: 'test', id: 'numberSeries', title: 'Zahlenfolgen', seconds: TESTS.numberSeries.testSeconds },
   { kind: 'test', id: 'wordFluency', title: 'Wortflüssigkeit', seconds: TESTS.wordFluency.testSeconds },

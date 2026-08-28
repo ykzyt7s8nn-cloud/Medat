@@ -38,6 +38,14 @@ import {
   wordPool,
 } from '../src/engines/wordFluency.js';
 import { generateMemorySession } from '../src/engines/memory.js';
+import {
+  DIFFICULTY_SETUP,
+  canAssemble,
+  generateFigureSet,
+  generateFigureTask,
+  hasHole,
+  shapeId,
+} from '../src/engines/figures.js';
 
 let failures = 0;
 let checks = 0;
@@ -339,6 +347,52 @@ check(`${MEMORY_SESSIONS} Durchgänge mit je 8 Ausweisen und 25 eindeutigen Frag
 const memoryNoneRate = (memoryNone / memoryQuestions) * 100;
 check(`Anteil "Keine Antwort ist richtig" liegt bei ~15 % (${memoryNoneRate.toFixed(1)} %)`, memoryNoneRate >= 10 && memoryNoneRate <= 20);
 
+/* -------------------------------------------------- Figuren zusammensetzen */
+section('Figuren zusammensetzen');
+
+let figureIssues = 0;
+let figureFailures = 0;
+const FIGURE_SAMPLES = 200;
+for (let i = 0; i < FIGURE_SAMPLES; i += 1) {
+  const task = generateFigureTask({ difficulty: 'medat' });
+  if (!task) { figureFailures += 1; continue; }
+
+  // Genau eine Antwortfigur darf sich aus den Teilen legen lassen.
+  const solvable = task.options.filter((option) => canAssemble(option.cells, task.solutionPieces));
+  if (solvable.length !== 1 || !solvable[0].correct) figureIssues += 1;
+
+  if (task.options.length !== 5) figureIssues += 1;
+  // Gleich viele Felder in allen Antworten – sonst reicht Zählen.
+  if (new Set(task.options.map((option) => option.cells.length)).size !== 1) figureIssues += 1;
+  // Keine zwei deckungsgleichen Antwortfiguren.
+  if (new Set(task.options.map((option) => shapeId(option.cells))).size !== 5) figureIssues += 1;
+  // Keine Ringformen mit eingeschlossenem Loch.
+  if (task.options.some((option) => hasHole(option.cells))) figureIssues += 1;
+  if (task.pieces.some(hasHole)) figureIssues += 1;
+  // Teile: mindestens zwei Felder, zusammen genau die Zielfigur.
+  if (task.pieces.some((piece) => piece.length < 2)) figureIssues += 1;
+  if (task.pieces.reduce((sum, piece) => sum + piece.length, 0) !== task.cellCount) figureIssues += 1;
+  // Die Auflösungsgrafik muss die Zielfigur exakt überdecken.
+  const covered = task.placements.flat().map((cell) => cell.join(','));
+  const targetCells = task.target.map((cell) => cell.join(','));
+  if (new Set(covered).size !== targetCells.length) figureIssues += 1;
+  if (!targetCells.every((cell) => covered.includes(cell))) figureIssues += 1;
+}
+check(`${FIGURE_SAMPLES} Aufgaben haben genau eine lösbare Antwortfigur`, figureIssues === 0, `${figureIssues} Abweichungen`);
+check('Alle Aufgaben konnten erzeugt werden', figureFailures === 0, `${figureFailures} Fehlversuche`);
+
+for (const [level, setup] of Object.entries(DIFFICULTY_SETUP)) {
+  const tasks = Array.from({ length: 12 }, () => generateFigureTask({ difficulty: level })).filter(Boolean);
+  const inRange = tasks.every((task) =>
+    task.cellCount >= setup.cells[0] && task.cellCount <= setup.cells[1]
+    && task.pieceCount >= setup.pieces[0] && task.pieceCount <= setup.pieces[1]);
+  check(`Schwierigkeit "${level}" hält Feld- und Teilezahl ein`, tasks.length === 12 && inRange);
+}
+
+const figureSet = generateFigureSet(TESTS.figures.questionCount, 'medat');
+check('Aufgabensatz hat 15 verschiedene Zielfiguren',
+  figureSet.length === 15 && new Set(figureSet.map((task) => shapeId(task.target))).size === 15);
+
 /* ---------------------------------------------------------- Konfiguration */
 section('Konfiguration (MedAT-Vorgaben)');
 check('Gedächtnis: 8 Ausweise, 8 Min Lernphase, 25 Fragen, 15 Min',
@@ -351,6 +405,8 @@ check('Wortflüssigkeit: 15 Aufgaben, 20 Min',
   TESTS.wordFluency.questionCount === 15 && TESTS.wordFluency.testSeconds === 1200);
 check('Implikationen: 10 Aufgaben, 10 Min',
   TESTS.implications.questionCount === 10 && TESTS.implications.testSeconds === 600);
+check('Figuren zusammensetzen: 15 Aufgaben, 15 Min',
+  TESTS.figures.questionCount === 15 && TESTS.figures.testSeconds === 900);
 
 /* -------------------------------------------------------------- Ergebnis */
 process.stdout.write(`\n${failures === 0 ? 'Alle Prüfungen bestanden' : `${failures} Prüfung(en) fehlgeschlagen`} (${checks} Prüfungen)\n`);

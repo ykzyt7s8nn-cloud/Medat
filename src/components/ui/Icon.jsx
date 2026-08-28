@@ -23,6 +23,7 @@ const PATHS = {
   cards: 'M4 8a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8Zm4-4h9a3 3 0 0 1 3 3v9',
   target: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-5a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0-3.5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1Z',
   pause: 'M9 5v14M15 5v14',
+  shapes: 'M4 4h7v7H4V4Zm9 9h7v7h-7v-7Zm-9 3h7v4H4v-4Zm9-12h7v5h-7V4Z',
 };
 
 export function Icon({ name, className = 'h-6 w-6', strokeWidth = 1.8, ...rest }) {

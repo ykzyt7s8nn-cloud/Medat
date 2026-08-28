@@ -1,9 +1,8 @@
 /**
  * MedAT-Simulation.
  *
- * Durchläuft die vier enthaltenen Untertests in der echten Testreihenfolge und
- * mit den Originalzeiten. "Figuren zusammensetzen" ist nicht Teil der App und
- * wird nur als Zeitblock mit Hinweis dargestellt.
+ * Durchläuft alle fünf KFF-Untertests in der echten Testreihenfolge und mit den
+ * Originalzeiten.
  *
  * Besonderheit: Die Lernphase des Gedächtnistests liegt am Anfang, die
  * zugehörige Prüfphase erst drei Untertests später – genau wie im MedAT. Die
@@ -16,16 +15,18 @@ import Icon from '../components/ui/Icon.jsx';
 import ProgressRing from '../components/ui/ProgressRing.jsx';
 import { SIMULATION_STEPS, TESTS } from '../data/testConfig.js';
 import { generateMemorySession } from '../engines/memory.js';
-import { formatTime, useCountdown } from '../hooks/useCountdown.js';
+import { formatTime } from '../hooks/useCountdown.js';
 import { useNavigation } from '../store/useNavigation.js';
 import { useProgress } from '../store/useProgress.js';
 
 const MemoryTest = lazy(() => import('./tests/MemoryTest.jsx'));
+const FiguresTest = lazy(() => import('./tests/FiguresTest.jsx'));
 const NumberSeriesTest = lazy(() => import('./tests/NumberSeriesTest.jsx'));
 const WordFluencyTest = lazy(() => import('./tests/WordFluencyTest.jsx'));
 const ImplicationsTest = lazy(() => import('./tests/ImplicationsTest.jsx'));
 
 const TEST_COMPONENTS = {
+  figures: FiguresTest,
   numberSeries: NumberSeriesTest,
   wordFluency: WordFluencyTest,
   implications: ImplicationsTest,
@@ -48,38 +49,6 @@ const PERCENTILE_BANDS = [
 ];
 
 const bandFor = (percent) => PERCENTILE_BANDS.find((band) => percent >= band.min) ?? PERCENTILE_BANDS[PERCENTILE_BANDS.length - 1];
-
-/* ------------------------------------------------------- Hinweis-Zeitblock */
-
-function NoticeStep({ step, onNext, onAbort }) {
-  const countdown = useCountdown(step.seconds, { onExpire: onNext });
-  return (
-    <Screen title="MedAT-Simulation" subtitle={step.title}>
-      <div className="flex flex-col items-center gap-5 py-8 text-center">
-        <ProgressRing value={countdown.remaining / step.seconds} size={168} strokeWidth={12} color="#8E8E93">
-          <span className="tabular text-[32px] font-bold">{formatTime(countdown.remaining)}</span>
-        </ProgressRing>
-        <div className="px-6">
-          <h2 className="text-[19px] font-bold">{step.title}</h2>
-          <p className="mt-2 text-[15px] text-black/60 dark:text-white/60">
-            Dieser Untertest ist in dieser App nicht enthalten. Im echten MedAT stehen dafür
-            {' '}{formatTime(step.seconds)} zur Verfügung – der Block bleibt hier nur der Vollständigkeit
-            halber erhalten.
-          </p>
-        </div>
-        <div className="w-full space-y-2 px-2">
-          <Button size="lg" onClick={onNext}>
-            Block überspringen
-            <Icon name="chevronRight" className="h-5 w-5" />
-          </Button>
-          <Button size="lg" variant="neutral" onClick={onAbort}>
-            Simulation abbrechen
-          </Button>
-        </div>
-      </div>
-    </Screen>
-  );
-}
 
 /* ------------------------------------------------------------- Auswertung */
 
@@ -117,7 +86,7 @@ function SimulationResult({ results, onClose, onRestart }) {
           <p className="mt-1 text-[14px] text-black/60 dark:text-white/60">{band.hint}</p>
           <p className="mt-3 text-[12px] leading-relaxed text-black/45 dark:text-white/45">
             Nur eine grobe Orientierung: Der echte Prozentrang hängt vom jeweiligen Jahrgang ab und
-            berücksichtigt zusätzlich den Untertest „Figuren zusammensetzen“.
+            davon, wie die Untertests im Auswertungsschlüssel gewichtet werden.
           </p>
         </section>
 
@@ -248,10 +217,6 @@ export default function SimulationScreen() {
   }
 
   const step = SIMULATION_STEPS[stepIndex];
-
-  if (step.kind === 'notice') {
-    return <NoticeStep step={step} onNext={advance} onAbort={closeScreen} />;
-  }
 
   if (step.kind === 'memoryLearn') {
     return (

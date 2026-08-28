@@ -10,6 +10,11 @@ import { TESTS, TEST_ORDER } from '../data/testConfig.js';
 import { formatTime } from '../hooks/useCountdown.js';
 
 const DETAILS = {
+  figures: [
+    '15 Aufgaben in 15 Minuten. Aus allen gezeigten Teilstücken lässt sich genau eine der fünf Figuren lückenlos zusammensetzen.',
+    'Die Teile dürfen gedreht, aber nicht gespiegelt werden. Es bleibt kein Teil übrig und keine Lücke offen.',
+    'Alle fünf Antwortfiguren haben gleich viele Felder – Zählen allein führt nicht zur Lösung.',
+  ],
   memory: [
     '8 Allergieausweise mit je 8 Feldern: Foto, Name, Geburtsdatum (TT.MM.), Blutgruppe, Medikamenteneinnahme, Allergien, Blutdruck, Brille.',
     'Lernphase 8 Minuten, danach folgen im echten Test andere Untertests, erst danach die 25 Fragen in 15 Minuten.',
@@ -37,9 +42,8 @@ export default function InfoScreen() {
         <section className="ios-card px-4 py-4">
           <h2 className="text-[17px] font-bold">Kognitive Fähigkeiten und Fertigkeiten</h2>
           <p className="mt-1.5 text-[14px] leading-relaxed text-black/65 dark:text-white/65">
-            Der KFF-Teil des MedAT besteht aus fünf Untertests. Diese App trainiert vier davon.
-            „Figuren zusammensetzen“ ist nicht enthalten, wird in der Simulation aber als Zeitblock
-            berücksichtigt, damit der Ablauf realistisch bleibt.
+            Der KFF-Teil des MedAT besteht aus fünf Untertests. Diese App trainiert alle fünf – in
+            der Simulation laufen sie in der echten Reihenfolge mit den Originalzeiten ab.
           </p>
         </section>
 

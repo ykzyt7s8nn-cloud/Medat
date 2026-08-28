@@ -11,17 +11,44 @@ aber auch auf iPad und Desktop.
 
 ## Enthaltene Untertests
 
+Alle fünf KFF-Untertests des MedAT:
+
 | Untertest | Aufgaben | Zeit | Besonderheit |
 |---|---|---|---|
+| Figuren zusammensetzen | 15 | 15 min | Teilstücke zu einer von fünf Figuren zusammensetzen |
 | Gedächtnis & Merkfähigkeit | 8 Ausweise + 25 Fragen | 8 min lernen, 15 min prüfen | Pause dazwischen einstellbar (2/5/10/20/40 min) |
-| Zahlenfolgen | 10 | 15 min | 7 Zahlen sichtbar, 2 gesucht; 7 Schwierigkeitslevel, optional adaptiv |
+| Zahlenfolgen | 10 | 15 min | 7 Zahlen sichtbar, 2 gesucht; 7 Stufen, optional adaptiv |
 | Wortflüssigkeit | 15 | 20 min | Buchstabensalat, Anfangsbuchstabe gesucht |
 | Implikationen erkennen | 10 | 10 min | Syllogismen mit Venn-Diagramm-Auflösung |
 
-Dazu ein **Simulationsmodus**, der alle Untertests in der echten MedAT-Reihenfolge
-mit Originalzeiten durchläuft (inklusive Platzhalter-Block für „Figuren
-zusammensetzen“, das nicht Teil dieser App ist) und am Ende einen geschätzten
+Dazu ein **Simulationsmodus**, der alle fünf Untertests in der echten
+MedAT-Reihenfolge mit Originalzeiten durchläuft und am Ende einen geschätzten
 KFF-Prozentrang ausgibt.
+
+## Lernfunktionen
+
+**Schwachstellen-Training** – Für jede Aufgabe wird die Kategorie mitgeschrieben:
+bei Zahlenfolgen die Regelfamilie, beim Gedächtnistest der Fragetyp, bei den
+Implikationen die Figur, bei der Wortflüssigkeit die Wortlänge, bei den Figuren
+die Anzahl der Teilstücke. Der gleichnamige Screen zeigt Trefferquote und
+Zeitbedarf je Kategorie und startet auf Wunsch einen Durchgang, der nur die
+schwachen Kategorien zieht.
+
+**Übungs- und Prüfungsmodus** – Im Übungsmodus wird nach jeder Aufgabe
+aufgelöst. Im Prüfungsmodus gibt es keine Auflösung, dafür Überspringen,
+Markieren zum Wiederkommen, eine Aufgabenübersicht und Abgabe am Ende – so wie
+im echten Test, wo die Zeiteinteilung mit über das Ergebnis entscheidet.
+
+**Tempo-Auswertung** – Jede Aufgabe wird auf eine Zehntelsekunde genau gemessen.
+Das Ergebnis rechnet hoch, ob das Tempo für das Zeitlimit reicht, und benennt
+Ausreißer.
+
+**Rechenweg statt Ergebnis** – Bei falsch gelösten Zahlenfolgen erscheint die
+Differenzen- bzw. Quotientenreihe, bei den Figuren die Zielfigur mit farbig
+eingezeichneten Teilstücken, bei den Implikationen das Venn-Diagramm.
+
+**Datensicherung** – Fortschritt und Einstellungen lassen sich als JSON-Datei
+sichern und wieder einspielen (Einstellungen → Datensicherung).
 
 ## Befehle
 
@@ -30,14 +57,15 @@ npm install
 npm run dev        # Entwicklungsserver
 npm run build      # Icons + Produktionsbuild nach dist/ + Precache-Liste
 npm run preview    # Produktionsbuild lokal ansehen
-npm run selftest   # Daten- und Engine-Prüfungen (66 Checks)
+npm run selftest   # Daten- und Engine-Prüfungen (75 Checks)
 npm run icons      # PWA-Icons neu generieren
 ```
 
 `npm run selftest` prüft unter anderem, ob die Syllogismus-Engine exakt die 24
 klassisch gültigen Modi liefert, ob jede erzeugte MC-Frage genau eine richtige
-Antwort hat, ob die Wortdatenbank anagramm-eindeutig bleibt und ob jede
-Zahlenfolgen-Stufe mehrere Regelfamilien mischt.
+Antwort hat, ob die Wortdatenbank anagramm-eindeutig bleibt, ob jede
+Zahlenfolgen-Stufe mehrere Regelfamilien mischt und ob sich bei den Figuren
+genau eine der fünf Antwortfiguren aus den Teilstücken legen lässt.
 
 ## Projektstruktur
 
@@ -54,6 +82,7 @@ src/
     syllogismTerms.js  70 Begriffstripel
     testConfig.js      Zeitlimits, Aufgabenzahlen, Simulationsablauf
   engines/         Aufgabengenerierung, frei von React
+    figures.js         Polyomino-Zerlegung + Exact-Cover-Prüfung
     memory.js          Allergieausweise + 13 Fragetypen
     numberSeries.js    30 Generatoren in 7 Stufen und 7 Regelfamilien
     wordFluency.js     Buchstabensalat mit Shuffle-Garantie
@@ -136,6 +165,14 @@ In ~20 % der Aufgaben ist e) „Keine Antwort ist richtig“ korrekt.
 **Gedächtnis** – Jeder Fragetyp prüft vor der Erzeugung, ob die zugrunde liegende
 Tatsache eindeutig ist (z. B. wird nach einem Allergen nur gefragt, wenn genau
 eine Person es hat). In ~15 % der Fragen ist e) korrekt.
+
+**Figuren zusammensetzen** – Auf einem Raster wird eine zusammenhängende
+Zielfigur erzeugt und in Teilstücke zerlegt. Die vier Distraktoren haben
+dieselbe Feldzahl, damit blosses Zählen nicht zur Lösung führt; für jeden wird
+per Backtracking bewiesen, dass er sich aus den Teilstücken *nicht* legen lässt
+(Drehungen erlaubt, Spiegelungen nicht). Ohne diesen Beweis könnte zufällig eine
+zweite richtige Antwort entstehen. Formen mit eingeschlossenem Loch werden
+aussortiert – sie sehen unnatürlich aus und kommen im MedAT nicht vor.
 
 ## Veröffentlichen
 

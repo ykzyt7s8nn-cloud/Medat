@@ -15,6 +15,7 @@ const defaultSettings = {
   timers: Object.fromEntries(TEST_ORDER.map((id) => [id, true])),
   /** Schwierigkeitsstufe je Untertest. */
   difficulty: {
+    figures: 'medat',
     memory: 'medat',
     numberSeries: 'medat',
     wordFluency: 'medat',

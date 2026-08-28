@@ -14,6 +14,7 @@ import InfoScreen from './screens/InfoScreen.jsx';
 import { useNavigation } from './store/useNavigation.js';
 import { useTheme } from './hooks/useTheme.js';
 
+const FiguresTest = lazy(() => import('./screens/tests/FiguresTest.jsx'));
 const MemoryTest = lazy(() => import('./screens/tests/MemoryTest.jsx'));
 const NumberSeriesTest = lazy(() => import('./screens/tests/NumberSeriesTest.jsx'));
 const WordFluencyTest = lazy(() => import('./screens/tests/WordFluencyTest.jsx'));
@@ -22,6 +23,7 @@ const SimulationScreen = lazy(() => import('./screens/SimulationScreen.jsx'));
 const TrainingScreen = lazy(() => import('./screens/TrainingScreen.jsx'));
 
 const FULLSCREENS = {
+  figures: FiguresTest,
   memory: MemoryTest,
   numberSeries: NumberSeriesTest,
   wordFluency: WordFluencyTest,
