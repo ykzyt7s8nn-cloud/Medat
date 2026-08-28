@@ -4,7 +4,8 @@ import Icon from '../ui/Icon.jsx';
 import { useNavigation } from '../../store/useNavigation.js';
 
 const TABS = [
-  { id: 'practice', label: 'Üben', icon: 'play' },
+  { id: 'practice', label: 'KFF', icon: 'play' },
+  { id: 'bms', label: 'BMS', icon: 'book' },
   { id: 'stats', label: 'Statistik', icon: 'chart' },
   { id: 'settings', label: 'Einstellungen', icon: 'gear' },
   { id: 'info', label: 'Info', icon: 'info' },
@@ -33,7 +34,7 @@ export function TabBar() {
                 }`}
               >
                 <Icon name={item.icon} className="h-6 w-6" strokeWidth={active ? 2.1 : 1.7} />
-                <span className="text-[10px] font-medium">{item.label}</span>
+                <span className="text-[10px] font-medium leading-tight">{item.label}</span>
               </Tappable>
             </li>
           );

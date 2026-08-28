@@ -30,7 +30,7 @@ export function TimerBar({ remaining, total, enabled = true, progressLabel, acce
         )}
       </div>
       <div
-        className={`tabular text-[17px] font-bold ${critical ? 'animate-pulse' : ''}`}
+        className={`tabular font-bold ${enabled ? 'text-[17px]' : 'text-[12px] text-black/40 dark:text-white/40'} ${critical ? 'animate-pulse' : ''}`}
         style={{ color: enabled ? color : undefined }}
         role="timer"
         aria-live="off"

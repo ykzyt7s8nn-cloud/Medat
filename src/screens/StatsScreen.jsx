@@ -103,7 +103,7 @@ export default function StatsScreen() {
                 className="flex h-8 w-8 items-center justify-center rounded-lg"
                 style={{ backgroundColor: `${test.accent}1A`, color: test.accent }}
               >
-                <Icon name={test.icon} className="h-4.5 w-4.5" />
+                <Icon name={test.icon} className="h-[18px] w-[18px]" />
               </span>
               <h2 className="flex-1 text-[15px] font-semibold">{test.short}</h2>
               <span className="tabular text-[13px] text-black/50 dark:text-white/50">

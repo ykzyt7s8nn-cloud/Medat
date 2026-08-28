@@ -21,6 +21,10 @@ const WordFluencyTest = lazy(() => import('./screens/tests/WordFluencyTest.jsx')
 const ImplicationsTest = lazy(() => import('./screens/tests/ImplicationsTest.jsx'));
 const SimulationScreen = lazy(() => import('./screens/SimulationScreen.jsx'));
 const TrainingScreen = lazy(() => import('./screens/TrainingScreen.jsx'));
+const BmsScreen = lazy(() => import('./screens/bms/BmsScreen.jsx'));
+const BmsEntryScreen = lazy(() => import('./screens/bms/BmsEntryScreen.jsx'));
+const BmsQuizScreen = lazy(() => import('./screens/bms/BmsQuizScreen.jsx'));
+const BmsSimulationScreen = lazy(() => import('./screens/bms/BmsSimulationScreen.jsx'));
 
 const FULLSCREENS = {
   figures: FiguresTest,
@@ -30,10 +34,14 @@ const FULLSCREENS = {
   implications: ImplicationsTest,
   simulation: SimulationScreen,
   training: TrainingScreen,
+  bmsEntry: BmsEntryScreen,
+  bmsQuiz: BmsQuizScreen,
+  bmsSimulation: BmsSimulationScreen,
 };
 
 const TABS = {
   practice: HomeScreen,
+  bms: BmsScreen,
   stats: StatsScreen,
   settings: SettingsScreen,
   info: InfoScreen,
@@ -67,7 +75,9 @@ export default function App() {
       ) : (
         <>
           <div className="min-h-0 flex-1">
-            <TabComponent />
+            <Suspense fallback={<Loading />}>
+              <TabComponent />
+            </Suspense>
           </div>
           <TabBar />
         </>
