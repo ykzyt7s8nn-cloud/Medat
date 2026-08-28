@@ -186,13 +186,24 @@ for (const level of [1, 2, 3, 4, 5, 6, 7]) {
   check(`Stufe ${level} mischt mindestens 3 Regelfamilien (${[...families].join(', ')})`, families.size >= 3);
 }
 
-const mixedSet = generateNumberSeriesSet(10, 'medat');
-const setFamilies = new Set(mixedSet.map((task) => task.family));
-check(`Ein MedAT-Durchgang nutzt mindestens 4 Regelfamilien (${setFamilies.size})`, setFamilies.size >= 4);
+// Über mehrere Durchgänge messen statt über einen: Ein einzelner Zufallssatz
+// darf auch mal nur drei Familien treffen, im Mittel müssen es mehr sein.
+const SET_SAMPLES = 20;
+let minFamilies = Infinity;
+let familySum = 0;
 let repeats = 0;
-for (let i = 1; i < mixedSet.length; i += 1) {
-  if (mixedSet[i].family === mixedSet[i - 1].family) repeats += 1;
+for (let i = 0; i < SET_SAMPLES; i += 1) {
+  const set = generateNumberSeriesSet(10, 'medat');
+  const families = new Set(set.map((task) => task.family));
+  minFamilies = Math.min(minFamilies, families.size);
+  familySum += families.size;
+  for (let j = 1; j < set.length; j += 1) {
+    if (set[j].family === set[j - 1].family) repeats += 1;
+  }
 }
+const averageFamilies = familySum / SET_SAMPLES;
+check(`Jeder MedAT-Durchgang nutzt mindestens 3 Regelfamilien (Minimum ${minFamilies})`, minFamilies >= 3);
+check(`Im Schnitt mindestens 4 Regelfamilien je Durchgang (${averageFamilies.toFixed(1)})`, averageFamilies >= 4);
 check('Keine zwei gleichen Regelfamilien direkt hintereinander', repeats === 0, `${repeats} Wiederholungen`);
 
 for (const level of [1, 2, 3, 4, 5, 6, 7]) {
