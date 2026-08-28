@@ -1,359 +1,270 @@
 /**
  * Engine für den Untertest "Figuren zusammensetzen".
  *
- * Aufgabe: Aus mehreren Teilstücken soll genau eine von fünf gezeigten Figuren
- * lückenlos zusammengesetzt werden. Die Teile dürfen gedreht, aber nicht
- * gespiegelt werden – so wie im MedAT.
+ * Aufgabe: Aus mehreren Teilstücken entsteht genau eine der fünf gezeigten
+ * Figuren. Die Teile dürfen gedreht, aber nicht gespiegelt werden.
  *
- * Umsetzung auf einem Raster:
- *   1. Eine zusammenhängende Zielfigur aus n Zellen erzeugen (Polyomino).
- *   2. Sie in k zusammenhängende Teilstücke zerlegen.
- *   3. Vier Distraktoren mit gleicher Zellenzahl bilden – gleich viele Zellen,
- *      damit blosses Zählen nicht zur Lösung führt.
- *   4. Für jeden Distraktor per Backtracking beweisen, dass er sich aus den
- *      Teilstücken NICHT legen lässt. Ohne diesen Beweis könnte zufällig eine
- *      zweite richtige Antwort entstehen.
- */
-import { pick, randInt, shuffle } from '../lib/random.js';
-
-const key = (cell) => `${cell[0]},${cell[1]}`;
-const parse = (text) => text.split(',').map(Number);
-const NEIGHBOURS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
-
-/** Verschiebt eine Zellenmenge in die linke obere Ecke. */
-export function normalize(cells) {
-  const minX = Math.min(...cells.map((cell) => cell[0]));
-  const minY = Math.min(...cells.map((cell) => cell[1]));
-  return cells
-    .map((cell) => [cell[0] - minX, cell[1] - minY])
-    .sort((a, b) => a[1] - b[1] || a[0] - b[0]);
-}
-
-/** Dreht um 90 Grad im Uhrzeigersinn. */
-export const rotate = (cells) => normalize(cells.map(([x, y]) => [-y, x]));
-
-/** Alle vier Drehlagen, Duplikate entfernt. */
-export function orientations(cells) {
-  const seen = new Map();
-  let current = normalize(cells);
-  for (let i = 0; i < 4; i += 1) {
-    seen.set(current.map(key).join(' '), current);
-    current = rotate(current);
-  }
-  return [...seen.values()];
-}
-
-/** Drehinvariante Kennung – zwei Figuren mit gleicher Kennung sind deckungsgleich. */
-export const shapeId = (cells) =>
-  orientations(cells)
-    .map((variant) => variant.map(key).join(' '))
-    .sort()[0];
-
-/**
- * Hat die Figur ein eingeschlossenes Loch?
+ * Formensprache wie im MedAT: Halb- und Viertelkreise, Fünf- bis Achtecke,
+ * dazu Dreieck, Quadrat und Rechteck. Alle Grundformen sind konvex – dadurch
+ * zerteilt jede Schnittgerade eine Figur in genau zwei gültige Teile, und die
+ * Zerlegung ist per Konstruktion lösbar.
  *
- * Geflutet wird von ausserhalb des Rahmens: Jede freie Zelle, die dabei nicht
- * erreicht wird, ist eingeschlossen. Solche Ringformen kommen im MedAT nicht
- * vor und sehen als Antwortfigur unnatürlich aus.
+ * Die Distraktoren sind nicht bloß "andere Formen": Für jeden ist beweisbar,
+ * dass er sich aus den Teilstücken nicht legen lässt, denn seine Fläche weicht
+ * von der Summe der Teilflächen ab. Eine Fläche, die nicht passt, kann nicht
+ * lückenlos ausgelegt werden – das ist unabhängig von jeder Anordnung.
+ * Der Unterschied liegt bei wenigen Prozent und ist mit dem Auge nicht zu
+ * messen; gelöst wird über die Form, nicht über die Größe.
  */
-export function hasHole(cells) {
-  const present = new Set(cells.map(key));
-  const width = Math.max(...cells.map((cell) => cell[0])) + 1;
-  const height = Math.max(...cells.map((cell) => cell[1])) + 1;
+import { chance, pick, randInt, shuffle } from '../lib/random.js';
+import {
+  boundsOf,
+  center,
+  centroid,
+  circleSector,
+  cutPolygon,
+  polygonArea,
+  radiusOf,
+  rectangle,
+  regularPolygon,
+  rotate,
+  scale,
+  simplify,
+} from '../lib/geometry.js';
 
-  const outside = new Set();
-  const queue = [[-1, -1]];
-  outside.add(key([-1, -1]));
-  while (queue.length > 0) {
-    const [x, y] = queue.pop();
-    for (const [dx, dy] of NEIGHBOURS) {
-      const nx = x + dx;
-      const ny = y + dy;
-      if (nx < -1 || ny < -1 || nx > width || ny > height) continue;
-      const cellKey = key([nx, ny]);
-      if (present.has(cellKey) || outside.has(cellKey)) continue;
-      outside.add(cellKey);
-      queue.push([nx, ny]);
-    }
-  }
+/** Einheitsfläche aller Grundformen – so sind sie direkt vergleichbar. */
+const UNIT_AREA = 1;
 
-  for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) {
-      const cellKey = key([x, y]);
-      if (!present.has(cellKey) && !outside.has(cellKey)) return true;
-    }
-  }
-  return false;
-}
-
-export const boundingBox = (cells) => ({
-  width: Math.max(...cells.map((cell) => cell[0])) + 1,
-  height: Math.max(...cells.map((cell) => cell[1])) + 1,
-});
-
-/**
- * Zufällige zusammenhängende Figur aus n Zellen.
- * Kompakte Formen werden bevorzugt – lange Schlangen wären zu leicht zu
- * erkennen und passen nicht zum Testbild.
- */
-export function randomPolyomino(n) {
-  for (let attempt = 0; attempt < 40; attempt += 1) {
-    const shape = growPolyomino(n);
-    if (!hasHole(shape)) return shape;
-  }
-  return growPolyomino(n);
-}
-
-function growPolyomino(n) {
-  const cells = new Set(['0,0']);
-  while (cells.size < n) {
-    const candidates = new Set();
-    for (const cellKey of cells) {
-      const [x, y] = parse(cellKey);
-      for (const [dx, dy] of NEIGHBOURS) {
-        const next = key([x + dx, y + dy]);
-        if (!cells.has(next)) candidates.add(next);
-      }
-    }
-    // Aus einer zufälligen Auswahl die Zelle nehmen, die die Figur am
-    // kompaktesten hält.
-    const options = shuffle([...candidates]).slice(0, 5);
-    let best = options[0];
-    let bestArea = Infinity;
-    for (const option of options) {
-      const trial = normalize([...cells, option].map(parse));
-      const { width, height } = boundingBox(trial);
-      const area = width * height + Math.abs(width - height);
-      if (area < bestArea) {
-        bestArea = area;
-        best = option;
-      }
-    }
-    cells.add(best);
-  }
-  return normalize([...cells].map(parse));
+/** Auf eine Zielfläche skalieren. */
+function withArea(points, area) {
+  return scale(points, Math.sqrt(area / polygonArea(points)));
 }
 
 /**
- * Zerlegt eine Figur in k zusammenhängende Teilstücke.
- * Die Teile wachsen abwechselnd von zufälligen Startzellen aus, dadurch bleibt
- * jedes Teil zusammenhängend.
+ * Katalog der Grundformen. `family` steuert die Auswahl der Distraktoren:
+ * Zu einem Halbkreis passen andere Rundformen als zu einem Achteck.
  */
-export function splitIntoPieces(cells, k) {
-  const remaining = new Set(cells.map(key));
-  const seeds = shuffle([...remaining]).slice(0, k);
-  const pieces = seeds.map((seed) => {
-    remaining.delete(seed);
-    return new Set([seed]);
-  });
+export const SHAPES = {
+  dreieck: { label: 'Dreieck', family: 'eckig', build: () => regularPolygon(3) },
+  quadrat: { label: 'Quadrat', family: 'eckig', build: () => regularPolygon(4) },
+  rechteck: { label: 'Rechteck', family: 'eckig', build: () => rectangle(1.7, 1) },
+  fuenfeck: { label: 'Fünfeck', family: 'eckig', build: () => regularPolygon(5) },
+  sechseck: { label: 'Sechseck', family: 'eckig', build: () => regularPolygon(6) },
+  siebeneck: { label: 'Siebeneck', family: 'eckig', build: () => regularPolygon(7) },
+  achteck: { label: 'Achteck', family: 'eckig', build: () => regularPolygon(8) },
+  viertelkreis: { label: 'Viertelkreis', family: 'rund', build: () => circleSector(0.25) },
+  halbkreis: { label: 'Halbkreis', family: 'rund', build: () => circleSector(0.5) },
+  dreiviertelkreis: { label: 'Dreiviertelkreis', family: 'rund', build: () => circleSector(0.75) },
+  kreis: { label: 'Kreis', family: 'rund', build: () => circleSector(1) },
+  drittelkreis: { label: 'Drittelkreis', family: 'rund', build: () => circleSector(1 / 3) },
+};
 
-  let progress = true;
-  while (remaining.size > 0 && progress) {
-    progress = false;
-    for (const piece of shuffle(pieces)) {
-      const candidates = [];
-      for (const cellKey of piece) {
-        const [x, y] = parse(cellKey);
-        for (const [dx, dy] of NEIGHBOURS) {
-          const next = key([x + dx, y + dy]);
-          if (remaining.has(next)) candidates.push(next);
-        }
-      }
-      if (candidates.length === 0) continue;
-      const chosen = pick(candidates);
-      piece.add(chosen);
-      remaining.delete(chosen);
-      progress = true;
-    }
-  }
-  // Übrig gebliebene Zellen an ein angrenzendes Teil hängen
-  for (const cellKey of [...remaining]) {
-    const [x, y] = parse(cellKey);
-    const target = pieces.find((piece) =>
-      NEIGHBOURS.some(([dx, dy]) => piece.has(key([x + dx, y + dy]))));
-    (target ?? pieces[0]).add(cellKey);
-    remaining.delete(cellKey);
-  }
+/** Grundform auf Einheitsfläche, im Ursprung zentriert. */
+function baseShape(id) {
+  return center(withArea(SHAPES[id].build(), UNIT_AREA));
+}
 
-  // In Koordinaten der Zielfigur zurückgeben – daraus entsteht später die
-  // Auflösungsgrafik, die zeigt, wo welches Teil liegt.
-  return pieces.map((piece) => [...piece].map(parse).sort((a, b) => a[1] - b[1] || a[0] - b[0]));
+/* ------------------------------------------------------------- Zerlegung */
+
+/** Zufällige Schnittgerade durch die Nähe des Schwerpunkts. */
+function randomCut(points) {
+  const [cx, cy] = centroid(points);
+  const reach = radiusOf(points);
+  const angle = Math.random() * Math.PI;
+  const normal = [Math.cos(angle), Math.sin(angle)];
+  // Versatz gegen die Mitte, damit nicht immer halbiert wird. Zu weit außen
+  // entstünden Splitter, die ohnehin verworfen würden.
+  const offset = (Math.random() - 0.5) * reach * 0.6;
+  return { point: [cx + normal[0] * offset, cy + normal[1] * offset], normal };
 }
 
 /**
- * Lässt sich die Zielfigur lückenlos aus allen Teilstücken legen?
- *
- * Backtracking über die jeweils oberste noch freie Zelle: Sie muss von
- * irgendeinem Teil abgedeckt werden, also werden alle Teile in allen Drehlagen
- * und mit jeder ihrer Zellen an dieser Stelle ausprobiert.
+ * Zerlegt eine Figur in `count` Teilstücke.
+ * Geschnitten wird jeweils das größte Teil – das vermeidet Splitter und ergibt
+ * Teile, die sich in der Größe ähneln und deshalb schwerer zuzuordnen sind.
  */
-export function canAssemble(target, pieces) {
-  const targetKeys = target.map(key);
-  const targetSet = new Set(targetKeys);
-  if (pieces.reduce((sum, piece) => sum + piece.length, 0) !== target.length) return false;
-
-  const variants = pieces.map((piece) => orientations(piece));
-  const covered = new Set();
-  const used = new Array(pieces.length).fill(false);
-
-  const firstFree = () => targetKeys.find((cellKey) => !covered.has(cellKey));
-
-  const place = () => {
-    const anchorKey = firstFree();
-    if (anchorKey === undefined) return true;
-    const anchor = parse(anchorKey);
-
-    for (let index = 0; index < variants.length; index += 1) {
-      if (used[index]) continue;
-      for (const variant of variants[index]) {
-        for (const cell of variant) {
-          const offsetX = anchor[0] - cell[0];
-          const offsetY = anchor[1] - cell[1];
-          const placed = variant.map(([x, y]) => key([x + offsetX, y + offsetY]));
-          if (!placed.every((cellKey) => targetSet.has(cellKey) && !covered.has(cellKey))) continue;
-
-          placed.forEach((cellKey) => covered.add(cellKey));
-          used[index] = true;
-          if (place()) return true;
-          placed.forEach((cellKey) => covered.delete(cellKey));
-          used[index] = false;
-        }
-      }
-    }
-    return false;
-  };
-
-  return place();
+/**
+ * Wie gut füllt ein Teil seine Hüllbox aus?
+ * Ein sehr spitzer Keil hat zwar Fläche, sieht aber wie ein Splitter aus und
+ * lässt sich kaum zuordnen – solche Schnitte werden verworfen.
+ */
+function fillRatio(points) {
+  const { width, height } = boundsOf(points);
+  const box = width * height;
+  return box > 0 ? polygonArea(points) / box : 0;
 }
 
+export function dissect(shape, count, minShare = 0.10, minFill = 0.3) {
+  const total = polygonArea(shape);
+  let pieces = [shape];
+
+  // Großzügig ansetzen: Ein Schnittversuch kostet Mikrosekunden, ein
+  // fehlgeschlagener Durchgang dagegen eine komplette Neugenerierung.
+  const maxAttempts = 1200 * count;
+  let guard = 0;
+  while (pieces.length < count && guard < maxAttempts) {
+    guard += 1;
+    const largest = pieces.reduce(
+      (best, piece, index) => (polygonArea(piece) > polygonArea(pieces[best]) ? index : best), 0,
+    );
+    const { point, normal } = randomCut(pieces[largest]);
+    const parts = cutPolygon(pieces[largest], point, normal).map((part) => simplify(part));
+    if (parts.length !== 2) continue;
+    if (parts.some((part) => polygonArea(part) < total * minShare)) continue;
+    if (parts.some((part) => fillRatio(part) < minFill)) continue;
+    pieces = [...pieces.slice(0, largest), ...parts, ...pieces.slice(largest + 1)];
+  }
+
+  return pieces.length === count ? pieces : null;
+}
+
+/* ----------------------------------------------------------- Distraktoren */
+
 /**
- * Erzeugt eine Figur mit gleicher Zellenzahl, die sich aus den Teilstücken
- * nicht legen lässt und mit keiner bereits vorhandenen Figur deckungsgleich ist.
+ * Abgewandelte Zielfigur: eine Ecke oder ein Randstück wird abgeschnitten.
+ * Sieht der Lösung sehr ähnlich und ist trotzdem beweisbar unlösbar, weil
+ * Fläche fehlt.
  */
-function buildDistractor(target, pieces, taken) {
-  for (let attempt = 0; attempt < 300; attempt += 1) {
-    // Mal eine Abwandlung der Zielfigur, mal eine ganz neue Figur – die
-    // Abwandlung ist der schwerere Distraktor, weil sie sehr ähnlich aussieht.
-    const candidate = attempt % 3 === 2
-      ? randomPolyomino(target.length)
-      : mutate(target);
-    if (!candidate) continue;
-    if (hasHole(candidate)) continue;
-    const id = shapeId(candidate);
-    if (taken.has(id)) continue;
-    if (canAssemble(candidate, pieces)) continue;
-    taken.add(id);
-    return candidate;
+function trimmedVariant(shape, minDrop, maxDrop) {
+  const total = polygonArea(shape);
+  for (let attempt = 0; attempt < 60; attempt += 1) {
+    const vertex = pick(shape);
+    const [cx, cy] = centroid(shape);
+    const direction = [vertex[0] - cx, vertex[1] - cy];
+    const length = Math.hypot(direction[0], direction[1]) || 1;
+    const normal = [direction[0] / length, direction[1] / length];
+    const depth = 0.55 + Math.random() * 0.4;
+    const point = [cx + normal[0] * length * depth, cy + normal[1] * length * depth];
+    const parts = cutPolygon(shape, point, [-normal[0], -normal[1]]).map((part) => simplify(part));
+    const kept = parts.reduce((best, part) => (polygonArea(part) > polygonArea(best) ? part : best), parts[0] ?? []);
+    if (!kept || kept.length < 3) continue;
+    const drop = 1 - polygonArea(kept) / total;
+    if (drop < minDrop || drop > maxDrop) continue;
+    return center(kept);
   }
   return null;
 }
 
-/** Verschiebt eine Randzelle der Figur an eine andere Stelle. */
-function mutate(cells) {
-  const set = new Set(cells.map(key));
-  const removable = shuffle([...set]).filter((cellKey) => {
-    const rest = new Set(set);
-    rest.delete(cellKey);
-    return isConnected(rest);
-  });
-  if (removable.length === 0) return null;
-
-  const removed = removable[0];
-  const rest = new Set(set);
-  rest.delete(removed);
-
-  const spots = new Set();
-  for (const cellKey of rest) {
-    const [x, y] = parse(cellKey);
-    for (const [dx, dy] of NEIGHBOURS) {
-      const next = key([x + dx, y + dy]);
-      if (!rest.has(next)) spots.add(next);
-    }
-  }
-  const spot = pick([...spots].filter((candidate) => candidate !== removed));
-  if (!spot) return null;
-  rest.add(spot);
-  return normalize([...rest].map(parse));
+/** Andere Grundform, bevorzugt aus derselben Familie. */
+function otherShape(targetId, usedIds) {
+  const family = SHAPES[targetId].family;
+  const sameFamily = Object.keys(SHAPES).filter(
+    (id) => SHAPES[id].family === family && id !== targetId && !usedIds.has(id),
+  );
+  const others = Object.keys(SHAPES).filter((id) => id !== targetId && !usedIds.has(id));
+  const pool = sameFamily.length > 0 && chance(0.75) ? sameFamily : others;
+  return pool.length > 0 ? pick(pool) : null;
 }
 
-function isConnected(cellSet) {
-  const cells = [...cellSet];
-  if (cells.length === 0) return false;
-  const seen = new Set([cells[0]]);
-  const queue = [cells[0]];
-  while (queue.length > 0) {
-    const [x, y] = parse(queue.pop());
-    for (const [dx, dy] of NEIGHBOURS) {
-      const next = key([x + dx, y + dy]);
-      if (cellSet.has(next) && !seen.has(next)) {
-        seen.add(next);
-        queue.push(next);
-      }
-    }
-  }
-  return seen.size === cells.length;
-}
+/* ------------------------------------------------------------ Aufgaben */
 
-/** Zellenzahl und Teileanzahl je Schwierigkeitsstufe. */
+/**
+ * Schwierigkeitsstufen.
+ * `areaGap` ist der Flächenunterschied der Distraktoren zur Lösung – je kleiner,
+ * desto weniger hilft ein Größenvergleich und desto genauer muss man die Form
+ * betrachten.
+ */
 export const DIFFICULTY_SETUP = {
-  leicht: { cells: [7, 9], pieces: [2, 3] },
-  mittel: { cells: [9, 11], pieces: [3, 3] },
-  schwer: { cells: [11, 14], pieces: [3, 4] },
-  medat: { cells: [10, 13], pieces: [3, 4] },
-  gemischt: { cells: [7, 14], pieces: [2, 4] },
+  leicht: {
+    pieces: [2, 3],
+    areaGap: [0.12, 0.22],
+    shapes: ['dreieck', 'quadrat', 'rechteck', 'halbkreis', 'sechseck'],
+  },
+  mittel: {
+    pieces: [3, 4],
+    areaGap: [0.08, 0.15],
+    shapes: ['quadrat', 'rechteck', 'fuenfeck', 'sechseck', 'halbkreis', 'viertelkreis'],
+  },
+  schwer: {
+    pieces: [4, 5],
+    areaGap: [0.04, 0.09],
+    shapes: Object.keys(SHAPES),
+  },
+  medat: {
+    pieces: [4, 5],
+    areaGap: [0.04, 0.10],
+    shapes: Object.keys(SHAPES),
+  },
+  gemischt: {
+    pieces: [2, 5],
+    areaGap: [0.05, 0.18],
+    shapes: Object.keys(SHAPES),
+  },
 };
 
-/** Erzeugt eine einzelne Aufgabe. */
+/** Kleinste zulässige Flächenabweichung – darunter wäre der Beweis wacklig. */
+export const MIN_AREA_GAP = 0.03;
+
+function gapFactor([min, max]) {
+  const gap = min + Math.random() * (max - min);
+  return chance(0.5) ? 1 - gap : 1 + gap;
+}
+
+/**
+ * Erzeugt eine Aufgabe.
+ * @param {{difficulty?: string, pieceCount?: number}} options
+ */
 export function generateFigureTask(options = {}) {
   const setup = DIFFICULTY_SETUP[options.difficulty] ?? DIFFICULTY_SETUP.medat;
   const pieceCount = options.pieceCount ?? randInt(setup.pieces[0], setup.pieces[1]);
 
-  for (let attempt = 0; attempt < 60; attempt += 1) {
-    const cellCount = randInt(setup.cells[0], setup.cells[1]);
-    const target = randomPolyomino(cellCount);
-    const placements = splitIntoPieces(target, pieceCount);
-    const pieces = placements.map(normalize);
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    const targetId = pick(setup.shapes);
+    const target = baseShape(targetId);
+    const placements = dissect(target, pieceCount);
+    if (!placements) continue;
 
-    // Einzelzellen als Teil sind uninteressant, ebenso ein Teil, das fast die
-    // ganze Figur ausmacht.
-    if (pieces.length !== pieceCount) continue;
-    if (pieces.some((piece) => piece.length < 2)) continue;
-    if (pieces.some((piece) => piece.length > cellCount - 2)) continue;
-    if (hasHole(target)) continue;
-    if (pieces.some(hasHole)) continue;
-    if (!canAssemble(target, pieces)) continue; // Sicherheitsnetz
+    const pieceArea = placements.reduce((sum, piece) => sum + polygonArea(piece), 0);
 
-    const taken = new Set([shapeId(target)]);
+    // Vier Distraktoren: teils abgewandelte Zielfigur, teils andere Grundform.
     const distractors = [];
-    for (let i = 0; i < 4; i += 1) {
-      const distractor = buildDistractor(target, pieces, taken);
-      if (!distractor) break;
-      distractors.push(distractor);
+    const usedIds = new Set([targetId]);
+    let guard = 0;
+    while (distractors.length < 4 && guard < 60) {
+      guard += 1;
+      const wantTrim = distractors.length < 2 ? chance(0.6) : chance(0.35);
+
+      let candidate = null;
+      if (wantTrim) {
+        candidate = trimmedVariant(target, setup.areaGap[0], setup.areaGap[1]);
+      } else {
+        const id = otherShape(targetId, usedIds);
+        if (id) {
+          usedIds.add(id);
+          candidate = center(withArea(SHAPES[id].build(), pieceArea * gapFactor(setup.areaGap)));
+        }
+      }
+      if (!candidate) continue;
+
+      // Der Beweis: abweichende Fläche kann nicht lückenlos ausgelegt werden.
+      const relativeGap = Math.abs(polygonArea(candidate) - pieceArea) / pieceArea;
+      if (relativeGap < MIN_AREA_GAP) continue;
+      distractors.push(candidate);
     }
     if (distractors.length < 4) continue;
 
     const letters = ['a', 'b', 'c', 'd', 'e'];
-    const figures = shuffle([
-      { cells: target, correct: true },
-      ...distractors.map((cells) => ({ cells, correct: false })),
+    const shuffled = shuffle([
+      { points: target, correct: true },
+      ...distractors.map((points) => ({ points, correct: false })),
     ]);
-    const answerOptions = figures.map((figure, index) => ({
+    const answerOptions = shuffled.map((option, index) => ({
       letter: letters[index],
-      cells: figure.cells,
-      correct: figure.correct,
+      points: option.points,
+      correct: option.correct,
     }));
 
     return {
       type: 'figures',
-      /** Zum Anzeigen: jedes Teil in einer zufälligen Drehlage. */
-      pieces: pieces.map((piece) => pick(orientations(piece))),
-      /** Zum Nachrechnen: die Teile in Normallage. */
-      solutionPieces: pieces,
-      /** Zum Zeigen der Auflösung: wo jedes Teil in der Zielfigur liegt. */
+      shapeId: targetId,
+      shapeLabel: SHAPES[targetId].label,
+      pieceCount,
+      /** Teile in zufälliger Drehlage und Reihenfolge – so werden sie gezeigt. */
+      pieces: shuffle(placements.map((piece) => rotate(center(piece), Math.random() * 2 * Math.PI))),
+      /** Teile an ihrem Platz in der Zielfigur – für die Auflösungsgrafik. */
       placements,
       target,
-      cellCount,
-      pieceCount,
+      pieceArea,
       options: answerOptions,
       correctLetter: answerOptions.find((option) => option.correct).letter,
     };
@@ -364,18 +275,18 @@ export function generateFigureTask(options = {}) {
 /** Aufgabensatz für einen kompletten Durchgang. */
 export function generateFigureSet(count, difficulty = 'medat', options = {}) {
   const tasks = [];
-  const seen = new Set();
+  let lastShape = null;
   let guard = 0;
-  while (tasks.length < count && guard < count * 30) {
+  while (tasks.length < count && guard < count * 20) {
     guard += 1;
     const task = generateFigureTask({
       difficulty,
       pieceCount: options.pieceCounts?.length ? Number(pick(options.pieceCounts)) : undefined,
     });
     if (!task) continue;
-    const id = shapeId(task.target);
-    if (seen.has(id)) continue;
-    seen.add(id);
+    // Nicht zweimal dieselbe Grundform hintereinander
+    if (task.shapeId === lastShape && count > 3) continue;
+    lastShape = task.shapeId;
     tasks.push({ ...task, index: tasks.length });
   }
   return tasks;

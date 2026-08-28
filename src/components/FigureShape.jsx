@@ -1,114 +1,121 @@
 /**
- * Zeichnet ein Polyomino (Zellenmenge auf einem Raster) als SVG.
+ * Zeichnet die Figuren des Untertests "Figuren zusammensetzen" als SVG.
  *
- * Innenkanten werden weggelassen – gezeichnet wird nur der Umriss, damit die
- * Figur als ein Stück wahrgenommen wird und nicht als Ansammlung von Kästchen.
- *
- * Alle Figuren einer Aufgabe bekommen dieselbe `extent`, also denselben
- * Maßstab. Sonst würde eine kleine Figur groß gerendert und die Aufgabe wäre
- * über die Größe statt über die Form lösbar.
+ * Entscheidend ist der gemeinsame Maßstab: Teilstücke und Antwortfiguren
+ * werden mit demselben Faktor gezeichnet. Würde jede Form ihre Box ausfüllen,
+ * liesse sich die Aufgabe über die Größe statt über die Form lösen – und die
+ * Teile wären nicht mehr mit den Antworten vergleichbar.
  */
+import { boundsOf, toSvgPoints } from '../lib/geometry.js';
 
-const cellKey = ([x, y]) => `${x},${y}`;
+/** Pixel je Zeichen-Einheit für eine quadratische Box der Kantenlänge `size`. */
+export const pixelsPerUnit = (size, extent) => size / (extent * 2);
 
-function outline(cells) {
-  const present = new Set(cells.map(cellKey));
-  const has = (x, y) => present.has(`${x},${y}`);
-  const lines = [];
-  for (const [x, y] of cells) {
-    if (!has(x, y - 1)) lines.push([x, y, x + 1, y]);
-    if (!has(x, y + 1)) lines.push([x, y + 1, x + 1, y + 1]);
-    if (!has(x - 1, y)) lines.push([x, y, x, y + 1]);
-    if (!has(x + 1, y)) lines.push([x + 1, y, x + 1, y + 1]);
-  }
-  return lines;
-}
+/** Halbe Kantenlänge des Zeichenbereichs, in dem alle Figuren Platz finden. */
+export const viewExtent = (shapes) =>
+  Math.max(...shapes.map((points) => {
+    const { minX, maxX, minY, maxY } = boundsOf(points);
+    return Math.max(Math.abs(minX), Math.abs(maxX), Math.abs(minY), Math.abs(maxY));
+  })) * 1.08;
 
+/** Einzelne Figur, im Zeichenbereich zentriert. */
 export function FigureShape({
-  cells,
+  points,
   extent,
-  cellSize = 16,
-  fill = '#007AFF',
-  fillOpacity = 0.18,
-  stroke = '#007AFF',
-  groups = null,
+  size = 96,
+  fill = '#5856D6',
+  fillOpacity = 0.16,
+  stroke = '#5856D6',
+  strokeWidth = 0.02,
   className = '',
   label,
 }) {
-  const width = Math.max(...cells.map((cell) => cell[0])) + 1;
-  const height = Math.max(...cells.map((cell) => cell[1])) + 1;
-  const span = extent ?? Math.max(width, height);
-  // Figur im gemeinsamen Rahmen zentrieren
-  const offsetX = (span - width) / 2;
-  const offsetY = (span - height) / 2;
-  const padding = 0.12;
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox={`${-extent} ${-extent} ${extent * 2} ${extent * 2}`}
+      className={className}
+      role="img"
+      aria-label={label ?? 'Figur'}
+    >
+      <polygon
+        points={toSvgPoints(points, 4)}
+        fill={fill}
+        fillOpacity={fillOpacity}
+        stroke={stroke}
+        strokeWidth={strokeWidth * extent}
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/**
+ * Die Teilstücke nebeneinander.
+ *
+ * `pixelsPerUnit` ist derselbe Wert wie bei den Antwortfiguren – nur so lässt
+ * sich mit dem Auge vergleichen, ob die Teile in eine Figur passen. Ohne das
+ * wäre die Aufgabe nicht fair lösbar.
+ */
+export function PieceRow({ pieces, colors, extent, pixelsPerUnit, gap = 0.14, label }) {
+  const boxes = pieces.map((points) => boundsOf(points));
+  const totalWidth = boxes.reduce((sum, box) => sum + box.width, 0) + gap * (pieces.length + 1);
+  const maxHeight = Math.max(...boxes.map((box) => box.height)) + gap * 2;
+
+  let cursor = gap;
+  const placed = pieces.map((points, index) => {
+    const box = boxes[index];
+    const offsetX = cursor - box.minX;
+    const offsetY = -box.minY - box.height / 2;
+    cursor += box.width + gap;
+    return { points: points.map(([x, y]) => [x + offsetX, y + offsetY]), color: colors[index % colors.length] };
+  });
 
   return (
     <svg
-      width={span * cellSize}
-      height={span * cellSize}
-      viewBox={`${-padding} ${-padding} ${span + padding * 2} ${span + padding * 2}`}
-      className={className}
+      width={totalWidth * pixelsPerUnit}
+      height={maxHeight * pixelsPerUnit}
+      viewBox={`0 ${-maxHeight / 2} ${totalWidth} ${maxHeight}`}
       role="img"
-      aria-label={label ?? `Figur aus ${cells.length} Feldern`}
+      aria-label={label ?? `${pieces.length} Teilstücke`}
     >
-      <g transform={`translate(${offsetX} ${offsetY})`}>
-        {groups
-          ? groups.map((group, index) => (
-            <g key={index}>
-              {group.cells.map((cell) => (
-                <rect
-                  key={cellKey(cell)}
-                  x={cell[0]}
-                  y={cell[1]}
-                  width="1"
-                  height="1"
-                  fill={group.color}
-                  fillOpacity="0.3"
-                />
-              ))}
-              {outline(group.cells).map((line, i) => (
-                <line
-                  key={i}
-                  x1={line[0]}
-                  y1={line[1]}
-                  x2={line[2]}
-                  y2={line[3]}
-                  stroke={group.color}
-                  strokeWidth="0.14"
-                  strokeLinecap="round"
-                />
-              ))}
-            </g>
-          ))
-          : (
-            <>
-              {cells.map((cell) => (
-                <rect
-                  key={cellKey(cell)}
-                  x={cell[0]}
-                  y={cell[1]}
-                  width="1"
-                  height="1"
-                  fill={fill}
-                  fillOpacity={fillOpacity}
-                />
-              ))}
-              {outline(cells).map((line, index) => (
-                <line
-                  key={index}
-                  x1={line[0]}
-                  y1={line[1]}
-                  x2={line[2]}
-                  y2={line[3]}
-                  stroke={stroke}
-                  strokeWidth="0.14"
-                  strokeLinecap="round"
-                />
-              ))}
-            </>
-          )}
-      </g>
+      {placed.map((piece, index) => (
+        <polygon
+          key={index}
+          points={toSvgPoints(piece.points, 4)}
+          fill={piece.color}
+          fillOpacity="0.22"
+          stroke={piece.color}
+          strokeWidth={0.02 * (extent ?? 1)}
+          strokeLinejoin="round"
+        />
+      ))}
+    </svg>
+  );
+}
+
+/** Auflösung: die Zielfigur mit den Teilstücken an ihrem Platz. */
+export function SolutionShape({ placements, colors, extent, size = 150, label }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox={`${-extent} ${-extent} ${extent * 2} ${extent * 2}`}
+      role="img"
+      aria-label={label ?? 'Auflösung: Lage der Teilstücke'}
+    >
+      {placements.map((points, index) => (
+        <polygon
+          key={index}
+          points={toSvgPoints(points, 4)}
+          fill={colors[index % colors.length]}
+          fillOpacity="0.3"
+          stroke={colors[index % colors.length]}
+          strokeWidth={0.018 * extent}
+          strokeLinejoin="round"
+        />
+      ))}
     </svg>
   );
 }

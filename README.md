@@ -15,7 +15,7 @@ Alle fünf KFF-Untertests des MedAT:
 
 | Untertest | Aufgaben | Zeit | Besonderheit |
 |---|---|---|---|
-| Figuren zusammensetzen | 15 | 15 min | Teilstücke zu einer von fünf Figuren zusammensetzen |
+| Figuren zusammensetzen | 15 | 15 min | Halb-/Viertelkreise und Vielecke aus Teilstücken erkennen |
 | Gedächtnis & Merkfähigkeit | 8 Ausweise + 25 Fragen | 8 min lernen, 15 min prüfen | Pause dazwischen einstellbar (2/5/10/20/40 min) |
 | Zahlenfolgen | 10 | 15 min | 7 Zahlen sichtbar, 2 gesucht; 7 Stufen, optional adaptiv |
 | Wortflüssigkeit | 15 | 20 min | Buchstabensalat, Anfangsbuchstabe gesucht |
@@ -57,7 +57,7 @@ npm install
 npm run dev        # Entwicklungsserver
 npm run build      # Icons + Produktionsbuild nach dist/ + Precache-Liste
 npm run preview    # Produktionsbuild lokal ansehen
-npm run selftest   # Daten- und Engine-Prüfungen (75 Checks)
+npm run selftest   # Daten- und Engine-Prüfungen (80 Checks)
 npm run icons      # PWA-Icons neu generieren
 ```
 
@@ -82,7 +82,7 @@ src/
     syllogismTerms.js  70 Begriffstripel
     testConfig.js      Zeitlimits, Aufgabenzahlen, Simulationsablauf
   engines/         Aufgabengenerierung, frei von React
-    figures.js         Polyomino-Zerlegung + Exact-Cover-Prüfung
+    figures.js         Konvexe Grundformen, Zerlegung, widerlegte Distraktoren
     memory.js          Allergieausweise + 13 Fragetypen
     numberSeries.js    30 Generatoren in 7 Stufen und 7 Regelfamilien
     wordFluency.js     Buchstabensalat mit Shuffle-Garantie
@@ -166,13 +166,21 @@ In ~20 % der Aufgaben ist e) „Keine Antwort ist richtig“ korrekt.
 Tatsache eindeutig ist (z. B. wird nach einem Allergen nur gefragt, wenn genau
 eine Person es hat). In ~15 % der Fragen ist e) korrekt.
 
-**Figuren zusammensetzen** – Auf einem Raster wird eine zusammenhängende
-Zielfigur erzeugt und in Teilstücke zerlegt. Die vier Distraktoren haben
-dieselbe Feldzahl, damit blosses Zählen nicht zur Lösung führt; für jeden wird
-per Backtracking bewiesen, dass er sich aus den Teilstücken *nicht* legen lässt
-(Drehungen erlaubt, Spiegelungen nicht). Ohne diesen Beweis könnte zufällig eine
-zweite richtige Antwort entstehen. Formen mit eingeschlossenem Loch werden
-aussortiert – sie sehen unnatürlich aus und kommen im MedAT nicht vor.
+**Figuren zusammensetzen** – Grundformen wie im Testbild: Halb-, Drittel- und
+Viertelkreise, Fünf- bis Achtecke, Dreieck, Quadrat, Rechteck. Runde Ränder sind
+mit 96 Segmenten pro Vollkreis angenähert; alle Formen sind konvex, weshalb jede
+Schnittgerade sie in genau zwei gültige Teile zerlegt. Die Zerlegung schneidet
+immer das größte Teil, damit keine Splitter entstehen und die Teile sich in der
+Größe ähneln.
+
+Die vier Distraktoren sind entweder eine andere Grundform oder die Zielfigur mit
+abgeschnittener Ecke. Für jeden ist beweisbar, dass er sich nicht legen lässt:
+Seine Fläche weicht von der Summe der Teilflächen ab, und eine Fläche, die nicht
+passt, lässt sich in keiner Anordnung lückenlos auslegen. Der Unterschied liegt
+bei 4–10 % und ist mit dem Auge nicht messbar – gelöst wird über die Form.
+
+Teilstücke und Antwortfiguren werden mit demselben Faktor gezeichnet. Ohne das
+liesse sich die Aufgabe über die Größe statt über die Form entscheiden.
 
 ## Veröffentlichen
 

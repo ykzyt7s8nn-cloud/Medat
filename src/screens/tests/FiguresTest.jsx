@@ -5,6 +5,9 @@
  * sich genau eine der fünf Figuren lückenlos zusammensetzen. Die Teile dürfen
  * gedreht, aber nicht gespiegelt werden.
  *
+ * Die Formen entsprechen dem Testbild: Halb-, Drittel- und Viertelkreise sowie
+ * Fünf- bis Achtecke, dazu Dreieck, Quadrat und Rechteck.
+ *
  * Nach einer Antwort zeigt der Übungsmodus die Auflösung: die richtige Figur
  * mit farbig eingezeichneten Teilen – daran sieht man, wo man falsch gedacht
  * hat.
@@ -16,7 +19,12 @@ import Icon from '../../components/ui/Icon.jsx';
 import Tappable from '../../components/ui/Tappable.jsx';
 import TimerBar from '../../components/ui/TimerBar.jsx';
 import ExamNavigator from '../../components/ExamNavigator.jsx';
-import FigureShape from '../../components/FigureShape.jsx';
+import FigureShape, {
+  PieceRow,
+  SolutionShape,
+  pixelsPerUnit,
+  viewExtent,
+} from '../../components/FigureShape.jsx';
 import ResultView from '../../components/ResultView.jsx';
 import TestIntro from '../../components/TestIntro.jsx';
 import { DIFFICULTIES, TESTS } from '../../data/testConfig.js';
@@ -34,32 +42,7 @@ const TEST = TESTS.figures;
 /** Farben der Teilstücke – auch in der Auflösungsgrafik verwendet. */
 const PIECE_COLORS = ['#007AFF', '#34C759', '#FF9500', '#AF52DE', '#FF2D55'];
 
-/** Gemeinsamer Maßstab aller Figuren einer Aufgabe. */
-const extentOf = (shapes) =>
-  Math.max(...shapes.flatMap((cells) => [
-    Math.max(...cells.map((cell) => cell[0])) + 1,
-    Math.max(...cells.map((cell) => cell[1])) + 1,
-  ]));
 
-function Pieces({ pieces }) {
-  const extent = extentOf(pieces);
-  return (
-    <div className="flex flex-wrap items-center justify-center gap-3">
-      {pieces.map((piece, index) => (
-        <div key={index} className="rounded-xl bg-black/[0.04] p-1.5 dark:bg-white/10">
-          <FigureShape
-            cells={piece}
-            extent={extent}
-            cellSize={15}
-            fill={PIECE_COLORS[index % PIECE_COLORS.length]}
-            stroke={PIECE_COLORS[index % PIECE_COLORS.length]}
-            label={`Teilstück ${index + 1} aus ${piece.length} Feldern`}
-          />
-        </div>
-      ))}
-    </div>
-  );
-}
 
 export default function FiguresTest({ embedded = false, onFinish, focusTags = null }) {
   const closeScreen = useNavigation((state) => state.closeScreen);
@@ -116,7 +99,7 @@ export default function FiguresTest({ embedded = false, onFinish, focusTags = nu
         id: `fg-${i}`,
         number: i + 1,
         correct: given === item.correctLetter,
-        prompt: `${item.pieceCount} Teilstücke, ${item.cellCount} Felder`,
+        prompt: `${item.shapeLabel} aus ${item.pieceCount} Teilstücken`,
         correctText: `Figur ${item.correctLetter.toUpperCase()}`,
         givenText: given ? `Figur ${given.toUpperCase()}` : 'keine Antwort',
         pieceCount: item.pieceCount,
@@ -170,7 +153,7 @@ export default function FiguresTest({ embedded = false, onFinish, focusTags = nu
         id: `fg-${index}`,
         number: index + 1,
         correct: option.correct,
-        prompt: `${task.pieceCount} Teilstücke, ${task.cellCount} Felder`,
+        prompt: `${task.shapeLabel} aus ${task.pieceCount} Teilstücken`,
         correctText: `Figur ${task.correctLetter.toUpperCase()}`,
         givenText: `Figur ${option.letter.toUpperCase()}`,
         pieceCount: task.pieceCount,
@@ -199,6 +182,7 @@ export default function FiguresTest({ embedded = false, onFinish, focusTags = nu
           facts={[
             '15 Aufgaben in 15 Minuten',
             'Aus allen Teilstücken entsteht genau eine der fünf Figuren',
+            'Halb- und Viertelkreise, Fünf- bis Achtecke – wie im echten Test',
             'Die Teile dürfen gedreht, aber nicht gespiegelt werden',
             'Kein Teil bleibt übrig, keine Lücke bleibt offen',
           ]}
@@ -223,14 +207,11 @@ export default function FiguresTest({ embedded = false, onFinish, focusTags = nu
             <div className="space-y-2">
               <p className="text-[13px] text-black/55 dark:text-white/55">So liegen die Teile:</p>
               <div className="flex justify-center">
-                <FigureShape
-                  cells={item.task.target}
-                  cellSize={22}
-                  groups={item.task.placements.map((cells, i) => ({
-                    cells,
-                    color: PIECE_COLORS[i % PIECE_COLORS.length],
-                  }))}
-                  label="Auflösung: Lage der Teilstücke"
+                <SolutionShape
+                  placements={item.task.placements}
+                  colors={PIECE_COLORS}
+                  extent={viewExtent([item.task.target])}
+                  size={150}
                 />
               </div>
             </div>
@@ -246,7 +227,10 @@ export default function FiguresTest({ embedded = false, onFinish, focusTags = nu
 
   const chosenLetter = examMode ? exam.answers[index] : selected;
   const revealed = !examMode && Boolean(selected);
-  const optionExtent = extentOf(task.options.map((option) => option.cells));
+  // Ein Maßstab für Teilstücke und alle fünf Antwortfiguren
+  const extent = viewExtent([...task.options.map((option) => option.points), task.target, ...task.pieces]);
+  const optionSize = 128;
+  const scaleFactor = pixelsPerUnit(optionSize, extent);
 
   return (
     <Screen
@@ -292,7 +276,15 @@ export default function FiguresTest({ embedded = false, onFinish, focusTags = nu
           <h2 className="mb-3 text-center text-[12px] font-semibold uppercase tracking-wide text-black/45 dark:text-white/45">
             Diese {task.pieces.length} Teilstücke
           </h2>
-          <Pieces pieces={task.pieces} />
+          <div className="scroll-area flex justify-center overflow-x-auto">
+            <PieceRow
+              pieces={task.pieces}
+              colors={PIECE_COLORS}
+              extent={extent}
+              pixelsPerUnit={scaleFactor}
+              label={`${task.pieces.length} Teilstücke`}
+            />
+          </div>
         </section>
 
         <h2 className="px-1 text-[15px] font-semibold">
@@ -340,9 +332,9 @@ export default function FiguresTest({ embedded = false, onFinish, focusTags = nu
                   </span>
                 </span>
                 <FigureShape
-                  cells={option.cells}
-                  extent={optionExtent}
-                  cellSize={17}
+                  points={option.points}
+                  extent={extent}
+                  size={optionSize}
                   fill={TEST.accent}
                   stroke={TEST.accent}
                   label={`Figur ${option.letter}`}
@@ -359,14 +351,11 @@ export default function FiguresTest({ embedded = false, onFinish, focusTags = nu
             </h3>
             <p className="text-[13px] text-black/55 dark:text-white/55">So liegen die Teile in der Figur:</p>
             <div className="flex justify-center pt-1">
-              <FigureShape
-                cells={task.target}
-                cellSize={26}
-                groups={task.placements.map((cells, i) => ({
-                  cells,
-                  color: PIECE_COLORS[i % PIECE_COLORS.length],
-                }))}
-                label="Auflösung: Lage der Teilstücke"
+              <SolutionShape
+                placements={task.placements}
+                colors={PIECE_COLORS}
+                extent={extent}
+                size={170}
               />
             </div>
           </section>

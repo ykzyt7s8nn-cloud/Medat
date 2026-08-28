@@ -13,7 +13,8 @@ const DETAILS = {
   figures: [
     '15 Aufgaben in 15 Minuten. Aus allen gezeigten Teilstücken lässt sich genau eine der fünf Figuren lückenlos zusammensetzen.',
     'Die Teile dürfen gedreht, aber nicht gespiegelt werden. Es bleibt kein Teil übrig und keine Lücke offen.',
-    'Alle fünf Antwortfiguren haben gleich viele Felder – Zählen allein führt nicht zur Lösung.',
+    'Die Formen entsprechen dem Testbild: Halb-, Drittel- und Viertelkreise sowie Fünf- bis Achtecke, dazu Dreieck, Quadrat und Rechteck.',
+    'Teilstücke und Antwortfiguren sind im selben Maßstab gezeichnet – Größen lassen sich direkt vergleichen.',
   ],
   memory: [
     '8 Allergieausweise mit je 8 Feldern: Foto, Name, Geburtsdatum (TT.MM.), Blutgruppe, Medikamenteneinnahme, Allergien, Blutdruck, Brille.',
