@@ -15,12 +15,14 @@ import AnswerOption from '../../components/ui/AnswerOption.jsx';
 import Button from '../../components/ui/Button.jsx';
 import Icon from '../../components/ui/Icon.jsx';
 import TimerBar from '../../components/ui/TimerBar.jsx';
+import ExamNavigator from '../../components/ExamNavigator.jsx';
 import VennDiagram from '../../components/charts/VennDiagram.jsx';
 import ResultView from '../../components/ResultView.jsx';
 import TestIntro from '../../components/TestIntro.jsx';
 import { DIFFICULTIES, TESTS } from '../../data/testConfig.js';
 import { generateSyllogismSet } from '../../engines/syllogism.js';
 import { useCountdown } from '../../hooks/useCountdown.js';
+import { useExamSession } from '../../hooks/useExamSession.js';
 import { secondsSince } from '../../lib/format.js';
 import { useFeedback } from '../../hooks/useFeedback.js';
 import { useNavigation } from '../../store/useNavigation.js';
@@ -55,12 +57,14 @@ export default function ImplicationsTest({ embedded = false, onFinish, focusTags
   const addResult = useProgress((state) => state.addResult);
   const difficulty = useSettings((state) => state.difficulty.implications);
   const timerSetting = useSettings((state) => state.timers.implications);
+  const examMode = useSettings((state) => state.mode === 'pruefung');
   const feedback = useFeedback();
+  const exam = useExamSession(TEST.questionCount);
 
   const useTimer = embedded ? true : timerSetting;
   const [phase, setPhase] = useState(embedded ? 'running' : 'intro');
   const [tasks, setTasks] = useState([]);
-  const [index, setIndex] = useState(0);
+  const [practiceIndex, setPracticeIndex] = useState(0);
   const [selected, setSelected] = useState(null);
   const [results, setResults] = useState([]);
   const startedAt = useRef(Date.now());
@@ -92,22 +96,46 @@ export default function ImplicationsTest({ embedded = false, onFinish, focusTags
     [addResult, difficulty, embedded, feedback, onFinish],
   );
 
+  /** Prüfungsmodus: alles auf einmal auswerten. */
+  const submitExam = useCallback(() => {
+    const timings = exam.collectTimings();
+    const items = tasks.map((task, i) => {
+      const given = exam.answers[i];
+      const correctOption = task.options.find((option) => option.correct);
+      return {
+        id: `im-${i}`,
+        number: i + 1,
+        correct: given === task.correctLetter,
+        prompt: task.premises.map((premise) => premise.text).join(' '),
+        correctText: correctOption.text,
+        givenText: given ? task.options.find((option) => option.letter === given).text : 'keine Antwort',
+        explanation: task.explanation,
+        figure: task.figure,
+        seconds: timings[i] ?? 0,
+        task,
+      };
+    });
+    setResults(items);
+    finish(items);
+  }, [exam, finish, tasks]);
+
   const countdown = useCountdown(TEST.testSeconds, {
     enabled: useTimer && phase === 'running',
     autoStart: embedded,
-    onExpire: () => finish(results),
+    onExpire: () => (examMode ? submitExam() : finish(results)),
   });
 
   const start = useCallback(() => {
     startedAt.current = Date.now();
     setTasks(generateSyllogismSet(TEST.questionCount, difficulty, { onlyFigures: figuresFrom(focusTags) }));
-    setIndex(0);
+    setPracticeIndex(0);
     setSelected(null);
     setResults([]);
+    exam.reset();
     taskStartedAt.current = Date.now();
     setPhase('running');
     countdown.reset(TEST.testSeconds);
-  }, [countdown, difficulty, focusTags]);
+  }, [countdown, difficulty, exam, focusTags]);
 
   useEffect(() => {
     if (embedded && tasks.length === 0) {
@@ -116,9 +144,15 @@ export default function ImplicationsTest({ embedded = false, onFinish, focusTags
     }
   }, [difficulty, embedded, focusTags, tasks.length]);
 
+  const index = examMode ? exam.index : practiceIndex;
   const task = tasks[index];
 
   const answer = (option) => {
+    if (examMode) {
+      feedback.tap();
+      exam.setAnswer(index, option.letter);
+      return;
+    }
     if (selected) return;
     setSelected(option.letter);
     if (option.correct) feedback.correct();
@@ -143,7 +177,7 @@ export default function ImplicationsTest({ embedded = false, onFinish, focusTags
   const advance = () => {
     if (index + 1 >= tasks.length) finish(results);
     else {
-      setIndex(index + 1);
+      setPracticeIndex(index + 1);
       setSelected(null);
       taskStartedAt.current = Date.now();
     }
@@ -196,7 +230,8 @@ export default function ImplicationsTest({ embedded = false, onFinish, focusTags
   }
 
   if (!task) return null;
-  const revealed = Boolean(selected);
+  const chosenLetter = examMode ? exam.answers[index] : selected;
+  const revealed = !examMode && Boolean(selected);
 
   return (
     <Screen
@@ -208,17 +243,32 @@ export default function ImplicationsTest({ embedded = false, onFinish, focusTags
           total={TEST.testSeconds}
           enabled={useTimer}
           accent={TEST.accent}
-          progressLabel={`Aufgabe ${index + 1} von ${tasks.length} · Figur ${task.figure}`}
+          progressLabel={`Aufgabe ${index + 1} von ${tasks.length}${examMode ? '' : ` · Figur ${task.figure}`}`}
         />
       }
       footer={
-        revealed && (
-          <div className="px-3 py-3">
-            <Button size="lg" onClick={advance}>
-              {index + 1 >= tasks.length ? 'Auswertung ansehen' : 'Nächste Aufgabe'}
-              <Icon name="chevronRight" className="h-5 w-5" />
-            </Button>
-          </div>
+        examMode ? (
+          <ExamNavigator
+            count={tasks.length}
+            index={index}
+            answers={exam.answers}
+            flags={exam.flags}
+            answeredCount={exam.answeredCount}
+            onGoTo={exam.goTo}
+            onPrevious={exam.previous}
+            onNext={exam.next}
+            onToggleFlag={() => exam.toggleFlag(index)}
+            onSubmit={submitExam}
+          />
+        ) : (
+          revealed && (
+            <div className="px-3 py-3">
+              <Button size="lg" onClick={advance}>
+                {index + 1 >= tasks.length ? 'Auswertung ansehen' : 'Nächste Aufgabe'}
+                <Icon name="chevronRight" className="h-5 w-5" />
+              </Button>
+            </div>
+          )
         )
       }
     >
@@ -241,7 +291,7 @@ export default function ImplicationsTest({ embedded = false, onFinish, focusTags
                 key={option.letter}
                 letter={option.letter}
                 state={state}
-                selected={option.letter === selected}
+                selected={option.letter === chosenLetter}
                 disabled={revealed}
                 onClick={() => answer(option)}
               >

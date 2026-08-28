@@ -24,6 +24,12 @@ const defaultSettings = {
   adaptiveNumberSeries: true,
   /** Pausendauer zwischen Lern- und Prüfphase des Gedächtnistests (Minuten). */
   breakMinutes: 2,
+  /**
+   * 'uebung'  – Auflösung nach jeder Aufgabe (gut zum Lernen)
+   * 'pruefung' – keine Auflösung, dafür Überspringen, Markieren und Abgabe am
+   *              Ende (wie im echten Test)
+   */
+  mode: 'uebung',
   /** 'system' | 'light' | 'dark' */
   theme: 'system',
   sound: true,
@@ -40,6 +46,7 @@ export const useSettings = create()(
         set((state) => ({ difficulty: { ...state.difficulty, [testId]: level } })),
       setBreakMinutes: (minutes) => set({ breakMinutes: minutes }),
       setTheme: (theme) => set({ theme }),
+      setMode: (mode) => set({ mode }),
       toggle: (key) => set((state) => ({ [key]: !state[key] })),
       resetSettings: () => set({ ...defaultSettings }),
     }),

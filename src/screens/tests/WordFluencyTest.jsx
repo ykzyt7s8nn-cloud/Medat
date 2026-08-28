@@ -14,11 +14,13 @@ import AnswerOption from '../../components/ui/AnswerOption.jsx';
 import Button from '../../components/ui/Button.jsx';
 import Icon from '../../components/ui/Icon.jsx';
 import TimerBar from '../../components/ui/TimerBar.jsx';
+import ExamNavigator from '../../components/ExamNavigator.jsx';
 import ResultView from '../../components/ResultView.jsx';
 import TestIntro from '../../components/TestIntro.jsx';
 import { DIFFICULTIES, TESTS } from '../../data/testConfig.js';
 import { generateWordFluencySet } from '../../engines/wordFluency.js';
 import { useCountdown } from '../../hooks/useCountdown.js';
+import { useExamSession } from '../../hooks/useExamSession.js';
 import { secondsSince } from '../../lib/format.js';
 import { useFeedback } from '../../hooks/useFeedback.js';
 import { useNavigation } from '../../store/useNavigation.js';
@@ -56,12 +58,14 @@ export default function WordFluencyTest({ embedded = false, onFinish, focusTags 
   const addResult = useProgress((state) => state.addResult);
   const difficulty = useSettings((state) => state.difficulty.wordFluency);
   const timerSetting = useSettings((state) => state.timers.wordFluency);
+  const examMode = useSettings((state) => state.mode === 'pruefung');
   const feedback = useFeedback();
+  const exam = useExamSession(TEST.questionCount);
 
   const useTimer = embedded ? true : timerSetting;
   const [phase, setPhase] = useState(embedded ? 'running' : 'intro');
   const [tasks, setTasks] = useState([]);
-  const [index, setIndex] = useState(0);
+  const [practiceIndex, setPracticeIndex] = useState(0);
   const [selected, setSelected] = useState(null);
   const [results, setResults] = useState([]);
   const startedAt = useRef(Date.now());
@@ -93,22 +97,46 @@ export default function WordFluencyTest({ embedded = false, onFinish, focusTags 
     [addResult, difficulty, embedded, feedback, onFinish],
   );
 
+  /** Prüfungsmodus: alles auf einmal auswerten. */
+  const submitExam = useCallback(() => {
+    const timings = exam.collectTimings();
+    const items = tasks.map((task, i) => {
+      const given = exam.answers[i];
+      const givenOption = task.options.find((option) => option.letter === given);
+      return {
+        id: `wf-${i}`,
+        number: i + 1,
+        correct: given === task.correctOption,
+        prompt: `${task.scrambled.join(' ')} – Anfangsbuchstabe?`,
+        correctText: task.correctOption === 'e' ? 'Keine Antwort ist richtig' : task.correctLetter,
+        givenText: givenOption ? givenOption.text : 'keine Antwort',
+        word: task.word,
+        band: task.band,
+        seconds: timings[i] ?? 0,
+        explanation: `Das gesuchte Wort lautet „${task.word}“.`,
+      };
+    });
+    setResults(items);
+    finish(items);
+  }, [exam, finish, tasks]);
+
   const countdown = useCountdown(TEST.testSeconds, {
     enabled: useTimer && phase === 'running',
     autoStart: embedded,
-    onExpire: () => finish(results),
+    onExpire: () => (examMode ? submitExam() : finish(results)),
   });
 
   const start = useCallback(() => {
     startedAt.current = Date.now();
     setTasks(generateWordFluencySet(TEST.questionCount, difficulty, { onlyBands: focusTags }));
-    setIndex(0);
+    setPracticeIndex(0);
     setSelected(null);
     setResults([]);
+    exam.reset();
     taskStartedAt.current = Date.now();
     setPhase('running');
     countdown.reset(TEST.testSeconds);
-  }, [countdown, difficulty, focusTags]);
+  }, [countdown, difficulty, exam, focusTags]);
 
   useEffect(() => {
     if (embedded && tasks.length === 0) {
@@ -117,9 +145,15 @@ export default function WordFluencyTest({ embedded = false, onFinish, focusTags 
     }
   }, [difficulty, embedded, focusTags, tasks.length]);
 
+  const index = examMode ? exam.index : practiceIndex;
   const task = tasks[index];
 
   const answer = (option) => {
+    if (examMode) {
+      feedback.tap();
+      exam.setAnswer(index, option.letter);
+      return;
+    }
     if (selected) return;
     setSelected(option.letter);
     if (option.correct) feedback.correct();
@@ -143,7 +177,7 @@ export default function WordFluencyTest({ embedded = false, onFinish, focusTags 
   const advance = () => {
     if (index + 1 >= tasks.length) finish(results);
     else {
-      setIndex(index + 1);
+      setPracticeIndex(index + 1);
       setSelected(null);
       taskStartedAt.current = Date.now();
     }
@@ -198,7 +232,8 @@ export default function WordFluencyTest({ embedded = false, onFinish, focusTags 
 
   if (!task) return null;
 
-  const revealed = Boolean(selected);
+  const chosenLetter = examMode ? exam.answers[index] : selected;
+  const revealed = !examMode && Boolean(selected);
 
   return (
     <Screen
@@ -214,13 +249,28 @@ export default function WordFluencyTest({ embedded = false, onFinish, focusTags 
         />
       }
       footer={
-        revealed && (
-          <div className="px-3 py-3">
-            <Button size="lg" onClick={advance}>
-              {index + 1 >= tasks.length ? 'Auswertung ansehen' : 'Nächste Aufgabe'}
-              <Icon name="chevronRight" className="h-5 w-5" />
-            </Button>
-          </div>
+        examMode ? (
+          <ExamNavigator
+            count={tasks.length}
+            index={index}
+            answers={exam.answers}
+            flags={exam.flags}
+            answeredCount={exam.answeredCount}
+            onGoTo={exam.goTo}
+            onPrevious={exam.previous}
+            onNext={exam.next}
+            onToggleFlag={() => exam.toggleFlag(index)}
+            onSubmit={submitExam}
+          />
+        ) : (
+          revealed && (
+            <div className="px-3 py-3">
+              <Button size="lg" onClick={advance}>
+                {index + 1 >= tasks.length ? 'Auswertung ansehen' : 'Nächste Aufgabe'}
+                <Icon name="chevronRight" className="h-5 w-5" />
+              </Button>
+            </div>
+          )
         )
       }
     >
@@ -256,7 +306,7 @@ export default function WordFluencyTest({ embedded = false, onFinish, focusTags 
                 key={option.letter}
                 letter={option.letter}
                 state={state}
-                selected={option.letter === selected}
+                selected={option.letter === chosenLetter}
                 disabled={revealed}
                 onClick={() => answer(option)}
               >

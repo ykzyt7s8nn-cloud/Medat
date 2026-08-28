@@ -34,6 +34,28 @@ export default function SettingsScreen() {
   return (
     <Screen title="Einstellungen">
       <div className="space-y-6 pb-6">
+        <Section
+          title="Modus"
+          footnote="Im Prüfungsmodus kannst du Aufgaben überspringen, zum Wiederkommen markieren und erst am Ende abgeben – so wie im echten MedAT. Der Gedächtnistest arbeitet immer so."
+        >
+          <div className="px-4 py-3">
+            <Segmented
+              ariaLabel="Modus"
+              options={[
+                { value: 'uebung', label: 'Übung' },
+                { value: 'pruefung', label: 'Prüfung' },
+              ]}
+              value={settings.mode}
+              onChange={settings.setMode}
+            />
+            <p className="mt-2 text-[13px] text-black/55 dark:text-white/55">
+              {settings.mode === 'uebung'
+                ? 'Nach jeder Aufgabe siehst du sofort die Lösung samt Erklärung.'
+                : 'Keine Auflösung während des Durchgangs – die Auswertung kommt am Ende.'}
+            </p>
+          </div>
+        </Section>
+
         <Section title="Timer" footnote="Ohne Timer wird im Übungsmodus ohne Zeitdruck geübt. In der MedAT-Simulation gelten immer die Originalzeiten.">
           {TEST_ORDER.map((id) => (
             <div key={id} className="ios-row">

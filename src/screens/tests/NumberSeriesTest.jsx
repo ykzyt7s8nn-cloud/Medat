@@ -15,6 +15,7 @@ import Icon from '../../components/ui/Icon.jsx';
 import NumberKeypad from '../../components/ui/NumberKeypad.jsx';
 import Tappable from '../../components/ui/Tappable.jsx';
 import TimerBar from '../../components/ui/TimerBar.jsx';
+import ExamNavigator from '../../components/ExamNavigator.jsx';
 import ResultView from '../../components/ResultView.jsx';
 import TestIntro from '../../components/TestIntro.jsx';
 import { DIFFICULTIES, TESTS } from '../../data/testConfig.js';
@@ -22,11 +23,13 @@ import {
   MIN_LEVEL,
   START_LEVEL,
   checkNumberSeriesAnswer,
+  generateNumberSeriesSet,
   generateNumberSeriesTask,
 } from '../../engines/numberSeries.js';
 import { pick } from '../../lib/random.js';
 import { secondsSince } from '../../lib/format.js';
 import { useCountdown } from '../../hooks/useCountdown.js';
+import { useExamSession } from '../../hooks/useExamSession.js';
 import { useFeedback } from '../../hooks/useFeedback.js';
 import { useNavigation } from '../../store/useNavigation.js';
 import { useProgress } from '../../store/useProgress.js';
@@ -40,10 +43,15 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
   const difficulty = useSettings((state) => state.difficulty.numberSeries);
   const timerSetting = useSettings((state) => state.timers.numberSeries);
   const adaptive = useSettings((state) => state.adaptiveNumberSeries);
+  const examMode = useSettings((state) => state.mode === 'pruefung');
   const feedback = useFeedback();
+  const exam = useExamSession(TEST.questionCount);
 
   const [phase, setPhase] = useState(embedded ? 'running' : 'intro');
+  // Übungsmodus: eine Aufgabe nach der anderen.
+  // Prüfungsmodus: alle Aufgaben liegen vor, man springt frei zwischen ihnen.
   const [task, setTask] = useState(null);
+  const [examTasks, setExamTasks] = useState([]);
   const [answers, setAnswers] = useState(['', '']);
   const [activeField, setActiveField] = useState(0);
   const [checked, setChecked] = useState(null);
@@ -101,10 +109,34 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
     [addResult, difficulty, embedded, feedback, onFinish],
   );
 
+  /** Prüfungsmodus: alle Aufgaben am Ende auswerten. */
+  const submitExam = useCallback(() => {
+    const timings = exam.collectTimings();
+    const items = examTasks.map((item, i) => {
+      const given = exam.answers[i] ?? ['', ''];
+      const outcome = checkNumberSeriesAnswer(item, given);
+      return {
+        id: `ns-${i}`,
+        number: i + 1,
+        correct: outcome.correct,
+        prompt: `${item.visible.join(', ')}, __, __`,
+        correctText: item.solution.join(', '),
+        givenText: given.some((value) => value !== '') ? given.map((v) => v || '–').join(', ') : 'keine Eingabe',
+        explanation: item.rule,
+        level: item.level,
+        family: item.family,
+        familyLabel: item.familyLabel,
+        seconds: timings[i] ?? 0,
+      };
+    });
+    setResults(items);
+    finish(items);
+  }, [exam, examTasks, finish]);
+
   const countdown = useCountdown(TEST.testSeconds, {
     enabled: useTimer && phase === 'running',
     autoStart: embedded,
-    onExpire: () => finish(results),
+    onExpire: () => (examMode ? submitExam() : finish(results)),
   });
 
   const start = () => {
@@ -112,7 +144,19 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
     levelRef.current = START_LEVEL[difficulty] ?? 3;
     streakRef.current = { correct: 0, wrong: 0 };
     setResults([]);
-    nextTask();
+    if (examMode) {
+      // Im Prüfungsmodus muss der ganze Satz vorab feststehen, damit man frei
+      // zwischen den Aufgaben springen kann.
+      setExamTasks(generateNumberSeriesSet(TEST.questionCount, difficulty, {
+        onlyFamilies: focusTags ?? undefined,
+      }));
+      exam.reset();
+      setAnswers(['', '']);
+      setActiveField(0);
+      setChecked(null);
+    } else {
+      nextTask();
+    }
     setPhase('running');
     countdown.reset(TEST.testSeconds);
   };
@@ -125,8 +169,16 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
     }
   }, [embedded, nextTask, task]);
 
+  const currentTask = examMode ? examTasks[exam.index] : task;
+  const currentAnswers = examMode ? (exam.answers[exam.index] ?? ['', '']) : answers;
+
+  const writeAnswers = (updater) => {
+    if (examMode) exam.setAnswer(exam.index, updater(exam.answers[exam.index] ?? ['', '']));
+    else setAnswers(updater);
+  };
+
   const inputDigit = (digit) => {
-    setAnswers((current) => {
+    writeAnswers((current) => {
       const next = [...current];
       if (next[activeField].replace('-', '').length >= 8) return current;
       next[activeField] = next[activeField] + digit;
@@ -135,7 +187,7 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
   };
 
   const deleteDigit = () => {
-    setAnswers((current) => {
+    writeAnswers((current) => {
       const next = [...current];
       if (next[activeField].length === 0 && activeField === 1) {
         setActiveField(0);
@@ -147,7 +199,7 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
   };
 
   const toggleSign = () => {
-    setAnswers((current) => {
+    writeAnswers((current) => {
       const next = [...current];
       next[activeField] = next[activeField].startsWith('-')
         ? next[activeField].slice(1)
@@ -259,7 +311,9 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
           total={TEST.testSeconds}
           enabled={useTimer}
           accent={TEST.accent}
-          progressLabel={`Aufgabe ${Math.min(complete + 1, TEST.questionCount)} von ${TEST.questionCount} · Stufe ${task?.level ?? '–'}`}
+          progressLabel={examMode
+            ? `Aufgabe ${exam.index + 1} von ${TEST.questionCount}`
+            : `Aufgabe ${Math.min(complete + 1, TEST.questionCount)} von ${TEST.questionCount} · Stufe ${task?.level ?? '–'}`}
         />
       }
       footer={
@@ -268,28 +322,50 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
             onInput={inputDigit}
             onDelete={deleteDigit}
             onToggleSign={toggleSign}
-            disabled={Boolean(checked)}
+            disabled={!examMode && Boolean(checked)}
           />
-          <div className="px-3 pb-3">
-            {checked ? (
-              <Button size="lg" onClick={advance}>
-                {results.length >= TEST.questionCount ? 'Auswertung ansehen' : 'Nächste Aufgabe'}
-                <Icon name="chevronRight" className="h-5 w-5" />
-              </Button>
-            ) : (
-              <Button size="lg" onClick={check} disabled={!canCheck}>
-                Prüfen
-              </Button>
-            )}
-          </div>
+          {examMode ? (
+            <ExamNavigator
+              count={examTasks.length}
+              index={exam.index}
+              answers={Object.fromEntries(
+                Object.entries(exam.answers).map(([key, value]) => [
+                  key,
+                  Array.isArray(value) && value.every((v) => v !== '' && v !== '-') ? value.join(',') : undefined,
+                ]),
+              )}
+              flags={exam.flags}
+              answeredCount={Object.values(exam.answers).filter(
+                (value) => Array.isArray(value) && value.every((v) => v !== '' && v !== '-'),
+              ).length}
+              onGoTo={(i) => { exam.goTo(i); setActiveField(0); }}
+              onPrevious={() => { exam.previous(); setActiveField(0); }}
+              onNext={() => { exam.next(); setActiveField(0); }}
+              onToggleFlag={() => exam.toggleFlag(exam.index)}
+              onSubmit={submitExam}
+            />
+          ) : (
+            <div className="px-3 pb-3">
+              {checked ? (
+                <Button size="lg" onClick={advance}>
+                  {results.length >= TEST.questionCount ? 'Auswertung ansehen' : 'Nächste Aufgabe'}
+                  <Icon name="chevronRight" className="h-5 w-5" />
+                </Button>
+              ) : (
+                <Button size="lg" onClick={check} disabled={!canCheck}>
+                  Prüfen
+                </Button>
+              )}
+            </div>
+          )}
         </>
       }
     >
-      {task && (
+      {currentTask && (
         <div className="space-y-4">
           <section className="ios-card px-3 py-5">
             <div className="flex flex-wrap items-center justify-center gap-1.5">
-              {task.visible.map((value, index) => (
+              {currentTask.visible.map((value, index) => (
                 <span
                   key={index}
                   className="tabular rounded-xl bg-black/[0.04] px-2.5 py-2 text-[19px] font-semibold dark:bg-white/10"
@@ -298,11 +374,13 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
                 </span>
               ))}
               {[0, 1].map((index) => {
-                const state = checked ? (checked.correctFlags[index] ? 'correct' : 'wrong') : 'idle';
+                const state = !examMode && checked
+                  ? (checked.correctFlags[index] ? 'correct' : 'wrong')
+                  : 'idle';
                 return (
                   <Tappable
                     key={`input-${index}`}
-                    onClick={() => !checked && setActiveField(index)}
+                    onClick={() => (examMode || !checked) && setActiveField(index)}
                     aria-label={`${index === 0 ? 'Achte' : 'Neunte'} Zahl`}
                     className={`tabular min-w-[64px] rounded-xl px-2.5 py-2 text-[19px] font-bold ${
                       state === 'correct'
@@ -314,19 +392,19 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
                             : 'bg-black/[0.04] text-black/40 ring-1 ring-black/10 dark:bg-white/10 dark:text-white/40 dark:ring-white/15'
                     }`}
                   >
-                    {answers[index] || '?'}
+                    {currentAnswers[index] || '?'}
                   </Tappable>
                 );
               })}
             </div>
-            {!checked && (
+            {(examMode || !checked) && (
               <p className="mt-4 text-center text-[13px] text-black/45 dark:text-white/45">
                 Tippe ein Feld an, um es zu füllen · Feld {activeField + 1} aktiv
               </p>
             )}
           </section>
 
-          {checked && (
+          {!examMode && checked && (
             <section
               className={`ios-card animate-slide-up px-4 py-4 ${
                 checked.correct ? 'ring-2 ring-ios-green' : 'ring-2 ring-ios-red'
@@ -345,7 +423,7 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
             </section>
           )}
 
-          {!checked && (
+          {(examMode || !checked) && (
             <p className="px-1 text-center text-[13px] text-black/45 dark:text-white/45">
               Setze die Zahlenfolge um zwei Zahlen fort.
             </p>
