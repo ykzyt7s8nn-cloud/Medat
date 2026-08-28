@@ -17,6 +17,7 @@ import Tappable from '../../components/ui/Tappable.jsx';
 import TimerBar from '../../components/ui/TimerBar.jsx';
 import ExamNavigator from '../../components/ExamNavigator.jsx';
 import ResultView from '../../components/ResultView.jsx';
+import SeriesAnalysis from '../../components/SeriesAnalysis.jsx';
 import TestIntro from '../../components/TestIntro.jsx';
 import { DIFFICULTIES, TESTS } from '../../data/testConfig.js';
 import {
@@ -126,6 +127,7 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
         level: item.level,
         family: item.family,
         familyLabel: item.familyLabel,
+        full: item.full,
         seconds: timings[i] ?? 0,
       };
     });
@@ -240,6 +242,7 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
       level: task.level,
       family: task.family,
       familyLabel: task.familyLabel,
+      full: task.full,
       seconds: secondsSince(taskStartedAt.current),
     };
     setResults((current) => [...current, entry]);
@@ -284,12 +287,13 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
           items={results}
           limitSeconds={TEST.testSeconds}
           renderReview={(item) => (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <p className="tabular text-[15px] font-medium">
                 {item.prompt.replace('__, __', '')}
                 <span className="text-ios-green">{item.correctText}</span>
               </p>
               <p className="text-[14px] text-black/60 dark:text-white/60">Regel: {item.explanation}</p>
+              {item.full && <SeriesAnalysis values={item.full} family={item.family} />}
               <p className="text-[12px] text-black/40 dark:text-white/40">
                 Stufe {item.level} · {item.familyLabel}
               </p>
@@ -319,12 +323,10 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
       }
       footer={
         <>
-          <NumberKeypad
-            onInput={inputDigit}
-            onDelete={deleteDigit}
-            onToggleSign={toggleSign}
-            disabled={!examMode && Boolean(checked)}
-          />
+          {/* Nach dem Prüfen weicht die Tastatur der Erklärung */}
+          {(examMode || !checked) && (
+            <NumberKeypad onInput={inputDigit} onDelete={deleteDigit} onToggleSign={toggleSign} />
+          )}
           {examMode ? (
             <ExamNavigator
               count={examTasks.length}
@@ -421,6 +423,14 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
                 </p>
               )}
               <p className="mt-2 text-[14px] text-black/60 dark:text-white/60">{task.rule}</p>
+              {!checked.correct && (
+                <div className="mt-3 border-t border-black/5 pt-3 dark:border-white/10">
+                  <p className="mb-2 text-[12px] font-medium uppercase tracking-wide text-black/45 dark:text-white/45">
+                    So kommst du drauf
+                  </p>
+                  <SeriesAnalysis values={task.full} family={task.family} />
+                </div>
+              )}
             </section>
           )}
 
