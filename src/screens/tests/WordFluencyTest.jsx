@@ -19,12 +19,20 @@ import TestIntro from '../../components/TestIntro.jsx';
 import { DIFFICULTIES, TESTS } from '../../data/testConfig.js';
 import { generateWordFluencySet } from '../../engines/wordFluency.js';
 import { useCountdown } from '../../hooks/useCountdown.js';
+import { secondsSince } from '../../lib/format.js';
 import { useFeedback } from '../../hooks/useFeedback.js';
 import { useNavigation } from '../../store/useNavigation.js';
 import { useProgress } from '../../store/useProgress.js';
 import { useSettings } from '../../store/useSettings.js';
 
 const TEST = TESTS.wordFluency;
+
+/** Bezeichnung der Längenbänder für die Schwachstellen-Statistik. */
+const BAND_LABELS = {
+  leicht: 'Kurze Wörter (5–6 Buchstaben)',
+  mittel: 'Mittlere Wörter (7–9 Buchstaben)',
+  schwer: 'Lange Wörter (10–14 Buchstaben)',
+};
 
 /** Buchstabenwolke: leichte, aber deterministische Neigung je Position. */
 function LetterCloud({ letters }) {
@@ -43,7 +51,7 @@ function LetterCloud({ letters }) {
   );
 }
 
-export default function WordFluencyTest({ embedded = false, onFinish }) {
+export default function WordFluencyTest({ embedded = false, onFinish, focusTags = null }) {
   const closeScreen = useNavigation((state) => state.closeScreen);
   const addResult = useProgress((state) => state.addResult);
   const difficulty = useSettings((state) => state.difficulty.wordFluency);
@@ -57,12 +65,27 @@ export default function WordFluencyTest({ embedded = false, onFinish }) {
   const [selected, setSelected] = useState(null);
   const [results, setResults] = useState([]);
   const startedAt = useRef(Date.now());
+  const taskStartedAt = useRef(Date.now());
 
   const finish = useCallback(
     (finalResults) => {
       const score = finalResults.filter((item) => item.correct).length;
       const seconds = Math.round((Date.now() - startedAt.current) / 1000);
-      if (!embedded) addResult({ testId: TEST.id, score, max: TEST.questionCount, seconds, difficulty });
+      if (!embedded) {
+        addResult({
+          testId: TEST.id,
+          score,
+          max: TEST.questionCount,
+          seconds,
+          difficulty,
+          breakdown: finalResults.map((item) => ({
+            tag: item.band,
+            label: BAND_LABELS[item.band] ?? item.band,
+            correct: item.correct,
+            seconds: item.seconds,
+          })),
+        });
+      }
       feedback.done();
       setPhase('result');
       onFinish?.({ testId: TEST.id, score, max: TEST.questionCount, seconds, results: finalResults });
@@ -78,20 +101,21 @@ export default function WordFluencyTest({ embedded = false, onFinish }) {
 
   const start = useCallback(() => {
     startedAt.current = Date.now();
-    setTasks(generateWordFluencySet(TEST.questionCount, difficulty));
+    setTasks(generateWordFluencySet(TEST.questionCount, difficulty, { onlyBands: focusTags }));
     setIndex(0);
     setSelected(null);
     setResults([]);
+    taskStartedAt.current = Date.now();
     setPhase('running');
     countdown.reset(TEST.testSeconds);
-  }, [countdown, difficulty]);
+  }, [countdown, difficulty, focusTags]);
 
   useEffect(() => {
     if (embedded && tasks.length === 0) {
       startedAt.current = Date.now();
-      setTasks(generateWordFluencySet(TEST.questionCount, difficulty));
+      setTasks(generateWordFluencySet(TEST.questionCount, difficulty, { onlyBands: focusTags }));
     }
-  }, [difficulty, embedded, tasks.length]);
+  }, [difficulty, embedded, focusTags, tasks.length]);
 
   const task = tasks[index];
 
@@ -109,6 +133,8 @@ export default function WordFluencyTest({ embedded = false, onFinish }) {
       correctText: task.correctOption === 'e' ? 'Keine Antwort ist richtig' : task.correctLetter,
       givenText: option.text,
       word: task.word,
+      band: task.band,
+      seconds: secondsSince(taskStartedAt.current),
       explanation: `Das gesuchte Wort lautet „${task.word}“.`,
     };
     setResults((current) => [...current, entry]);
@@ -119,6 +145,7 @@ export default function WordFluencyTest({ embedded = false, onFinish }) {
     else {
       setIndex(index + 1);
       setSelected(null);
+      taskStartedAt.current = Date.now();
     }
   };
 

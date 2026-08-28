@@ -25,6 +25,7 @@ import TestIntro from '../../components/TestIntro.jsx';
 import { TESTS } from '../../data/testConfig.js';
 import { generateMemorySession } from '../../engines/memory.js';
 import { formatTime, useCountdown } from '../../hooks/useCountdown.js';
+import { secondsSince } from '../../lib/format.js';
 import { useFeedback } from '../../hooks/useFeedback.js';
 import { useSwipe } from '../../hooks/useSwipe.js';
 import { useNavigation } from '../../store/useNavigation.js';
@@ -120,6 +121,7 @@ export default function MemoryTest({
   session: providedSession,
   onLearnComplete,
   onFinish,
+  focusTags = null,
 }) {
   const closeScreen = useNavigation((state) => state.closeScreen);
   const addResult = useProgress((state) => state.addResult);
@@ -134,6 +136,20 @@ export default function MemoryTest({
   const [answers, setAnswers] = useState({});
   const [results, setResults] = useState([]);
   const startedAt = useRef(Date.now());
+
+  // Zeit je Frage: Die Prüfphase erlaubt Vor- und Zurückspringen, deshalb wird
+  // die Verweildauer je Frage aufsummiert statt einmalig gemessen.
+  const timingsRef = useRef({});
+  const questionStartedAt = useRef(Date.now());
+  const currentQuestionIdRef = useRef(null);
+
+  const flushTiming = useCallback(() => {
+    const id = currentQuestionIdRef.current;
+    if (!id) return;
+    const delta = secondsSince(questionStartedAt.current);
+    timingsRef.current[id] = (timingsRef.current[id] ?? 0) + delta;
+    questionStartedAt.current = Date.now();
+  }, []);
 
   /* --- Lernphase ------------------------------------------------------- */
   const learnCountdown = useCountdown(TEST.learnSeconds, {
@@ -156,6 +172,8 @@ export default function MemoryTest({
   /* --- Prüfphase -------------------------------------------------------- */
   const finish = useCallback(
     (finalAnswers) => {
+      flushTiming();
+      const timings = timingsRef.current;
       const questions = session?.questions ?? [];
       const items = questions.map((question, i) => {
         const given = finalAnswers[question.id];
@@ -169,17 +187,33 @@ export default function MemoryTest({
           givenText: given ? question.options.find((o) => o.letter === given)?.text : 'keine Antwort',
           explanation: question.solution,
           cardIds: question.cardIds,
+          typeId: question.typeId,
+          typeLabel: question.typeLabel,
+          seconds: timings[question.id] ?? 0,
         };
       });
       const score = items.filter((item) => item.correct).length;
       const seconds = Math.round((Date.now() - startedAt.current) / 1000);
       setResults(items);
-      if (!embedded) addResult({ testId: TEST.id, score, max: questions.length, seconds });
+      if (!embedded) {
+        addResult({
+          testId: TEST.id,
+          score,
+          max: questions.length,
+          seconds,
+          breakdown: items.map((item) => ({
+            tag: item.typeId,
+            label: item.typeLabel,
+            correct: item.correct,
+            seconds: item.seconds,
+          })),
+        });
+      }
       feedback.done();
       setStage('result');
       onFinish?.({ testId: TEST.id, score, max: questions.length, seconds, results: items });
     },
-    [addResult, embedded, feedback, onFinish, session],
+    [addResult, embedded, feedback, flushTiming, onFinish, session],
   );
 
   const quizCountdown = useCountdown(TEST.testSeconds, {
@@ -191,26 +225,29 @@ export default function MemoryTest({
   const startQuiz = useCallback(() => {
     setIndex(0);
     setAnswers({});
+    timingsRef.current = {};
+    currentQuestionIdRef.current = null;
     startedAt.current = Date.now();
+    questionStartedAt.current = Date.now();
     setStage('quiz');
     quizCountdown.reset(TEST.testSeconds);
   }, [quizCountdown]);
 
   const startLearn = useCallback(
     (existing) => {
-      const newSession = existing ?? generateMemorySession(TEST.cardCount, TEST.questionCount);
+      const newSession = existing ?? generateMemorySession(TEST.cardCount, TEST.questionCount, { preferTypes: focusTags });
       setSession(newSession);
       setStage('learn');
       learnCountdown.reset(TEST.learnSeconds);
     },
-    [learnCountdown],
+    [focusTags, learnCountdown],
   );
 
   // Simulation: die Phase wird von außen vorgegeben und startet sofort.
   useEffect(() => {
     if (!embedded) return;
     if (initialStage === 'learn') {
-      if (!session) setSession(generateMemorySession(TEST.cardCount, TEST.questionCount));
+      if (!session) setSession(generateMemorySession(TEST.cardCount, TEST.questionCount, { preferTypes: focusTags }));
       learnCountdown.reset(TEST.learnSeconds);
     } else if (initialStage === 'quiz') {
       startedAt.current = Date.now();
@@ -220,6 +257,13 @@ export default function MemoryTest({
     // bei jedem Tick und dürfen deshalb nicht in die Abhängigkeiten.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [embedded, initialStage]);
+
+  // Beim Wechsel der Frage die Uhr auf die neue Frage stellen
+  useEffect(() => {
+    if (stage !== 'quiz' || !session) return;
+    currentQuestionIdRef.current = session.questions[index]?.id ?? null;
+    questionStartedAt.current = Date.now();
+  }, [index, session, stage]);
 
   const startBreak = () => {
     setStage('break');
@@ -328,8 +372,14 @@ export default function MemoryTest({
     };
 
     const advance = () => {
+      flushTiming();
       if (index + 1 >= session.questions.length) finish(answers);
       else setIndex(index + 1);
+    };
+
+    const goBack = () => {
+      flushTiming();
+      setIndex(Math.max(0, index - 1));
     };
 
     return (
@@ -350,7 +400,7 @@ export default function MemoryTest({
             <Button
               variant="neutral"
               size="md"
-              onClick={() => setIndex(Math.max(0, index - 1))}
+              onClick={goBack}
               disabled={index === 0}
             >
               <Icon name="chevronLeft" className="h-5 w-5" />

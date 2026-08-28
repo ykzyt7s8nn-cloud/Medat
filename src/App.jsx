@@ -19,6 +19,7 @@ const NumberSeriesTest = lazy(() => import('./screens/tests/NumberSeriesTest.jsx
 const WordFluencyTest = lazy(() => import('./screens/tests/WordFluencyTest.jsx'));
 const ImplicationsTest = lazy(() => import('./screens/tests/ImplicationsTest.jsx'));
 const SimulationScreen = lazy(() => import('./screens/SimulationScreen.jsx'));
+const TrainingScreen = lazy(() => import('./screens/TrainingScreen.jsx'));
 
 const FULLSCREENS = {
   memory: MemoryTest,
@@ -26,6 +27,7 @@ const FULLSCREENS = {
   wordFluency: WordFluencyTest,
   implications: ImplicationsTest,
   simulation: SimulationScreen,
+  training: TrainingScreen,
 };
 
 const TABS = {

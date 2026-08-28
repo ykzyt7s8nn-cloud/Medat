@@ -236,9 +236,23 @@ function distractorLetters(word, exclude) {
  * Erzeugt eine Aufgabe.
  * @param {{difficulty?: string, usedWords?: Set<string>, forceNone?: boolean}} options
  */
+/** Längenband eines Wortes – dient als Kategorie in der Statistik. */
+export function lengthBand(word) {
+  for (const [band, [min, max]] of Object.entries(DIFFICULTY_RANGES)) {
+    if (word.length >= min && word.length <= max) return band;
+  }
+  return 'mittel';
+}
+
 export function generateWordFluencyTask(options = {}) {
   const { difficulty = 'medat', usedWords } = options;
-  const pool = wordPool(difficulty);
+  let pool = wordPool(difficulty);
+  // Gezieltes Training: nur Wörter aus den angegebenen Längenbändern
+  if (options.onlyBands?.length) {
+    const wanted = new Set(options.onlyBands);
+    const filtered = SOLVABLE_NOUNS.filter((word) => wanted.has(lengthBand(word)));
+    if (filtered.length > 0) pool = filtered;
+  }
   const available = usedWords ? pool.filter((word) => !usedWords.has(word)) : pool;
   const word = pickWord(difficulty, available.length > 0 ? available : pool);
   if (usedWords) usedWords.add(word);
@@ -272,12 +286,12 @@ export function generateWordFluencyTask(options = {}) {
     correctLetter,
     options: options_,
     correctOption: options_.find((option) => option.correct).letter,
-    difficultyLabel: word.length <= 6 ? 'leicht' : word.length <= 9 ? 'mittel' : 'schwer',
+    band: lengthBand(word),
   };
 }
 
 /** Aufgabensatz mit ~20 % "Keine Antwort ist richtig" und ohne Wortwiederholung. */
-export function generateWordFluencySet(count, difficulty = 'medat') {
+export function generateWordFluencySet(count, difficulty = 'medat', options = {}) {
   const usedWords = new Set();
   const noneTarget = Math.round(count * 0.2);
   const noneFlags = shuffle([
@@ -285,7 +299,7 @@ export function generateWordFluencySet(count, difficulty = 'medat') {
     ...Array.from({ length: count - noneTarget }, () => false),
   ]);
   return noneFlags.map((forceNone, index) => ({
-    ...generateWordFluencyTask({ difficulty, usedWords, forceNone }),
+    ...generateWordFluencyTask({ difficulty, usedWords, forceNone, onlyBands: options.onlyBands }),
     index,
   }));
 }

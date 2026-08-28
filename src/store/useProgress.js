@@ -1,9 +1,18 @@
 /**
  * Fortschritt und Statistik – dauerhaft in localStorage.
  *
- * Gespeichert wird bewusst nur das Nötigste: pro abgeschlossener Übung ein
- * schlanker Eintrag. Alles Abgeleitete (Schnitt, Streak, Verlauf) wird beim
- * Lesen berechnet, damit es keine inkonsistenten Doppeldaten gibt.
+ * Zwei Ebenen:
+ *   history  – pro abgeschlossener Übung ein schlanker Eintrag
+ *   tagStats – aufsummierte Trefferquote und Zeit je Aufgaben-Kategorie
+ *
+ * Eine "Kategorie" (Tag) ist das, woran man eine Schwäche festmachen kann:
+ * bei Zahlenfolgen die Regelfamilie, beim Gedächtnistest der Fragetyp, bei den
+ * Implikationen die Figur, bei der Wortflüssigkeit die Wortlänge. Nur diese
+ * Summen werden gespeichert, nicht jede einzelne Aufgabe – das hält den
+ * Speicher klein und die Auswertung eindeutig.
+ *
+ * Alles weitere Abgeleitete (Schnitt, Streak, Verlauf) wird beim Lesen
+ * berechnet, damit es keine widersprüchlichen Doppeldaten gibt.
  */
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
@@ -25,19 +34,75 @@ export const useProgress = create()(
       /** [{ id, testId, score, max, seconds, at, mode }] */
       history: [],
 
+      /** { [testId]: { [tag]: { label, attempts, correct, seconds } } } */
+      tagStats: {},
+
+      /**
+       * Ergebnis eines Durchgangs ablegen.
+       * @param {{testId, score, max, seconds, mode?, breakdown?: Array<{tag, label, correct, seconds}>}} result
+       */
       addResult: (result) =>
         set((state) => {
+          const { breakdown, ...rest } = result;
           const entry = {
             id: `${result.testId}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
             at: Date.now(),
             mode: 'practice',
-            ...result,
+            ...rest,
           };
           const sameTest = state.history.filter((item) => item.testId === entry.testId);
           const others = state.history.filter((item) => item.testId !== entry.testId);
           const trimmed = [...sameTest, entry].slice(-HISTORY_LIMIT);
-          return { history: [...others, ...trimmed].sort((a, b) => a.at - b.at) };
+
+          // Kategorien aufsummieren
+          const forTest = { ...(state.tagStats[entry.testId] ?? {}) };
+          for (const item of breakdown ?? []) {
+            if (!item?.tag) continue;
+            const current = forTest[item.tag] ?? { label: item.label ?? item.tag, attempts: 0, correct: 0, seconds: 0 };
+            forTest[item.tag] = {
+              label: item.label ?? current.label,
+              attempts: current.attempts + 1,
+              correct: current.correct + (item.correct ? 1 : 0),
+              seconds: current.seconds + (item.seconds ?? 0),
+            };
+          }
+
+          return {
+            history: [...others, ...trimmed].sort((a, b) => a.at - b.at),
+            tagStats: { ...state.tagStats, [entry.testId]: forTest },
+          };
         }),
+
+      /**
+       * Kategorien eines Untertests, schwächste zuerst.
+       * Kategorien mit weniger als `minAttempts` Versuchen gelten als noch nicht
+       * belastbar und werden ans Ende sortiert.
+       */
+      tagsFor: (testId, { minAttempts = 3 } = {}) => {
+        const stats = get().tagStats[testId] ?? {};
+        return Object.entries(stats)
+          .map(([tag, value]) => ({
+            tag,
+            ...value,
+            accuracy: value.attempts > 0 ? value.correct / value.attempts : 0,
+            secondsPerTask: value.attempts > 0 ? value.seconds / value.attempts : 0,
+            reliable: value.attempts >= minAttempts,
+          }))
+          .sort((a, b) => {
+            if (a.reliable !== b.reliable) return a.reliable ? -1 : 1;
+            return a.accuracy - b.accuracy;
+          });
+      },
+
+      /** Die schwächsten Kategorien eines Untertests (für das gezielte Training). */
+      weakTags: (testId, { limit = 3, threshold = 0.8, minAttempts = 3 } = {}) =>
+        get()
+          .tagsFor(testId, { minAttempts })
+          .filter((item) => item.reliable && item.accuracy < threshold)
+          .slice(0, limit),
+
+      /** Gibt es überhaupt genug Daten für eine Schwachstellen-Analyse? */
+      hasTagData: (testId) => Object.keys(get().tagStats[testId] ?? {}).length > 0,
 
       historyFor: (testId, limit = 30) =>
         get().history.filter((item) => item.testId === testId).slice(-limit),
@@ -74,8 +139,15 @@ export const useProgress = create()(
         return count;
       },
 
-      resetAll: () => set({ history: [] }),
+      resetAll: () => set({ history: [], tagStats: {} }),
     }),
-    { name: PROGRESS_KEY, version: 1 },
+    {
+      name: PROGRESS_KEY,
+      version: 2,
+      // Bestehende Installationen behalten ihren Verlauf; die Kategorie-
+      // Statistik startet leer und füllt sich ab der nächsten Übung.
+      migrate: (persisted) => ({ tagStats: {}, ...persisted }),
+      merge: (persisted, current) => ({ ...current, ...persisted, tagStats: persisted?.tagStats ?? {} }),
+    },
   ),
 );

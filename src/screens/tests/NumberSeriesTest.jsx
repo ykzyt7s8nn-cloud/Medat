@@ -25,6 +25,7 @@ import {
   generateNumberSeriesTask,
 } from '../../engines/numberSeries.js';
 import { pick } from '../../lib/random.js';
+import { secondsSince } from '../../lib/format.js';
 import { useCountdown } from '../../hooks/useCountdown.js';
 import { useFeedback } from '../../hooks/useFeedback.js';
 import { useNavigation } from '../../store/useNavigation.js';
@@ -33,7 +34,7 @@ import { useSettings } from '../../store/useSettings.js';
 
 const TEST = TESTS.numberSeries;
 
-export default function NumberSeriesTest({ embedded = false, onFinish }) {
+export default function NumberSeriesTest({ embedded = false, onFinish, focusTags = null }) {
   const closeScreen = useNavigation((state) => state.closeScreen);
   const addResult = useProgress((state) => state.addResult);
   const difficulty = useSettings((state) => state.difficulty.numberSeries);
@@ -50,6 +51,7 @@ export default function NumberSeriesTest({ embedded = false, onFinish }) {
   const levelRef = useRef(START_LEVEL[difficulty] ?? 3);
   const streakRef = useRef({ correct: 0, wrong: 0 });
   const lastFamilyRef = useRef(null);
+  const taskStartedAt = useRef(Date.now());
   const startedAt = useRef(Date.now());
 
   // In der Simulation gilt immer das Originalzeitlimit.
@@ -63,20 +65,34 @@ export default function NumberSeriesTest({ embedded = false, onFinish }) {
     const options = adaptive && difficulty !== 'gemischt'
       ? { level: Math.min(7, Math.max(floor, levelRef.current + jitter)), excludeFamily: lastFamilyRef.current }
       : { difficulty, excludeFamily: lastFamilyRef.current };
+    if (focusTags?.length) options.onlyFamilies = focusTags;
     const task = generateNumberSeriesTask(options);
     lastFamilyRef.current = task.family;
+    taskStartedAt.current = Date.now();
     setTask(task);
     setAnswers(['', '']);
     setActiveField(0);
     setChecked(null);
-  }, [adaptive, difficulty]);
+  }, [adaptive, difficulty, focusTags]);
 
   const finish = useCallback(
     (finalResults) => {
       const score = finalResults.filter((item) => item.correct).length;
       const seconds = Math.round((Date.now() - startedAt.current) / 1000);
       if (!embedded) {
-        addResult({ testId: TEST.id, score, max: TEST.questionCount, seconds, difficulty });
+        addResult({
+          testId: TEST.id,
+          score,
+          max: TEST.questionCount,
+          seconds,
+          difficulty,
+          breakdown: finalResults.map((item) => ({
+            tag: item.family,
+            label: item.familyLabel,
+            correct: item.correct,
+            seconds: item.seconds,
+          })),
+        });
       }
       feedback.done();
       setPhase('result');
@@ -170,7 +186,9 @@ export default function NumberSeriesTest({ embedded = false, onFinish }) {
       givenText: answers.some((value) => value !== '') ? answers.map((v) => v || '–').join(', ') : 'keine Eingabe',
       explanation: task.rule,
       level: task.level,
+      family: task.family,
       familyLabel: task.familyLabel,
+      seconds: secondsSince(taskStartedAt.current),
     };
     setResults((current) => [...current, entry]);
   };

@@ -157,6 +157,7 @@ const joinAllergies = (card) => card.allergies.join(', ');
 const QUESTION_TYPES = [
   {
     id: 'bloodOfPerson',
+    label: 'Blutgruppe einer Person',
     build(cards, noneCorrect) {
       const card = pick(cards);
       const options = buildOptions(card.bloodType, BLOOD_TYPES, noneCorrect);
@@ -171,6 +172,7 @@ const QUESTION_TYPES = [
   },
   {
     id: 'birthdayOfPerson',
+    label: 'Geburtstag einer Person',
     build(cards, noneCorrect) {
       const card = pick(cards);
       const options = buildOptions(
@@ -189,6 +191,7 @@ const QUESTION_TYPES = [
   },
   {
     id: 'bloodPressureOfPerson',
+    label: 'Blutdruck einer Person',
     build(cards, noneCorrect) {
       const card = pick(cards);
       const options = buildOptions(
@@ -207,6 +210,7 @@ const QUESTION_TYPES = [
   },
   {
     id: 'allergiesOfBloodType',
+    label: 'Allergien zu einer Blutgruppe',
     build(cards, noneCorrect) {
       const candidates = uniqueBy(cards, (card) => card.bloodType);
       if (candidates.length === 0) return null;
@@ -223,6 +227,7 @@ const QUESTION_TYPES = [
   },
   {
     id: 'allergiesOfPerson',
+    label: 'Allergien einer Person',
     build(cards, noneCorrect) {
       const card = pick(cards);
       const options = buildOptions(joinAllergies(card), cards.map(joinAllergies), noneCorrect);
@@ -237,6 +242,7 @@ const QUESTION_TYPES = [
   },
   {
     id: 'personWithAllergen',
+    label: 'Person zu einem Allergen',
     build(cards, noneCorrect) {
       const candidates = allergenOwners(cards).filter(([, owners]) => owners.length === 1);
       if (candidates.length === 0) return null;
@@ -254,6 +260,7 @@ const QUESTION_TYPES = [
   },
   {
     id: 'personByBirthday',
+    label: 'Person zu einem Geburtsdatum',
     build(cards, noneCorrect) {
       const card = pick(cards);
       const options = buildOptions(card.fullName, cards.map((c) => c.fullName), noneCorrect);
@@ -268,6 +275,7 @@ const QUESTION_TYPES = [
   },
   {
     id: 'bloodTypeByAllergen',
+    label: 'Blutgruppe über ein Allergen',
     build(cards, noneCorrect) {
       const candidates = allergenOwners(cards).filter(([, owners]) => owners.length === 1);
       if (candidates.length === 0) return null;
@@ -285,6 +293,7 @@ const QUESTION_TYPES = [
   },
   {
     id: 'birthdayByBloodType',
+    label: 'Geburtstag über die Blutgruppe',
     build(cards, noneCorrect) {
       const candidates = uniqueBy(cards, (card) => card.bloodType);
       if (candidates.length === 0) return null;
@@ -301,6 +310,7 @@ const QUESTION_TYPES = [
   },
   {
     id: 'medicationPerson',
+    label: 'Medikamenteneinnahme',
     build(cards, noneCorrect) {
       const takers = cards.filter((card) => card.medication === 'Ja');
       const nonTakers = cards.filter((card) => card.medication === 'Nein');
@@ -328,6 +338,7 @@ const QUESTION_TYPES = [
   },
   {
     id: 'glassesPerson',
+    label: 'Brillenträger/in',
     build(cards, noneCorrect) {
       const wearers = cards.filter((card) => card.glasses === 'Ja');
       const nonWearers = cards.filter((card) => card.glasses === 'Nein');
@@ -355,6 +366,7 @@ const QUESTION_TYPES = [
   },
   {
     id: 'allergyCount',
+    label: 'Anzahl der Allergien',
     build(cards, noneCorrect) {
       const card = pick(cards);
       const counts = ['1', '2', '3', '4'];
@@ -371,6 +383,7 @@ const QUESTION_TYPES = [
   },
   {
     id: 'personWithAllergenCategory',
+    label: 'Allergen einer Person',
     build(cards, noneCorrect) {
       const candidates = allergenOwners(cards).filter(([, owners]) => owners.length === 1);
       if (candidates.length === 0) return null;
@@ -391,12 +404,19 @@ const QUESTION_TYPES = [
   },
 ];
 
+/** Alle Fragetypen mit ihrer Bezeichnung – für die Schwachstellen-Statistik. */
+export const QUESTION_TYPE_LABELS = Object.fromEntries(
+  QUESTION_TYPES.map((type) => [type.id, type.label]),
+);
+
 /**
  * Erzeugt den Fragensatz zur Prüfphase.
  * @param {Array} cards Die zuvor gelernten Ausweise
  * @param {number} count Anzahl Fragen (MedAT: 25)
+ * @param {{preferTypes?: string[]}} options Gezieltes Training: diese Fragetypen
+ *        bevorzugen (die übrigen füllen nur auf, wenn nicht genug zustande kommt)
  */
-export function generateQuestions(cards, count = 25) {
+export function generateQuestions(cards, count = 25, options = {}) {
   const questions = [];
   const usedPrompts = new Set();
   const noneTarget = Math.max(1, Math.round(count * NONE_CORRECT_RATE));
@@ -405,20 +425,38 @@ export function generateQuestions(cards, count = 25) {
     ...Array.from({ length: count - noneTarget }, () => false),
   ]);
 
-  let typeQueue = shuffle(QUESTION_TYPES);
+  const preferred = options.preferTypes?.length
+    ? QUESTION_TYPES.filter((type) => options.preferTypes.includes(type.id))
+    : [];
+
+  // Beim gezielten Training rotieren zuerst nur die gewählten Fragetypen.
+  // Acht Ausweise geben aber nicht beliebig viele verschiedene Fragen eines
+  // Typs her – wenn nichts mehr Neues entsteht, füllen die übrigen Typen auf,
+  // damit der Durchgang trotzdem vollständig wird.
+  let rotation = preferred.length > 0 ? preferred : QUESTION_TYPES;
+  let typeQueue = shuffle(rotation);
   let guard = 0;
+  let sinceLastQuestion = 0;
   while (questions.length < count && guard < count * 60) {
     guard += 1;
-    if (typeQueue.length === 0) typeQueue = shuffle(QUESTION_TYPES);
+    sinceLastQuestion += 1;
+    if (sinceLastQuestion > rotation.length * 4 && rotation !== QUESTION_TYPES) {
+      rotation = QUESTION_TYPES;
+      typeQueue = shuffle(rotation);
+      sinceLastQuestion = 0;
+    }
+    if (typeQueue.length === 0) typeQueue = shuffle(rotation);
     const type = typeQueue.pop();
     const noneCorrect = noneFlags[questions.length];
     const built = type.build(cards, noneCorrect);
     if (!built || usedPrompts.has(built.prompt)) continue;
     usedPrompts.add(built.prompt);
+    sinceLastQuestion = 0;
     questions.push({
       id: `q-${questions.length}`,
       index: questions.length,
       typeId: type.id,
+      typeLabel: type.label,
       ...built,
       correctLetter: built.options.find((option) => option.correct).letter,
     });
@@ -427,7 +465,7 @@ export function generateQuestions(cards, count = 25) {
 }
 
 /** Kompletter Durchgang: Ausweise + Fragen. */
-export function generateMemorySession(cardCount = CARD_COUNT, questionCount = 25) {
+export function generateMemorySession(cardCount = CARD_COUNT, questionCount = 25, options = {}) {
   const cards = generateCards(cardCount);
-  return { cards, questions: generateQuestions(cards, questionCount) };
+  return { cards, questions: generateQuestions(cards, questionCount, options) };
 }

@@ -7,7 +7,9 @@
 import Screen from '../components/layout/Screen.jsx';
 import Icon from '../components/ui/Icon.jsx';
 import LineChart from '../components/charts/LineChart.jsx';
+import Tappable from '../components/ui/Tappable.jsx';
 import { TESTS, TEST_ORDER } from '../data/testConfig.js';
+import { useNavigation } from '../store/useNavigation.js';
 import { useProgress } from '../store/useProgress.js';
 import { formatTime } from '../hooks/useCountdown.js';
 
@@ -26,6 +28,7 @@ function StatCard({ icon, label, value, tint }) {
 }
 
 export default function StatsScreen() {
+  const openScreen = useNavigation((state) => state.openScreen);
   const history = useProgress((state) => state.history);
   const streak = useProgress((state) => state.streak)();
   const totalSeconds = useProgress((state) => state.totalSeconds)();
@@ -50,6 +53,22 @@ export default function StatsScreen() {
           <StatCard icon="flame" tint="#FF9500" value={`${streak}`} label={streak === 1 ? 'Tag Streak' : 'Tage Streak'} />
           <StatCard icon="clock" tint="#007AFF" value={formatTime(totalSeconds)} label="Gesamt geübt" />
         </div>
+
+        <Tappable
+          onClick={() => openScreen('training')}
+          className="ios-card flex w-full items-center gap-3 px-4 py-3.5 text-left"
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-ios-blue/10 text-ios-blue">
+            <Icon name="target" className="h-5 w-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[15px] font-semibold">Schwachstellen-Training</span>
+            <span className="block text-[13px] text-black/55 dark:text-white/55">
+              Trefferquote nach Aufgabentyp – und gezielt das üben, was hakt
+            </span>
+          </span>
+          <Icon name="chevronRight" className="h-5 w-5 shrink-0 text-black/25 dark:text-white/25" />
+        </Tappable>
 
         {weakest && (
           <section className="ios-card flex items-start gap-3 px-4 py-3.5">

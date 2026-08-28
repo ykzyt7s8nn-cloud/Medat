@@ -164,11 +164,15 @@ const STRENGTH = { A: 0, E: 1, I: 2, O: 3 };
 
 /**
  * Erzeugt eine einzelne Aufgabe.
- * @param {{difficulty?: string, forceNone?: boolean, usedTriples?: Set<number>}} options
+ * @param {{difficulty?, forceNone?, usedTriples?, onlyFigures?: number[]}} options
  */
 export function generateSyllogismTask(options = {}) {
   const { difficulty = 'medat', usedTriples } = options;
-  const profile = profileFor(difficulty);
+  const baseProfile = profileFor(difficulty);
+  // Gezieltes Training: nur die angegebenen Figuren
+  const profile = options.onlyFigures?.length
+    ? { ...baseProfile, figures: options.onlyFigures }
+    : baseProfile;
   const wantNone = options.forceNone ?? chance(profile.noneRate);
 
   for (let attempt = 0; attempt < 400; attempt += 1) {
@@ -271,7 +275,7 @@ function buildExplanation({ wantNone, correctStatement, terms, premises, valid }
 }
 
 /** Erzeugt einen kompletten Aufgabensatz ohne Wiederholung der Begriffstripel. */
-export function generateSyllogismSet(count, difficulty = 'medat') {
+export function generateSyllogismSet(count, difficulty = 'medat', options = {}) {
   const usedTriples = new Set();
   const tasks = [];
   let noneCount = 0;
@@ -280,7 +284,7 @@ export function generateSyllogismSet(count, difficulty = 'medat') {
     const remaining = count - i;
     const targetNone = Math.max(1, Math.round(count * 0.18));
     const forceNone = noneCount < targetNone && remaining <= targetNone - noneCount ? true : undefined;
-    const task = generateSyllogismTask({ difficulty, usedTriples, forceNone });
+    const task = generateSyllogismTask({ difficulty, usedTriples, forceNone, onlyFigures: options.onlyFigures });
     if (!task) continue;
     if (task.correctLetter === 'e') noneCount += 1;
     tasks.push({ ...task, index: tasks.length });

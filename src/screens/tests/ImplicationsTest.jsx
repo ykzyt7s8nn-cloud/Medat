@@ -21,12 +21,18 @@ import TestIntro from '../../components/TestIntro.jsx';
 import { DIFFICULTIES, TESTS } from '../../data/testConfig.js';
 import { generateSyllogismSet } from '../../engines/syllogism.js';
 import { useCountdown } from '../../hooks/useCountdown.js';
+import { secondsSince } from '../../lib/format.js';
 import { useFeedback } from '../../hooks/useFeedback.js';
 import { useNavigation } from '../../store/useNavigation.js';
 import { useProgress } from '../../store/useProgress.js';
 import { useSettings } from '../../store/useSettings.js';
 
 const TEST = TESTS.implications;
+
+/** Kategorie-Tags der Statistik ("figur-3") zurück in Figurnummern übersetzen. */
+const figuresFrom = (tags) => (tags?.length
+  ? tags.map((tag) => Number(String(tag).replace('figur-', ''))).filter(Number.isFinite)
+  : null);
 
 function Premises({ premises }) {
   return (
@@ -44,7 +50,7 @@ function Premises({ premises }) {
   );
 }
 
-export default function ImplicationsTest({ embedded = false, onFinish }) {
+export default function ImplicationsTest({ embedded = false, onFinish, focusTags = null }) {
   const closeScreen = useNavigation((state) => state.closeScreen);
   const addResult = useProgress((state) => state.addResult);
   const difficulty = useSettings((state) => state.difficulty.implications);
@@ -58,12 +64,27 @@ export default function ImplicationsTest({ embedded = false, onFinish }) {
   const [selected, setSelected] = useState(null);
   const [results, setResults] = useState([]);
   const startedAt = useRef(Date.now());
+  const taskStartedAt = useRef(Date.now());
 
   const finish = useCallback(
     (finalResults) => {
       const score = finalResults.filter((item) => item.correct).length;
       const seconds = Math.round((Date.now() - startedAt.current) / 1000);
-      if (!embedded) addResult({ testId: TEST.id, score, max: TEST.questionCount, seconds, difficulty });
+      if (!embedded) {
+        addResult({
+          testId: TEST.id,
+          score,
+          max: TEST.questionCount,
+          seconds,
+          difficulty,
+          breakdown: finalResults.map((item) => ({
+            tag: `figur-${item.figure}`,
+            label: `Figur ${item.figure}`,
+            correct: item.correct,
+            seconds: item.seconds,
+          })),
+        });
+      }
       feedback.done();
       setPhase('result');
       onFinish?.({ testId: TEST.id, score, max: TEST.questionCount, seconds, results: finalResults });
@@ -79,20 +100,21 @@ export default function ImplicationsTest({ embedded = false, onFinish }) {
 
   const start = useCallback(() => {
     startedAt.current = Date.now();
-    setTasks(generateSyllogismSet(TEST.questionCount, difficulty));
+    setTasks(generateSyllogismSet(TEST.questionCount, difficulty, { onlyFigures: figuresFrom(focusTags) }));
     setIndex(0);
     setSelected(null);
     setResults([]);
+    taskStartedAt.current = Date.now();
     setPhase('running');
     countdown.reset(TEST.testSeconds);
-  }, [countdown, difficulty]);
+  }, [countdown, difficulty, focusTags]);
 
   useEffect(() => {
     if (embedded && tasks.length === 0) {
       startedAt.current = Date.now();
-      setTasks(generateSyllogismSet(TEST.questionCount, difficulty));
+      setTasks(generateSyllogismSet(TEST.questionCount, difficulty, { onlyFigures: figuresFrom(focusTags) }));
     }
-  }, [difficulty, embedded, tasks.length]);
+  }, [difficulty, embedded, focusTags, tasks.length]);
 
   const task = tasks[index];
 
@@ -111,6 +133,8 @@ export default function ImplicationsTest({ embedded = false, onFinish }) {
         correctText: task.options.find((o) => o.correct).text,
         givenText: option.text,
         explanation: task.explanation,
+        figure: task.figure,
+        seconds: secondsSince(taskStartedAt.current),
         task,
       },
     ]);
@@ -121,6 +145,7 @@ export default function ImplicationsTest({ embedded = false, onFinish }) {
     else {
       setIndex(index + 1);
       setSelected(null);
+      taskStartedAt.current = Date.now();
     }
   };
 

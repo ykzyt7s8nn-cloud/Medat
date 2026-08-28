@@ -576,11 +576,18 @@ function toTask(generator) {
 
 /**
  * Erzeugt eine Aufgabe.
- * @param {{level?: number, difficulty?: string, excludeFamily?: string}} options
+ * @param {{level?, difficulty?, excludeFamily?, onlyFamilies?: string[]}} options
  */
 export function generateNumberSeriesTask(options = {}) {
   const level = options.level ?? pick(DIFFICULTY_LEVELS[options.difficulty] ?? DIFFICULTY_LEVELS.medat);
   let candidates = generatorsForLevel(level);
+  // Gezieltes Training: nur die angegebenen Regelfamilien, notfalls über alle
+  // Stufen hinweg (eine Familie kommt nicht auf jeder Stufe vor).
+  if (options.onlyFamilies?.length) {
+    const wanted = new Set(options.onlyFamilies);
+    const onLevel = candidates.filter((generator) => wanted.has(generator.family));
+    candidates = onLevel.length > 0 ? onLevel : GENERATORS.filter((generator) => wanted.has(generator.family));
+  }
   // Möglichst nicht zweimal hintereinander dieselbe Regelfamilie
   if (options.excludeFamily) {
     const filtered = candidates.filter((generator) => generator.family !== options.excludeFamily);
@@ -604,14 +611,20 @@ export function generateNumberSeriesTask(options = {}) {
  * Achtet auf zwei Dinge: keine doppelte Folge und eine echte Durchmischung der
  * Regelfamilien – sonst kämen leicht fünf Fibonacci-Aufgaben hintereinander.
  */
-export function generateNumberSeriesSet(count, difficulty = 'medat') {
+export function generateNumberSeriesSet(count, difficulty = 'medat', options = {}) {
   const seen = new Set();
   const tasks = [];
   let lastFamily = null;
   let guard = 0;
+  // Beim gezielten Training auf eine einzige Familie darf sie sich wiederholen.
+  const allowRepeat = (options.onlyFamilies?.length ?? 0) === 1;
   while (tasks.length < count && guard < count * 40) {
     guard += 1;
-    const task = generateNumberSeriesTask({ difficulty, excludeFamily: lastFamily });
+    const task = generateNumberSeriesTask({
+      difficulty,
+      excludeFamily: allowRepeat ? null : lastFamily,
+      onlyFamilies: options.onlyFamilies,
+    });
     const key = task.full.join(',');
     if (seen.has(key)) continue;
     seen.add(key);
