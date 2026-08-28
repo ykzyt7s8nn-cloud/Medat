@@ -12,6 +12,7 @@ import { TESTS, TEST_ORDER } from '../data/testConfig.js';
 import { useNavigation } from '../store/useNavigation.js';
 import { useProgress } from '../store/useProgress.js';
 import { formatTime } from '../hooks/useCountdown.js';
+import { formatDuration } from '../lib/format.js';
 
 function StatCard({ icon, label, value, tint }) {
   return (
@@ -33,12 +34,23 @@ export default function StatsScreen() {
   const streak = useProgress((state) => state.streak)();
   const totalSeconds = useProgress((state) => state.totalSeconds)();
 
+  const tagStats = useProgress((state) => state.tagStats);
+
   const perTest = TEST_ORDER.map((id) => {
     const items = history.filter((item) => item.testId === id).slice(-30);
     const percents = items.map((item) => (item.score / item.max) * 100);
     const average = percents.length > 0 ? percents.reduce((a, b) => a + b, 0) / percents.length : null;
     const best = percents.length > 0 ? Math.max(...percents) : null;
-    return { test: TESTS[id], items, percents, average, best };
+
+    // Zeit pro Aufgabe aus der Kategorie-Statistik (dort wird sie pro Aufgabe
+    // gemessen, während history nur die Gesamtdauer kennt).
+    const tags = Object.values(tagStats[id] ?? {});
+    const attempts = tags.reduce((sum, tag) => sum + tag.attempts, 0);
+    const tagSeconds = tags.reduce((sum, tag) => sum + tag.seconds, 0);
+    const perTask = attempts > 0 && tagSeconds > 0 ? tagSeconds / attempts : null;
+    const budget = TESTS[id].testSeconds / TESTS[id].questionCount;
+
+    return { test: TESTS[id], items, percents, average, best, perTask, budget };
   });
 
   const withData = perTest.filter((entry) => entry.average !== null);
@@ -84,7 +96,7 @@ export default function StatsScreen() {
           </section>
         )}
 
-        {perTest.map(({ test, items, percents, average, best }) => (
+        {perTest.map(({ test, items, percents, average, best, perTask, budget }) => (
           <section key={test.id} className="ios-card px-4 py-4">
             <header className="mb-3 flex items-center gap-2.5">
               <span
@@ -117,6 +129,15 @@ export default function StatsScreen() {
                 </dd>
               </div>
             </dl>
+
+            {perTask !== null && (
+              <p className="mt-2 text-center text-[12px] text-black/45 dark:text-white/45">
+                ⌀ {formatDuration(perTask)} pro Aufgabe ·{' '}
+                <span className={perTask > budget ? 'text-ios-red' : 'text-ios-green'}>
+                  {perTask > budget ? 'über' : 'im'} Zeitbudget von {formatDuration(budget)}
+                </span>
+              </p>
+            )}
           </section>
         ))}
 

@@ -212,6 +212,7 @@ export default function ImplicationsTest({ embedded = false, onFinish, focusTags
           max={TEST.questionCount}
           seconds={Math.round((Date.now() - startedAt.current) / 1000)}
           items={results}
+          limitSeconds={TEST.testSeconds}
           renderReview={(item) => (
             <div className="space-y-3">
               <p className="text-[14px] text-black/60 dark:text-white/60">{item.explanation}</p>

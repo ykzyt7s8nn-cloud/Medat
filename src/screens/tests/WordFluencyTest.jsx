@@ -213,6 +213,7 @@ export default function WordFluencyTest({ embedded = false, onFinish, focusTags 
           max={TEST.questionCount}
           seconds={Math.round((Date.now() - startedAt.current) / 1000)}
           items={results}
+          limitSeconds={TEST.testSeconds}
           renderReview={(item) => (
             <div className="space-y-1">
               <p className="text-[15px]">

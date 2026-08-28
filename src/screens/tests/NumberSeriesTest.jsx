@@ -282,6 +282,7 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
           max={TEST.questionCount}
           seconds={Math.round((Date.now() - startedAt.current) / 1000)}
           items={results}
+          limitSeconds={TEST.testSeconds}
           renderReview={(item) => (
             <div className="space-y-2">
               <p className="tabular text-[15px] font-medium">
