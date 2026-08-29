@@ -10,7 +10,7 @@ import Screen from '../../components/layout/Screen.jsx';
 import Button from '../../components/ui/Button.jsx';
 import Icon from '../../components/ui/Icon.jsx';
 import Tappable from '../../components/ui/Tappable.jsx';
-import { SUBJECTS, loadAllSubjects } from '../../data/bms/index.js';
+import { SUBJECTS, loadAllSubjects, loadSubject } from '../../data/bms/index.js';
 import { useNavigation } from '../../store/useNavigation.js';
 import { useBmsProgress } from '../../store/useBmsProgress.js';
 
@@ -21,40 +21,53 @@ export default function BmsEntryScreen({ subjectId, entryId }) {
   const toggleRead = useBmsProgress((state) => state.toggleRead);
   const readEntries = useBmsProgress((state) => state.readEntries);
   const [all, setAll] = useState(null);
+  const [primary, setPrimary] = useState(null);
   const [currentId, setCurrentId] = useState(entryId);
 
+  // Zuerst nur das Fach des Eintrags laden – das genügt für die Anzeige und
+  // spart beim Öffnen die übrigen drei Fächer.
   useEffect(() => {
+    let active = true;
+    loadSubject(subjectId).then((data) => { if (active) setPrimary({ [subjectId]: data }); });
+    return () => { active = false; };
+  }, [subjectId]);
+
+  const loaded = all ?? primary;
+
+  const index = useMemo(() => {
+    const map = new Map();
+    if (!loaded) return map;
+    for (const [id, content] of Object.entries(loaded)) {
+      for (const topic of content.topics) {
+        for (const entry of topic.entries) map.set(entry.id, { subjectId: id, topic, entry });
+      }
+    }
+    return map;
+  }, [loaded]);
+
+  const found = index.get(currentId) ?? null;
+
+  // Die restlichen Fächer erst nachladen, wenn sie wirklich gebraucht werden:
+  // für einen Eintrag aus einem anderen Fach oder einen fachübergreifenden
+  // Querverweis. Die meisten Einträge kommen ohne aus.
+  useEffect(() => {
+    if (!primary || all) return undefined;
+    const missing = !found || (found.entry.related ?? []).some((id) => !index.has(id));
+    if (!missing) return undefined;
     let active = true;
     loadAllSubjects().then((data) => { if (active) setAll(data); });
     return () => { active = false; };
-  }, []);
+  }, [all, found, index, primary]);
 
   // Ein geöffneter Eintrag zählt als gelesen.
   useEffect(() => { markRead(currentId); }, [currentId, markRead]);
 
-  const found = useMemo(() => {
-    if (!all) return null;
-    for (const [id, content] of Object.entries(all)) {
-      for (const topic of content.topics) {
-        const entry = topic.entries.find((item) => item.id === currentId);
-        if (entry) return { subjectId: id, topic, entry };
-      }
-    }
-    return null;
-  }, [all, currentId]);
+  const relatedEntries = useMemo(
+    () => (found?.entry.related ?? []).map((id) => index.get(id)?.entry).filter(Boolean),
+    [found, index],
+  );
 
-  const relatedEntries = useMemo(() => {
-    if (!all || !found) return [];
-    const index = new Map();
-    for (const content of Object.values(all)) {
-      for (const topic of content.topics) {
-        for (const entry of topic.entries) index.set(entry.id, entry);
-      }
-    }
-    return (found.entry.related ?? []).map((id) => index.get(id)).filter(Boolean);
-  }, [all, found]);
-
-  if (!all) {
+  if (!loaded) {
     return (
       <Screen title="Lexikon" onClose={closeScreen}>
         <p className="py-8 text-center text-[14px] text-black/45 dark:text-white/45">Lädt …</p>
@@ -63,10 +76,12 @@ export default function BmsEntryScreen({ subjectId, entryId }) {
   }
 
   if (!found) {
+    // Solange nur das Startfach geladen ist, kann der Eintrag noch in einem
+    // anderen Fach liegen – dann warten statt eine Fehlmeldung zu zeigen.
     return (
       <Screen title="Lexikon" onClose={closeScreen}>
         <p className="py-8 text-center text-[14px] text-black/45 dark:text-white/45">
-          Dieser Eintrag ist noch nicht hinterlegt.
+          {all ? 'Dieser Eintrag ist noch nicht hinterlegt.' : 'Lädt …'}
         </p>
       </Screen>
     );

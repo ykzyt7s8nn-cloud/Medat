@@ -39,7 +39,7 @@ const DETAILS = {
 
 export default function InfoScreen() {
   return (
-    <Screen title="Info" subtitle="KFF-Untertests im MedAT">
+    <Screen title="Info" subtitle="Die Testteile im MedAT">
       <div className="space-y-4 pb-6">
         <section className="ios-card px-4 py-4">
           <h2 className="text-[17px] font-bold">Kognitive Fähigkeiten und Fertigkeiten</h2>
@@ -47,6 +47,20 @@ export default function InfoScreen() {
             Der KFF-Teil des MedAT besteht aus fünf Untertests. Diese App trainiert alle fünf – in
             der Simulation laufen sie in der echten Reihenfolge mit den Originalzeiten ab.
           </p>
+        </section>
+
+        <section className="ios-card px-4 py-4">
+          <h2 className="text-[17px] font-bold">Basiskenntnistest (BMS)</h2>
+          <p className="mt-1.5 text-[14px] leading-relaxed text-black/65 dark:text-white/65">
+            Der BMS macht 40 % der Gesamtwertung aus und prüft Biologie, Chemie, Physik und
+            Mathematik auf Maturaniveau: 94 Fragen in 75 Minuten, aufgeteilt in 40 Biologie,
+            24 Chemie, 18 Physik und 12 Mathematik.
+          </p>
+          <ul className="mt-2 space-y-1.5 text-[14px] leading-snug text-black/65 dark:text-white/65">
+            <li>Im Lexikon steht zu jedem Stichwort eine Erklärung mit Schlüsselfakten und Querverweisen.</li>
+            <li>Im Quiz lässt sich ein einzelnes Thema, ein ganzes Fach oder die volle Simulation üben.</li>
+            <li>Nach jeder Antwort wird erklärt, warum sie richtig oder falsch ist – mit Link ins Lexikon.</li>
+          </ul>
         </section>
 
         {TEST_ORDER.map((id) => {

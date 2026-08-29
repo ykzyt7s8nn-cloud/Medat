@@ -1,15 +1,9 @@
 /**
- * BMS – Biologie: Lexikon und Fragen.
- *
- * Niveau: österreichische Matura. Die Erklärungen sind bewusst kompakt
- * gehalten – sie sollen das Stichwort sicher abdecken, nicht ein Lehrbuch
- * ersetzen. Die Schlüsselfakten sind auf die typischen MC-Fallen zugeschnitten.
- *
- * Diese Datei wird erst geladen, wenn Biologie geöffnet wird (siehe index.js).
+ * Biologie – Thema "Die menschliche Zelle".
+ * Teil des BMS-Lexikons, siehe src/data/bms/index.js für das Schema.
  */
 
-export const TOPICS = [
-  {
+export const TOPIC = {
     id: 'bio-zelle',
     title: 'Die menschliche Zelle',
     summary: 'Aufbau, Organellen, Transport und Lebenszyklus der Zelle',
@@ -171,8 +165,7 @@ export const TOPICS = [
         related: ['bio-zelle-teilung', 'bio-gen-krebs', 'bio-zelle-lysosomen'],
       },
     ],
-  },
-];
+  };
 
 export const QUESTIONS = [
   {

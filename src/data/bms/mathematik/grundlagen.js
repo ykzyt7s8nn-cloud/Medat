@@ -1,0 +1,198 @@
+/** Mathematik – Thema "Zahlen, Terme und Gleichungen". */
+
+export const TOPIC = {
+  id: 'mat-grundlagen',
+  title: 'Zahlen und Gleichungen',
+  summary: 'Bruch- und Potenzrechnen, Terme, lineare Gleichungen',
+  entries: [
+    {
+      id: 'mat-grundlagen-bruch',
+      title: 'Bruch- und Prozentrechnung',
+      text: 'Brüche werden addiert, indem man sie zuerst auf einen gemeinsamen Nenner bringt und dann die Zähler addiert – die Nenner werden dabei nicht addiert. Multipliziert wird dagegen einfach Zähler mal Zähler und Nenner mal Nenner. Durch einen Bruch teilt man, indem man mit dem Kehrwert multipliziert. Ein Prozentsatz ist nichts anderes als ein Bruch mit dem Nenner hundert; der Prozentwert ergibt sich, indem man den Grundwert mit dem Prozentsatz multipliziert. Wichtig ist der Bezugspunkt: Eine Erhöhung um zwanzig Prozent und eine anschließende Senkung um zwanzig Prozent führen nicht zum Ausgangswert zurück, weil sich die zweite Rechnung auf den bereits erhöhten Wert bezieht.',
+      facts: [
+        'Addition nur über den gemeinsamen Nenner',
+        'Multiplikation: Zähler mal Zähler, Nenner mal Nenner',
+        'Division durch einen Bruch heißt Multiplikation mit dem Kehrwert',
+        'Prozentwert = Grundwert · Prozentsatz',
+        '+20 % und danach −20 % ergeben nicht den Ausgangswert',
+      ],
+      formulas: ['a/b + c/d = (ad + cb) / (bd)', 'a/b : c/d = a/b · d/c'],
+      related: ['mat-grundlagen-potenz', 'mat-grundlagen-gleichung', 'mat-stat-wahrscheinlichkeit'],
+    },
+    {
+      id: 'mat-grundlagen-potenz',
+      title: 'Potenzen und Wurzeln',
+      text: 'Beim Multiplizieren von Potenzen mit gleicher Basis werden die Exponenten addiert, beim Dividieren subtrahiert; wird eine Potenz potenziert, multipliziert man die Exponenten. Jede Zahl außer null hoch null ergibt eins, und ein negativer Exponent bedeutet den Kehrwert. Eine Wurzel lässt sich als Potenz mit gebrochenem Exponenten schreiben, wodurch dieselben Rechenregeln gelten. Beim Rechnen mit Zehnerpotenzen werden die Vorfaktoren multipliziert und die Exponenten addiert – das ist die Grundlage der wissenschaftlichen Schreibweise, in der jede Zahl als Produkt aus einem Wert zwischen eins und zehn und einer Zehnerpotenz dargestellt wird.',
+      facts: [
+        'a^m · a^n = a^(m+n); a^m : a^n = a^(m−n)',
+        '(a^m)^n = a^(m·n)',
+        'a^0 = 1 für a ungleich 0',
+        'a^(−n) = 1 / a^n',
+        'Wurzel als Potenz: √a = a^(1/2)',
+      ],
+      formulas: ['a^m · a^n = a^(m+n)', 'a^(−n) = 1 / a^n'],
+      related: ['mat-grundlagen-bruch', 'mat-funktion-exponential', 'mat-grundlagen-gleichung'],
+    },
+    {
+      id: 'mat-grundlagen-gleichung',
+      title: 'Gleichungen umformen',
+      text: 'Eine Gleichung bleibt richtig, wenn man auf beiden Seiten dieselbe Rechnung ausführt – Äquivalenzumformungen sind Addition, Subtraktion sowie Multiplikation und Division mit einer Zahl ungleich null. Bei einer linearen Gleichung sammelt man die Unbekannte auf einer Seite und die Zahlen auf der anderen. Bei einer quadratischen Gleichung in Normalform liefert die Lösungsformel die Nullstellen; die Diskriminante unter der Wurzel entscheidet über ihre Zahl: Ist sie positiv, gibt es zwei Lösungen, ist sie null, genau eine, und ist sie negativ, keine reelle. Ein Produkt ist genau dann null, wenn einer der Faktoren null ist – dieser Satz vom Nullprodukt erspart oft die Formel.',
+      facts: [
+        'Äquivalenzumformung: dieselbe Operation auf beiden Seiten',
+        'Nie durch null dividieren',
+        'Diskriminante positiv: zwei Lösungen; null: eine; negativ: keine reelle',
+        'Satz vom Nullprodukt: ein Faktor null genügt',
+        'Bei Ungleichungen dreht die Multiplikation mit einer negativen Zahl das Zeichen um',
+      ],
+      formulas: ['x = (−b ± √(b² − 4ac)) / (2a)'],
+      related: ['mat-grundlagen-potenz', 'mat-funktion-linear', 'mat-grundlagen-bruch'],
+    },
+  ],
+};
+
+export const QUESTIONS = [
+  {
+    id: 'mat-grd-q1', topicId: 'mat-grundlagen', entryId: 'mat-grundlagen-bruch', kind: 'single',
+    prompt: 'Wie viel ergibt 1/3 + 1/6?',
+    options: [
+      { text: '1/2', correct: true, why: 'Auf sechstel erweitert: 2/6 + 1/6 = 3/6 = 1/2.' },
+      { text: '2/9', correct: false, why: 'Hier wurden Zähler und Nenner getrennt addiert.' },
+      { text: '1/9', correct: false, why: 'Auch hier wurden die Nenner addiert.' },
+      { text: '1/18', correct: false, why: 'Das wäre das Produkt der beiden Brüche.' },
+      { text: '2/3', correct: false, why: 'Dieses Ergebnis lässt sich nicht herleiten.' },
+    ],
+    explanation: 'Bei der Addition wird nur der Zähler addiert, nachdem der Nenner angeglichen wurde.',
+  },
+  {
+    id: 'mat-grd-q2', topicId: 'mat-grundlagen', entryId: 'mat-grundlagen-bruch', kind: 'single',
+    prompt: 'Wie viel ergibt (3/4) : (1/2)?',
+    options: [
+      { text: '3/2', correct: true, why: 'Division durch einen Bruch heißt Multiplikation mit dem Kehrwert: 3/4 · 2/1.' },
+      { text: '3/8', correct: false, why: 'Das ist das Produkt der beiden Brüche.' },
+      { text: '2/3', correct: false, why: 'Hier wurde der Kehrwert des Ergebnisses gebildet.' },
+      { text: '1/4', correct: false, why: 'Hier wurde subtrahiert.' },
+      { text: '4/3', correct: false, why: 'Hier wurden Zähler und Nenner vertauscht.' },
+    ],
+    explanation: 'Merke: Durch einen Bruch teilen heißt mit dem Kehrwert malnehmen.',
+  },
+  {
+    id: 'mat-grd-q3', topicId: 'mat-grundlagen', entryId: 'mat-grundlagen-bruch', kind: 'single',
+    prompt: 'Ein Preis von 200 Euro wird um 20 % erhöht und danach um 20 % gesenkt. Was ergibt sich?',
+    options: [
+      { text: '192 Euro', correct: true, why: '200 → 240 → 240 − 48 = 192.' },
+      { text: '200 Euro', correct: false, why: 'Die zweite Rechnung bezieht sich auf den erhöhten Wert.' },
+      { text: '208 Euro', correct: false, why: 'Der Endwert liegt unter dem Ausgangswert.' },
+      { text: '180 Euro', correct: false, why: 'Dieser Wert lässt sich nicht herleiten.' },
+      { text: '240 Euro', correct: false, why: 'Das ist der Zwischenwert nach der Erhöhung.' },
+    ],
+    explanation: 'Prozentangaben beziehen sich immer auf den jeweils aktuellen Grundwert.',
+  },
+  {
+    id: 'mat-grd-q4', topicId: 'mat-grundlagen', entryId: 'mat-grundlagen-bruch', kind: 'single',
+    prompt: 'Wie viel sind 15 % von 240?',
+    options: [
+      { text: '36', correct: true, why: '10 % sind 24, 5 % sind 12, zusammen 36.' },
+      { text: '24', correct: false, why: 'Das sind 10 Prozent.' },
+      { text: '30', correct: false, why: 'Dieser Wert entspricht 12,5 Prozent.' },
+      { text: '48', correct: false, why: 'Das sind 20 Prozent.' },
+      { text: '16', correct: false, why: 'Dieser Wert lässt sich nicht herleiten.' },
+    ],
+    explanation: 'Im Kopf zerlegen: 10 % plus die Hälfte davon ergeben 15 %.',
+  },
+  {
+    id: 'mat-grd-q5', topicId: 'mat-grundlagen', entryId: 'mat-grundlagen-potenz', kind: 'single',
+    prompt: 'Wie viel ergibt 2³ · 2⁴?',
+    options: [
+      { text: '2⁷', correct: true, why: 'Bei gleicher Basis werden die Exponenten addiert.' },
+      { text: '2¹²', correct: false, why: 'Multipliziert werden die Exponenten nur beim Potenzieren einer Potenz.' },
+      { text: '4⁷', correct: false, why: 'Die Basis bleibt unverändert.' },
+      { text: '2¹', correct: false, why: 'Hier wurde subtrahiert.' },
+      { text: '8⁴', correct: false, why: 'So lässt sich die Rechnung nicht zusammenfassen.' },
+    ],
+    explanation: 'Malnehmen heißt Exponenten addieren, Potenzieren heißt Exponenten multiplizieren.',
+  },
+  {
+    id: 'mat-grd-q6', topicId: 'mat-grundlagen', entryId: 'mat-grundlagen-potenz', kind: 'single',
+    prompt: 'Wie viel ergibt 5⁰?',
+    options: [
+      { text: '1', correct: true, why: 'Jede Zahl außer null hoch null ergibt eins.' },
+      { text: '0', correct: false, why: 'Das gilt nur für 0 als Basis mit positivem Exponenten.' },
+      { text: '5', correct: false, why: 'Das wäre 5 hoch 1.' },
+      { text: 'Nicht definiert', correct: false, why: 'Für eine Basis ungleich null ist der Wert definiert.' },
+      { text: '−1', correct: false, why: 'Ein negatives Ergebnis kommt nicht in Frage.' },
+    ],
+    explanation: 'Das folgt aus der Divisionsregel: a^n : a^n = a^0 = 1.',
+  },
+  {
+    id: 'mat-grd-q7', topicId: 'mat-grundlagen', entryId: 'mat-grundlagen-potenz', kind: 'single',
+    prompt: 'Wie viel ergibt (2 · 10³) · (3 · 10⁴)?',
+    options: [
+      { text: '6 · 10⁷', correct: true, why: 'Vorfaktoren multiplizieren, Exponenten addieren.' },
+      { text: '6 · 10¹²', correct: false, why: 'Die Exponenten werden addiert, nicht multipliziert.' },
+      { text: '5 · 10⁷', correct: false, why: 'Die Vorfaktoren werden multipliziert, nicht addiert.' },
+      { text: '6 · 10¹', correct: false, why: 'Hier wurde subtrahiert.' },
+      { text: '23 · 10⁷', correct: false, why: 'Die Vorfaktoren wurden nicht korrekt verrechnet.' },
+    ],
+    explanation: 'Die wissenschaftliche Schreibweise macht Rechnungen mit sehr großen Zahlen überschaubar.',
+  },
+  {
+    id: 'mat-grd-q8', topicId: 'mat-grundlagen', entryId: 'mat-grundlagen-gleichung', kind: 'single',
+    prompt: 'Löse: 3x + 7 = 22.',
+    options: [
+      { text: 'x = 5', correct: true, why: '3x = 15, also x = 5.' },
+      { text: 'x = 15', correct: false, why: 'Hier fehlt die Division durch 3.' },
+      { text: 'x = 29/3', correct: false, why: 'Hier wurde addiert statt subtrahiert.' },
+      { text: 'x = 7', correct: false, why: 'Das ist die Konstante der Gleichung.' },
+      { text: 'x = 3', correct: false, why: 'Einsetzen ergibt 16, nicht 22.' },
+    ],
+    explanation: 'Probe: 3 · 5 + 7 = 22 – die Einsetzprobe deckt Rechenfehler sofort auf.',
+  },
+  {
+    id: 'mat-grd-q9', topicId: 'mat-grundlagen', entryId: 'mat-grundlagen-gleichung', kind: 'single',
+    prompt: 'Wie viele reelle Lösungen hat eine quadratische Gleichung mit negativer Diskriminante?',
+    options: [
+      { text: 'Keine', correct: true, why: 'Aus einer negativen Zahl lässt sich keine reelle Wurzel ziehen.' },
+      { text: 'Genau eine', correct: false, why: 'Das gilt bei Diskriminante null.' },
+      { text: 'Genau zwei', correct: false, why: 'Das gilt bei positiver Diskriminante.' },
+      { text: 'Unendlich viele', correct: false, why: 'Eine quadratische Gleichung hat höchstens zwei Lösungen.' },
+      { text: 'Das lässt sich nicht entscheiden', correct: false, why: 'Die Diskriminante entscheidet eindeutig.' },
+    ],
+    explanation: 'Grafisch: Die Parabel schneidet die x-Achse dann gar nicht.',
+  },
+  {
+    id: 'mat-grd-q10', topicId: 'mat-grundlagen', entryId: 'mat-grundlagen-gleichung', kind: 'single',
+    prompt: 'Für welche Werte gilt (x − 3) · (x + 5) = 0?',
+    options: [
+      { text: 'x = 3 oder x = −5', correct: true, why: 'Nach dem Satz vom Nullprodukt genügt es, wenn ein Faktor null wird.' },
+      { text: 'x = −3 oder x = 5', correct: false, why: 'Die Vorzeichen sind vertauscht.' },
+      { text: 'x = 3 und x = 5', correct: false, why: 'x = 5 ist keine Lösung.' },
+      { text: 'x = 15', correct: false, why: 'Hier wurden die Faktoren multipliziert.' },
+      { text: 'Es gibt keine Lösung', correct: false, why: 'Es gibt zwei Lösungen.' },
+    ],
+    explanation: 'Bei faktorisierten Gleichungen ist die Lösungsformel überflüssig.',
+  },
+  {
+    id: 'mat-grd-q11', topicId: 'mat-grundlagen', entryId: 'mat-grundlagen-gleichung', kind: 'single',
+    prompt: 'Was passiert mit dem Ungleichheitszeichen, wenn man beide Seiten mit −2 multipliziert?',
+    options: [
+      { text: 'Es dreht sich um', correct: true, why: 'Die Multiplikation mit einer negativen Zahl kehrt die Ordnung um.' },
+      { text: 'Es bleibt unverändert', correct: false, why: 'Das gilt nur bei positiven Faktoren.' },
+      { text: 'Es wird zum Gleichheitszeichen', correct: false, why: 'Eine Ungleichung bleibt eine Ungleichung.' },
+      { text: 'Die Ungleichung wird ungültig', correct: false, why: 'Sie bleibt gültig, nur mit gedrehtem Zeichen.' },
+      { text: 'Beide Seiten werden null', correct: false, why: 'Das wäre nur bei Multiplikation mit null der Fall.' },
+    ],
+    explanation: 'Aus 2 < 3 wird beim Multiplizieren mit −2 tatsächlich −4 > −6.',
+  },
+  {
+    id: 'mat-grd-q12', topicId: 'mat-grundlagen', entryId: 'mat-grundlagen-potenz', kind: 'multi',
+    prompt: 'Welche zwei Gleichungen sind korrekt? (2 aus 5)',
+    options: [
+      { text: '3⁻² = 1/9', correct: true, why: 'Ein negativer Exponent bedeutet den Kehrwert der Potenz.' },
+      { text: '(2³)² = 2⁶', correct: true, why: 'Beim Potenzieren einer Potenz werden die Exponenten multipliziert.' },
+      { text: '2³ + 2³ = 2⁶', correct: false, why: 'Bei der Addition gelten die Potenzgesetze nicht; es ergibt 16.' },
+      { text: '3⁻² = −9', correct: false, why: 'Ein negativer Exponent ergibt keinen negativen Wert.' },
+      { text: '(2³)² = 2⁵', correct: false, why: 'Die Exponenten werden multipliziert, nicht addiert.' },
+    ],
+    explanation: 'Die Potenzgesetze gelten nur für Multiplikation, Division und Potenzieren, nie für die Addition.',
+  },
+];

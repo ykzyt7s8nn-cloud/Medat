@@ -86,10 +86,10 @@ const cache = new Map();
 export async function loadSubject(subjectId) {
   if (cache.has(subjectId)) return cache.get(subjectId);
   const loaders = {
-    biologie: () => import('./biologie.js'),
-    chemie: () => import('./chemie.js'),
-    physik: () => import('./physik.js'),
-    mathematik: () => import('./mathematik.js'),
+    biologie: () => import('./biologie/index.js'),
+    chemie: () => import('./chemie/index.js'),
+    physik: () => import('./physik/index.js'),
+    mathematik: () => import('./mathematik/index.js'),
   };
   const loader = loaders[subjectId];
   if (!loader) throw new Error(`Unbekanntes Fach: ${subjectId}`);

@@ -50,6 +50,13 @@ import {
   generateFigureTask,
 } from '../src/engines/figures.js';
 import { polygonArea } from '../src/lib/geometry.js';
+import {
+  BMS_TOTAL,
+  NO_ANSWER_LABEL as BMS_NO_ANSWER_LABEL,
+  SUBJECTS,
+  SUBJECT_ORDER,
+  loadAllSubjects,
+} from '../src/data/bms/index.js';
 
 let failures = 0;
 let checks = 0;
@@ -466,6 +473,140 @@ check('Aufgabensatz hat 15 Aufgaben ohne direkte Formwiederholung',
   && figureSet.every((task, i) => i === 0 || task.shapeId !== figureSet[i - 1].shapeId));
 const setNone = figureSet.filter((task) => task.correctLetter === 'e').length;
 check(`Im Durchgang sind 2–4 Aufgaben mit e) als Lösung (${setNone})`, setNone >= 2 && setNone <= 4);
+
+/* --------------------------------------------------------------------- BMS */
+section('BMS: Lexikon und Fragen');
+
+const bmsSubjects = await loadAllSubjects();
+const bmsEntryIds = new Set();
+const bmsQuestionIds = new Set();
+let bmsTopics = 0;
+let bmsEntries = 0;
+let bmsQuestions = 0;
+let duplicateEntryIds = 0;
+let duplicateQuestionIds = 0;
+
+for (const subjectId of SUBJECT_ORDER) {
+  const { topics: TOPICS, questions: QUESTIONS } = bmsSubjects[subjectId];
+  bmsTopics += TOPICS.length;
+  for (const topic of TOPICS) {
+    for (const entry of topic.entries) {
+      if (bmsEntryIds.has(entry.id)) duplicateEntryIds += 1;
+      bmsEntryIds.add(entry.id);
+      bmsEntries += 1;
+    }
+  }
+  for (const question of QUESTIONS) {
+    if (bmsQuestionIds.has(question.id)) duplicateQuestionIds += 1;
+    bmsQuestionIds.add(question.id);
+    bmsQuestions += 1;
+  }
+}
+
+check(`Alle vier Fächer liefern Inhalte (${SUBJECT_ORDER.length})`,
+  SUBJECT_ORDER.every((id) => bmsSubjects[id].topics.length > 0));
+check(`Mindestens 250 Fragen insgesamt (${bmsQuestions})`, bmsQuestions >= 250);
+check(`Mindestens 100 Lexikoneinträge (${bmsEntries})`, bmsEntries >= 100);
+check('Eintrags-IDs sind eindeutig', duplicateEntryIds === 0, `${duplicateEntryIds} Dubletten`);
+check('Frage-IDs sind eindeutig', duplicateQuestionIds === 0, `${duplicateQuestionIds} Dubletten`);
+
+// Jedes Hauptthema braucht laut Vorgabe mindestens 10 Fragen.
+const thinTopics = [];
+for (const subjectId of SUBJECT_ORDER) {
+  const { topics: TOPICS, questions: QUESTIONS } = bmsSubjects[subjectId];
+  for (const topic of TOPICS) {
+    const count = QUESTIONS.filter((q) => q.topicId === topic.id).length;
+    if (count < 10) thinTopics.push(`${topic.title} (${count})`);
+  }
+}
+check(`Jedes der ${bmsTopics} Hauptthemen hat mindestens 10 Fragen`,
+  thinTopics.length === 0, thinTopics.join(', '));
+
+// Struktur jeder einzelnen Frage: fünf Optionen, korrekte Anzahl Lösungen,
+// Begründung je Option und ein auflösbarer Lexikonverweis.
+let malformed = 0;
+let missingWhy = 0;
+let danglingEntry = 0;
+let danglingTopic = 0;
+for (const subjectId of SUBJECT_ORDER) {
+  const { topics: TOPICS, questions: QUESTIONS } = bmsSubjects[subjectId];
+  const topicIds = new Set(TOPICS.map((t) => t.id));
+  const entryIds = new Set(TOPICS.flatMap((t) => t.entries.map((e) => e.id)));
+  for (const question of QUESTIONS) {
+    const correct = question.options.filter((o) => o.correct).length;
+    if (question.options.length !== 5) malformed += 1;
+    else if (question.kind === 'single' && correct !== 1) malformed += 1;
+    else if (question.kind === 'multi' && correct < 2) malformed += 1;
+    if (!question.explanation || question.options.some((o) => !o.why)) missingWhy += 1;
+    if (!entryIds.has(question.entryId)) danglingEntry += 1;
+    if (!topicIds.has(question.topicId)) danglingTopic += 1;
+  }
+}
+check('Jede Frage hat fünf Optionen und die passende Zahl richtiger Antworten',
+  malformed === 0, `${malformed} Abweichungen`);
+check('Jede Option hat eine Begründung, jede Frage eine Erklärung',
+  missingWhy === 0, `${missingWhy} Abweichungen`);
+check('Jede Frage verweist auf einen vorhandenen Lexikoneintrag',
+  danglingEntry === 0, `${danglingEntry} Abweichungen`);
+check('Jede Frage ist einem vorhandenen Thema zugeordnet',
+  danglingTopic === 0, `${danglingTopic} Abweichungen`);
+
+// Querverweise dürfen auch über Fächergrenzen hinweg nicht ins Leere zeigen.
+const danglingRelated = [];
+for (const subjectId of SUBJECT_ORDER) {
+  for (const topic of bmsSubjects[subjectId].topics) {
+    for (const entry of topic.entries) {
+      for (const related of entry.related ?? []) {
+        if (!bmsEntryIds.has(related)) danglingRelated.push(`${entry.id} → ${related}`);
+      }
+    }
+  }
+}
+check('Alle Querverweise zwischen Stichwörtern lassen sich auflösen',
+  danglingRelated.length === 0, danglingRelated.slice(0, 3).join(', '));
+
+// Ein "Keine der Antwortmöglichkeiten"-Distraktor darf nie die Lösung sein,
+// sonst wäre die Frage nicht eindeutig auflösbar.
+let noneAsSolution = 0;
+for (const subjectId of SUBJECT_ORDER) {
+  for (const question of bmsSubjects[subjectId].questions) {
+    const none = question.options.find((o) => o.text === BMS_NO_ANSWER_LABEL);
+    if (none?.correct && question.options.filter((o) => o.correct).length > 1) noneAsSolution += 1;
+  }
+}
+check('Kein "Keine der Antwortmöglichkeiten" neben einer weiteren Lösung', noneAsSolution === 0);
+
+// Die Simulation muss jedes Fach vollständig bestücken können.
+const shortPools = [];
+for (const subjectId of SUBJECT_ORDER) {
+  const need = SUBJECTS[subjectId].questionCount;
+  const have = bmsSubjects[subjectId].questions.length;
+  if (have < need) shortPools.push(`${subjectId}: ${have}/${need}`);
+}
+check('Jedes Fach hat genug Fragen für einen vollen Simulationsdurchgang',
+  shortPools.length === 0, shortPools.join(', '));
+check('BMS-Simulation: 94 Fragen in 75 Minuten',
+  BMS_TOTAL.questionCount === 94 && BMS_TOTAL.seconds === 75 * 60);
+check('Fächeraufteilung entspricht dem MedAT (40/24/18/12)',
+  SUBJECTS.biologie.questionCount === 40 && SUBJECTS.chemie.questionCount === 24
+  && SUBJECTS.physik.questionCount === 18 && SUBJECTS.mathematik.questionCount === 12);
+check('Die Fächerzeiten ergeben zusammen die Gesamtzeit',
+  SUBJECT_ORDER.reduce((sum, id) => sum + SUBJECTS[id].seconds, 0) === BMS_TOTAL.seconds);
+check('Die Fragenzahlen der Fächer ergeben zusammen 94',
+  SUBJECT_ORDER.reduce((sum, id) => sum + SUBJECTS[id].questionCount, 0) === BMS_TOTAL.questionCount);
+
+// Ein Lexikoneintrag muss den Lernzweck erfüllen: erklärender Text plus
+// stichpunktartige Kernaussagen.
+let thinEntries = 0;
+for (const subjectId of SUBJECT_ORDER) {
+  for (const topic of bmsSubjects[subjectId].topics) {
+    for (const entry of topic.entries) {
+      if (!entry.title || entry.text.length < 250 || (entry.facts?.length ?? 0) < 3) thinEntries += 1;
+    }
+  }
+}
+check('Jeder Eintrag hat Titel, ausführlichen Text und mindestens 3 Schlüsselfakten',
+  thinEntries === 0, `${thinEntries} Abweichungen`);
 
 /* ---------------------------------------------------------- Konfiguration */
 section('Konfiguration (MedAT-Vorgaben)');

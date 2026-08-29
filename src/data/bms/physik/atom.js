@@ -1,0 +1,196 @@
+/** Physik – Thema "Atom- und Kernphysik". */
+
+export const TOPIC = {
+  id: 'phy-atom',
+  title: 'Atom- und Kernphysik',
+  summary: 'Radioaktivität, Halbwertszeit, Strahlenschutz, Größen und Einheiten',
+  entries: [
+    {
+      id: 'phy-atom-radioaktivitaet',
+      title: 'Radioaktive Strahlung',
+      text: 'Instabile Atomkerne zerfallen und senden dabei Strahlung aus. Alphastrahlung besteht aus Heliumkernen; sie ist stark ionisierend, hat aber die geringste Reichweite und wird schon von einem Blatt Papier oder der Haut aufgehalten. Betastrahlung besteht aus Elektronen und wird von einigen Millimetern Aluminium abgeschirmt. Gammastrahlung ist eine energiereiche elektromagnetische Welle ohne Ruhemasse; sie durchdringt Materie am weitesten und erfordert dicke Blei- oder Betonabschirmungen. Es gilt also die Umkehrung: Je stärker die ionisierende Wirkung, desto geringer die Reichweite. Gefährlich ist Alphastrahlung deshalb vor allem, wenn der Strahler eingeatmet oder verschluckt wird und damit im Körper wirkt.',
+      facts: [
+        'Alpha: Heliumkerne, stark ionisierend, geringe Reichweite',
+        'Beta: Elektronen, mittlere Durchdringung',
+        'Gamma: elektromagnetische Welle, größte Durchdringung',
+        'Abschirmung: Papier – Aluminium – Blei',
+        'Starke Ionisation bedeutet geringe Reichweite und umgekehrt',
+      ],
+      related: ['phy-atom-halbwertszeit', 'che-atombau-isotope', 'phy-atom-groessen'],
+    },
+    {
+      id: 'phy-atom-halbwertszeit',
+      title: 'Halbwertszeit und Zerfallsgesetz',
+      text: 'Die Halbwertszeit ist die Zeitspanne, nach der im Mittel die Hälfte der ursprünglich vorhandenen Kerne zerfallen ist. Sie ist eine Stoffkonstante und lässt sich weder durch Temperatur noch durch Druck oder chemische Bindung verändern. Der Zerfall verläuft exponentiell: Nach einer Halbwertszeit ist die Hälfte übrig, nach zwei ein Viertel, nach drei ein Achtel; rechnerisch bleibt nach n Halbwertszeiten der Anteil ein Halb hoch n. Vollständig verschwindet ein radioaktiver Stoff damit rechnerisch nie. Der einzelne Zerfall ist zufällig und nicht vorhersagbar, erst über die große Zahl der Kerne ergibt sich das gleichmäßige Gesetz. Die Halbwertszeiten reichen von Sekundenbruchteilen bis zu Milliarden Jahren.',
+      facts: [
+        'Nach n Halbwertszeiten bleibt der Anteil (1/2)^n',
+        'Nach 3 Halbwertszeiten ist noch ein Achtel vorhanden',
+        'Die Halbwertszeit ist unabhängig von Temperatur, Druck und Bindung',
+        'Der einzelne Zerfall ist zufällig',
+        'Rechnerisch wird der Stoff nie vollständig null',
+      ],
+      formulas: ['N(t) = N0 · (1/2)^(t / T½)'],
+      related: ['phy-atom-radioaktivitaet', 'che-atombau-isotope', 'phy-atom-groessen'],
+    },
+    {
+      id: 'phy-atom-groessen',
+      title: 'Größen, Einheiten und Vorsätze',
+      text: 'Physikalische Aussagen bestehen aus Zahlenwert und Einheit. Die sieben SI-Basiseinheiten sind Meter, Kilogramm, Sekunde, Ampere, Kelvin, Mol und Candela; alle übrigen leiten sich daraus ab, etwa das Newton oder das Joule. Die Vorsätze verändern die Größenordnung um Zehnerpotenzen: Kilo steht für tausend, Mega für eine Million, Giga für eine Milliarde, während Milli ein Tausendstel, Mikro ein Millionstel und Nano ein Milliardstel bedeuten. Beim Rechnen müssen alle Größen in dieselbe Einheit gebracht werden, sonst weichen die Ergebnisse um Zehnerpotenzen ab. Eine schnelle Kontrolle liefert die Einheitenprobe: Wenn die Einheiten des Ergebnisses nicht zur gesuchten Größe passen, ist die Rechnung falsch aufgesetzt.',
+      facts: [
+        'SI-Basiseinheiten: m, kg, s, A, K, mol, cd',
+        'Kilo = 10³, Mega = 10⁶, Giga = 10⁹',
+        'Milli = 10⁻³, Mikro = 10⁻⁶, Nano = 10⁻⁹',
+        'Vor dem Rechnen alle Größen in dieselbe Einheit bringen',
+        'Die Einheitenprobe deckt Rechenfehler zuverlässig auf',
+      ],
+      related: ['phy-mechanik-kinematik', 'phy-atom-halbwertszeit', 'che-stoech-mol'],
+    },
+  ],
+};
+
+export const QUESTIONS = [
+  {
+    id: 'phy-atm-q1', topicId: 'phy-atom', entryId: 'phy-atom-radioaktivitaet', kind: 'single',
+    prompt: 'Woraus besteht Alphastrahlung?',
+    options: [
+      { text: 'Aus Heliumkernen', correct: true, why: 'Zwei Protonen und zwei Neutronen.' },
+      { text: 'Aus Elektronen', correct: false, why: 'Das ist Betastrahlung.' },
+      { text: 'Aus elektromagnetischen Wellen', correct: false, why: 'Das ist Gammastrahlung.' },
+      { text: 'Aus Neutronen allein', correct: false, why: 'Neutronenstrahlung ist eine eigene Art.' },
+      { text: 'Aus Protonen allein', correct: false, why: 'Alphateilchen enthalten auch Neutronen.' },
+    ],
+    explanation: 'Wegen ihrer Masse und Doppelladung ionisiert Alphastrahlung stark, kommt aber kaum weit.',
+  },
+  {
+    id: 'phy-atm-q2', topicId: 'phy-atom', entryId: 'phy-atom-radioaktivitaet', kind: 'single',
+    prompt: 'Welche Strahlungsart hat die größte Durchdringungsfähigkeit?',
+    options: [
+      { text: 'Gammastrahlung', correct: true, why: 'Sie erfordert Blei- oder Betonabschirmungen.' },
+      { text: 'Alphastrahlung', correct: false, why: 'Sie wird schon von Papier aufgehalten.' },
+      { text: 'Betastrahlung', correct: false, why: 'Wenige Millimeter Aluminium genügen.' },
+      { text: 'Alle drei gleich stark', correct: false, why: 'Die Unterschiede sind erheblich.' },
+      { text: 'Keine, alle werden von Papier gestoppt', correct: false, why: 'Nur Alphastrahlung wird von Papier gestoppt.' },
+    ],
+    explanation: 'Merke die Reihenfolge der Abschirmung: Papier, Aluminium, Blei.',
+  },
+  {
+    id: 'phy-atm-q3', topicId: 'phy-atom', entryId: 'phy-atom-radioaktivitaet', kind: 'single',
+    prompt: 'Warum ist Alphastrahlung besonders gefährlich, wenn der Strahler eingeatmet wird?',
+    options: [
+      { text: 'Weil sie im Körper stark ionisierend direkt auf das Gewebe wirkt', correct: true, why: 'Die geringe Reichweite ist dann kein Schutz mehr.' },
+      { text: 'Weil sie den Körper vollständig durchdringt', correct: false, why: 'Gerade das kann sie nicht.' },
+      { text: 'Weil sie die Halbwertszeit verkürzt', correct: false, why: 'Die Halbwertszeit ändert sich nicht.' },
+      { text: 'Weil sie sich in Gammastrahlung umwandelt', correct: false, why: 'Eine solche Umwandlung findet nicht statt.' },
+      { text: 'Weil sie magnetisch wirkt', correct: false, why: 'Das ist nicht der Wirkmechanismus.' },
+    ],
+    explanation: 'Von außen ist Alphastrahlung harmlos, von innen wegen der starken Ionisierung besonders schädlich.',
+  },
+  {
+    id: 'phy-atm-q4', topicId: 'phy-atom', entryId: 'phy-atom-halbwertszeit', kind: 'single',
+    prompt: 'Welcher Anteil eines radioaktiven Stoffes ist nach drei Halbwertszeiten noch vorhanden?',
+    options: [
+      { text: 'Ein Achtel', correct: true, why: '(1/2)³ = 1/8.' },
+      { text: 'Ein Drittel', correct: false, why: 'Der Zerfall verläuft exponentiell, nicht linear.' },
+      { text: 'Ein Viertel', correct: false, why: 'Das entspräche zwei Halbwertszeiten.' },
+      { text: 'Ein Sechstel', correct: false, why: 'Hier wurde 2 · 3 gerechnet.' },
+      { text: 'Nichts mehr', correct: false, why: 'Rechnerisch bleibt immer ein Rest.' },
+    ],
+    explanation: 'Halbieren, halbieren, halbieren: 1/2 → 1/4 → 1/8.',
+  },
+  {
+    id: 'phy-atm-q5', topicId: 'phy-atom', entryId: 'phy-atom-halbwertszeit', kind: 'single',
+    prompt: 'Ein Präparat mit einer Halbwertszeit von 5 Tagen enthält anfangs 800 mg. Wie viel ist nach 15 Tagen übrig?',
+    options: [
+      { text: '100 mg', correct: true, why: '15 Tage sind drei Halbwertszeiten: 800 → 400 → 200 → 100.' },
+      { text: '200 mg', correct: false, why: 'Das entspräche zwei Halbwertszeiten.' },
+      { text: '400 mg', correct: false, why: 'Das entspräche einer Halbwertszeit.' },
+      { text: '50 mg', correct: false, why: 'Das wären vier Halbwertszeiten.' },
+      { text: '0 mg', correct: false, why: 'Der Zerfall erreicht rechnerisch nie null.' },
+    ],
+    explanation: 'Erst die Zahl der Halbwertszeiten bestimmen, dann so oft halbieren.',
+  },
+  {
+    id: 'phy-atm-q6', topicId: 'phy-atom', entryId: 'phy-atom-halbwertszeit', kind: 'single',
+    prompt: 'Wodurch lässt sich die Halbwertszeit eines Radionuklids beeinflussen?',
+    options: [
+      { text: 'Durch nichts von alledem – sie ist eine Stoffkonstante', correct: true, why: 'Der Kernzerfall ist von der Umgebung unabhängig.' },
+      { text: 'Durch Erhitzen', correct: false, why: 'Temperatur wirkt auf die Hülle, nicht auf den Kern.' },
+      { text: 'Durch hohen Druck', correct: false, why: 'Auch Druck beeinflusst den Kern nicht.' },
+      { text: 'Durch eine chemische Bindung', correct: false, why: 'Bindungen betreffen nur die Elektronenhülle.' },
+      { text: 'Durch ein Magnetfeld', correct: false, why: 'Das Feld lenkt die Strahlung ab, ändert aber nicht die Zerfallsrate.' },
+    ],
+    explanation: 'Deshalb eignet sich der Zerfall zur Altersbestimmung – er läuft wie eine unbeeinflussbare Uhr.',
+  },
+  {
+    id: 'phy-atm-q7', topicId: 'phy-atom', entryId: 'phy-atom-groessen', kind: 'single',
+    prompt: 'Wie viele Millimeter sind 2,5 Meter?',
+    options: [
+      { text: '2500 mm', correct: true, why: 'Ein Meter hat 1000 Millimeter.' },
+      { text: '250 mm', correct: false, why: 'Das wären 25 Zentimeter.' },
+      { text: '25 mm', correct: false, why: 'Hier fehlen zwei Zehnerpotenzen.' },
+      { text: '0,0025 mm', correct: false, why: 'Hier wurde in die falsche Richtung gerechnet.' },
+      { text: '25000 mm', correct: false, why: 'Eine Zehnerpotenz zu viel.' },
+    ],
+    explanation: 'Milli bedeutet ein Tausendstel – von Meter zu Millimeter also mal 1000.',
+  },
+  {
+    id: 'phy-atm-q8', topicId: 'phy-atom', entryId: 'phy-atom-groessen', kind: 'single',
+    prompt: 'Welcher Vorsatz steht für den Faktor 10 hoch minus 6?',
+    options: [
+      { text: 'Mikro', correct: true, why: 'Ein Mikrometer ist ein millionstel Meter.' },
+      { text: 'Milli', correct: false, why: 'Milli steht für 10 hoch minus 3.' },
+      { text: 'Nano', correct: false, why: 'Nano steht für 10 hoch minus 9.' },
+      { text: 'Mega', correct: false, why: 'Mega steht für 10 hoch plus 6.' },
+      { text: 'Zenti', correct: false, why: 'Zenti steht für 10 hoch minus 2.' },
+    ],
+    explanation: 'Achte auf das Vorzeichen: Mega vergrößert, Mikro verkleinert um denselben Faktor.',
+  },
+  {
+    id: 'phy-atm-q9', topicId: 'phy-atom', entryId: 'phy-atom-groessen', kind: 'single',
+    prompt: 'Welche der folgenden Einheiten ist eine SI-Basiseinheit?',
+    options: [
+      { text: 'Das Kilogramm', correct: true, why: 'Es ist die Basiseinheit der Masse.' },
+      { text: 'Das Newton', correct: false, why: 'Es ist eine abgeleitete Einheit.' },
+      { text: 'Das Joule', correct: false, why: 'Auch das Joule leitet sich ab.' },
+      { text: 'Das Watt', correct: false, why: 'Watt ist Joule je Sekunde, also abgeleitet.' },
+      { text: 'Das Volt', correct: false, why: 'Auch Volt ist eine abgeleitete Einheit.' },
+    ],
+    explanation: 'Basiseinheiten sind Meter, Kilogramm, Sekunde, Ampere, Kelvin, Mol und Candela.',
+  },
+  {
+    id: 'phy-atm-q10', topicId: 'phy-atom', entryId: 'phy-atom-radioaktivitaet', kind: 'single',
+    prompt: 'Welche Strahlungsart wird in einem Magnetfeld nicht abgelenkt?',
+    options: [
+      { text: 'Gammastrahlung', correct: true, why: 'Sie ist ungeladen und trägt keine Ruhemasse.' },
+      { text: 'Alphastrahlung', correct: false, why: 'Sie ist positiv geladen und wird abgelenkt.' },
+      { text: 'Betastrahlung', correct: false, why: 'Sie ist negativ geladen und wird abgelenkt.' },
+      { text: 'Alle drei werden abgelenkt', correct: false, why: 'Gammastrahlung nicht.' },
+      { text: 'Keine wird abgelenkt', correct: false, why: 'Geladene Teilchen werden sehr wohl abgelenkt.' },
+    ],
+    explanation: 'Alpha und Beta werden zudem in entgegengesetzte Richtungen abgelenkt – wegen ihrer Ladung.',
+  },
+  {
+    id: 'phy-atm-q11', topicId: 'phy-atom', entryId: 'phy-atom-groessen', kind: 'single',
+    prompt: 'Wie viele Sekunden hat eine Stunde?',
+    options: [
+      { text: '3600', correct: true, why: '60 Minuten mal 60 Sekunden.' },
+      { text: '60', correct: false, why: 'Das ist die Zahl der Minuten.' },
+      { text: '600', correct: false, why: 'Eine Zehnerpotenz zu wenig.' },
+      { text: '360', correct: false, why: 'Hier wurde einmal zu wenig multipliziert.' },
+      { text: '86400', correct: false, why: 'Das ist die Zahl der Sekunden eines Tages.' },
+    ],
+    explanation: 'Für Formeln mit Sekunden immer zuerst die Zeiten umrechnen.',
+  },
+  {
+    id: 'phy-atm-q12', topicId: 'phy-atom', entryId: 'phy-atom-halbwertszeit', kind: 'multi',
+    prompt: 'Welche zwei Aussagen über den radioaktiven Zerfall sind richtig? (2 aus 5)',
+    options: [
+      { text: 'Der Zeitpunkt des Zerfalls eines einzelnen Kerns ist zufällig', correct: true, why: 'Nur im Mittel über viele Kerne ergibt sich ein Gesetz.' },
+      { text: 'Der Zerfall verläuft exponentiell', correct: true, why: 'In jeder Halbwertszeit halbiert sich die verbleibende Menge.' },
+      { text: 'Der Zerfall verläuft linear', correct: false, why: 'Dann wäre der Stoff nach zwei Halbwertszeiten vollständig verschwunden.' },
+      { text: 'Die Halbwertszeit lässt sich durch Kühlung verlängern', correct: false, why: 'Sie ist von äußeren Bedingungen unabhängig.' },
+      { text: 'Nach zwei Halbwertszeiten ist nichts mehr vorhanden', correct: false, why: 'Es ist noch ein Viertel übrig.' },
+    ],
+    explanation: 'Zufall im Einzelnen, Gesetzmäßigkeit in der Masse – das ist der Kern des Zerfallsgesetzes.',
+  },
+];

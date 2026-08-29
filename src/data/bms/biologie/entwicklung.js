@@ -1,0 +1,185 @@
+/** Biologie – Thema "Frühentwicklung des Menschen". */
+
+export const TOPIC = {
+  id: 'bio-entwicklung',
+  title: 'Frühentwicklung des Menschen',
+  summary: 'Von der Befruchtung bis zur Plazenta',
+  entries: [
+    {
+      id: 'bio-entwicklung-befruchtung',
+      title: 'Befruchtung und Einnistung',
+      text: 'Die Befruchtung findet normalerweise im ampullären Teil des Eileiters statt. Nur ein Spermium dringt in die Eizelle ein; unmittelbar danach verhindert die Rindenreaktion, dass weitere Spermien folgen (Polyspermieblock). Erst jetzt schließt die Eizelle ihre zweite Reifeteilung ab. Aus der Verschmelzung der beiden haploiden Kerne entsteht die diploide Zygote. Sie durchläuft während der Wanderung zur Gebärmutter Furchungsteilungen, wobei die Zellen kleiner werden und der Gesamtdurchmesser gleich bleibt. Über Morula und Blastozyste erreicht der Keim etwa am fünften bis sechsten Tag die Gebärmutter und nistet sich um den sechsten bis siebten Tag in der Schleimhaut ein.',
+      facts: [
+        'Befruchtungsort ist der Eileiter, nicht die Gebärmutter',
+        'Rindenreaktion verhindert das Eindringen weiterer Spermien',
+        'Die Eizelle beendet die zweite Reifeteilung erst nach dem Eindringen des Spermiums',
+        'Furchung: Zellzahl steigt, Zellgröße sinkt, Gesamtvolumen bleibt zunächst gleich',
+        'Einnistung (Nidation) etwa am 6.–7. Tag im Blastozystenstadium',
+      ],
+      related: ['bio-gen-meiose', 'bio-entwicklung-keimblaetter', 'bio-koerper-fortpflanzung'],
+    },
+    {
+      id: 'bio-entwicklung-keimblaetter',
+      title: 'Keimblätter',
+      text: 'In der dritten Woche entstehen durch die Gastrulation drei Keimblätter, aus denen sich alle Gewebe ableiten. Das Ektoderm bildet die Oberhaut mit ihren Anhangsgebilden sowie das gesamte Nervensystem und die Sinnesepithelien. Das Mesoderm liefert Bindegewebe, Knochen, Knorpel, Muskulatur, Herz und Blutgefäße, Blut, Nieren und Keimdrüsen. Das Entoderm bildet die Auskleidung von Verdauungs- und Atemtrakt sowie die großen Anhangsdrüsen Leber, Pankreas und Schilddrüse. Diese Zuordnung wird im BMS regelmäßig abgefragt.',
+      facts: [
+        'Ektoderm: Haut und Nervensystem – „außen und Nerven"',
+        'Mesoderm: Muskeln, Knochen, Herz, Blut, Nieren, Keimdrüsen',
+        'Entoderm: Auskleidung von Darm und Atemwegen, Leber, Pankreas, Schilddrüse',
+        'Das Neuralrohr geht aus dem Ektoderm hervor',
+        'Die Gastrulation findet in der dritten Entwicklungswoche statt',
+      ],
+      mnemonic: 'Ekto = außen und Nerven, Meso = Mitte und Muskeln, Ento = innen und Darm.',
+      related: ['bio-entwicklung-embryo', 'bio-koerper-gewebe', 'bio-entwicklung-befruchtung'],
+    },
+    {
+      id: 'bio-entwicklung-embryo',
+      title: 'Embryonal- und Fetalperiode',
+      text: 'Die Embryonalperiode umfasst die ersten acht Wochen. In ihr werden alle Organanlagen gebildet (Organogenese) – deshalb ist der Keim in dieser Zeit am empfindlichsten gegenüber Schadstoffen, Infektionen und Strahlung. Fehlbildungen entstehen überwiegend in diesem Fenster. Ab der neunten Woche spricht man vom Fetus; jetzt stehen Wachstum und Ausreifung der bereits angelegten Organe im Vordergrund, Schädigungen führen eher zu Funktionsstörungen als zu groben Fehlbildungen. Die Schwangerschaft dauert von der letzten Regelblutung an gerechnet etwa 40 Wochen, vom Zeitpunkt der Befruchtung an etwa 38 Wochen.',
+      facts: [
+        'Embryonalperiode: Woche 1–8, Organogenese, höchste Empfindlichkeit für Fehlbildungen',
+        'Fetalperiode: ab Woche 9, Wachstum und Reifung',
+        'Schwangerschaftsdauer ca. 40 Wochen post menstruationem, 38 Wochen post conceptionem',
+        'Teratogene wirken je nach Zeitpunkt unterschiedlich stark',
+        'Der Herzschlag ist bereits in der Embryonalperiode nachweisbar',
+      ],
+      related: ['bio-entwicklung-keimblaetter', 'bio-entwicklung-plazenta', 'bio-humangen-praenatal'],
+    },
+    {
+      id: 'bio-entwicklung-plazenta',
+      title: 'Plazenta und Eihäute',
+      text: 'Die Plazenta entsteht aus einem kindlichen Anteil (Chorion) und einem mütterlichen Anteil (Dezidua). Über sie werden Sauerstoff und Nährstoffe zum Kind und Kohlendioxid sowie Stoffwechselendprodukte zurück zur Mutter transportiert – ausschließlich durch Diffusion und aktive Transportvorgänge. Mütterliches und kindliches Blut vermischen sich dabei nicht; sie sind durch die Plazentaschranke getrennt. Die Plazenta ist zugleich eine Hormondrüse und bildet unter anderem hCG, Östrogene und Progesteron, mit denen sie die Schwangerschaft aufrechterhält. Alkohol, Nikotin, viele Medikamente sowie manche Erreger passieren die Schranke, ebenso Antikörper der Klasse IgG, die dem Neugeborenen einen zeitlich begrenzten Nestschutz geben.',
+      facts: [
+        'Mütterliches und kindliches Blut vermischen sich nicht',
+        'hCG erhält den Gelbkörper und ist der Marker im Schwangerschaftstest',
+        'IgG passiert die Plazenta und vermittelt den Nestschutz – IgM nicht',
+        'Alkohol, Nikotin und viele Medikamente überwinden die Schranke',
+        'Nabelschnur: zwei Arterien führen sauerstoffarmes Blut zur Plazenta, eine Vene sauerstoffreiches zum Kind',
+      ],
+      related: ['bio-entwicklung-embryo', 'bio-immun-antikoerper', 'bio-koerper-herz'],
+    },
+  ],
+};
+
+export const QUESTIONS = [
+  {
+    id: 'bio-entw-q1', topicId: 'bio-entwicklung', entryId: 'bio-entwicklung-befruchtung', kind: 'single',
+    prompt: 'Wo findet die Befruchtung beim Menschen normalerweise statt?',
+    options: [
+      { text: 'Im Eileiter', correct: true, why: 'Meist im ampullären Abschnitt, kurz nach dem Eisprung.' },
+      { text: 'In der Gebärmutter', correct: false, why: 'Dorthin gelangt der Keim erst als Blastozyste zur Einnistung.' },
+      { text: 'Im Eierstock', correct: false, why: 'Im Eierstock reift die Eizelle, befruchtet wird sie erst danach.' },
+      { text: 'In der Scheide', correct: false, why: 'Dort werden die Spermien nur abgegeben.' },
+      { text: 'Im Gebärmutterhals', correct: false, why: 'Der Zervixschleim ist eine Passage, kein Befruchtungsort.' },
+    ],
+    explanation: 'Eine Einnistung außerhalb der Gebärmutter, meist im Eileiter, heißt Extrauteringravidität.',
+  },
+  {
+    id: 'bio-entw-q2', topicId: 'bio-entwicklung', entryId: 'bio-entwicklung-keimblaetter', kind: 'single',
+    prompt: 'Aus welchem Keimblatt entsteht das Nervensystem?',
+    options: [
+      { text: 'Ektoderm', correct: true, why: 'Aus dem Ektoderm gehen Haut und Nervensystem hervor.' },
+      { text: 'Mesoderm', correct: false, why: 'Aus dem Mesoderm entstehen Muskeln, Knochen, Herz und Nieren.' },
+      { text: 'Entoderm', correct: false, why: 'Das Entoderm bildet die Auskleidung von Darm und Atemwegen.' },
+      { text: 'Aus allen drei gleichermaßen', correct: false, why: 'Die Zuordnung ist eindeutig ektodermal.' },
+      { text: 'Aus dem Trophoblast', correct: false, why: 'Der Trophoblast bildet den kindlichen Teil der Plazenta.' },
+    ],
+    explanation: 'Merkhilfe: Ekto = außen und Nerven. Die Neuralplatte ist eine Verdickung des Ektoderms.',
+  },
+  {
+    id: 'bio-entw-q3', topicId: 'bio-entwicklung', entryId: 'bio-entwicklung-plazenta', kind: 'single',
+    prompt: 'Welche Aussage über die Plazenta ist korrekt?',
+    options: [
+      { text: 'Mütterliches und kindliches Blut vermischen sich nicht', correct: true, why: 'Der Austausch erfolgt über die Plazentaschranke durch Diffusion und Transportvorgänge.' },
+      { text: 'Mütterliches und kindliches Blut vermischen sich vollständig', correct: false, why: 'Dann käme es regelmäßig zu Blutgruppenunverträglichkeiten.' },
+      { text: 'Sie bildet keine Hormone', correct: false, why: 'Sie produziert unter anderem hCG, Östrogene und Progesteron.' },
+      { text: 'Sie ist für Alkohol undurchlässig', correct: false, why: 'Alkohol passiert die Schranke ungehindert.' },
+      { text: 'Sie besteht ausschließlich aus mütterlichem Gewebe', correct: false, why: 'Sie hat einen kindlichen (Chorion) und einen mütterlichen Anteil.' },
+    ],
+    explanation: 'Die Trennung der Kreisläufe ist auch der Grund, warum eine Rhesusunverträglichkeit meist erst bei der Geburt angebahnt wird.',
+  },
+  {
+    id: 'bio-entw-q4', topicId: 'bio-entwicklung', entryId: 'bio-entwicklung-embryo', kind: 'single',
+    prompt: 'In welchem Zeitraum ist die Empfindlichkeit gegenüber Fehlbildungen am größten?',
+    options: [
+      { text: 'In den ersten acht Wochen', correct: true, why: 'In der Embryonalperiode werden alle Organe angelegt.' },
+      { text: 'Im dritten Trimester', correct: false, why: 'Dann stehen Wachstum und Reifung im Vordergrund.' },
+      { text: 'Erst unmittelbar vor der Geburt', correct: false, why: 'Zu diesem Zeitpunkt sind die Organe längst angelegt.' },
+      { text: 'In den ersten drei Lebensmonaten nach der Geburt', correct: false, why: 'Nach der Geburt entstehen keine Organanlagen mehr.' },
+      { text: 'Während der Furchungsteilungen', correct: false, why: 'In dieser Phase gilt meist das Alles-oder-Nichts-Prinzip.' },
+    ],
+    explanation: 'Organogenese = Embryonalperiode = höchste Teratogen-Empfindlichkeit.',
+  },
+  {
+    id: 'bio-entw-q5', topicId: 'bio-entwicklung', entryId: 'bio-entwicklung-befruchtung', kind: 'single',
+    prompt: 'Was geschieht bei den Furchungsteilungen unmittelbar nach der Befruchtung?',
+    options: [
+      { text: 'Die Zellzahl steigt, die einzelnen Zellen werden kleiner', correct: true, why: 'Zwischen den Teilungen findet kaum Wachstum statt.' },
+      { text: 'Die Zellen wachsen zwischen den Teilungen auf Ausgangsgröße heran', correct: false, why: 'Genau das unterbleibt – der Keim wird als Ganzes nicht größer.' },
+      { text: 'Die Chromosomenzahl halbiert sich mit jeder Teilung', correct: false, why: 'Furchungsteilungen sind Mitosen, die Chromosomenzahl bleibt diploid.' },
+      { text: 'Es entstehen haploide Zellen', correct: false, why: 'Haploid sind nur die Keimzellen vor der Befruchtung.' },
+      { text: 'Die Zygote wandert in den Eierstock zurück', correct: false, why: 'Sie wandert Richtung Gebärmutter.' },
+    ],
+    explanation: 'Deshalb hat die Morula etwa denselben Durchmesser wie die Zygote, besteht aber aus vielen Zellen.',
+  },
+  {
+    id: 'bio-entw-q6', topicId: 'bio-entwicklung', entryId: 'bio-entwicklung-keimblaetter', kind: 'multi',
+    prompt: 'Welche zwei Strukturen entstehen aus dem Mesoderm?',
+    options: [
+      { text: 'Skelettmuskulatur', correct: true, why: 'Muskulatur ist klassisch mesodermal.' },
+      { text: 'Nieren', correct: true, why: 'Das Harnsystem entwickelt sich aus dem intermediären Mesoderm.' },
+      { text: 'Oberhaut', correct: false, why: 'Die Epidermis ist ektodermal.' },
+      { text: 'Leber', correct: false, why: 'Die Leber geht aus dem Entoderm hervor.' },
+      { text: 'Rückenmark', correct: false, why: 'Das Rückenmark stammt aus dem Ektoderm.' },
+    ],
+    explanation: 'Mesoderm = Bindegewebe, Knochen, Muskeln, Herz-Kreislauf, Blut, Nieren, Keimdrüsen.',
+  },
+  {
+    id: 'bio-entw-q7', topicId: 'bio-entwicklung', entryId: 'bio-entwicklung-plazenta', kind: 'single',
+    prompt: 'Welche Antikörperklasse gelangt über die Plazenta zum Kind?',
+    options: [
+      { text: 'IgG', correct: true, why: 'IgG ist als einzige Klasse plazentagängig und vermittelt den Nestschutz.' },
+      { text: 'IgM', correct: false, why: 'IgM ist zu groß (Pentamer) und passiert die Plazenta nicht.' },
+      { text: 'IgA', correct: false, why: 'IgA gelangt über die Muttermilch, nicht über die Plazenta.' },
+      { text: 'IgE', correct: false, why: 'IgE spielt bei Allergien und Parasiten eine Rolle.' },
+      { text: 'IgD', correct: false, why: 'IgD sitzt vor allem als Rezeptor auf B-Zellen.' },
+    ],
+    explanation: 'Nachweisbares IgM beim Neugeborenen spricht deshalb für eine eigene, also vorgeburtliche Infektion.',
+  },
+  {
+    id: 'bio-entw-q8', topicId: 'bio-entwicklung', entryId: 'bio-entwicklung-befruchtung', kind: 'single',
+    prompt: 'Wann nistet sich der Keim üblicherweise in der Gebärmutterschleimhaut ein?',
+    options: [
+      { text: 'Etwa am 6. bis 7. Tag nach der Befruchtung', correct: true, why: 'Zu diesem Zeitpunkt liegt das Blastozystenstadium vor.' },
+      { text: 'Unmittelbar nach der Befruchtung', correct: false, why: 'Der Keim muss erst durch den Eileiter wandern.' },
+      { text: 'Etwa am 14. Tag', correct: false, why: 'Da ist die Einnistung längst abgeschlossen.' },
+      { text: 'In der dritten Woche', correct: false, why: 'In der dritten Woche läuft bereits die Gastrulation.' },
+      { text: 'Erst nach Ausbildung der Keimblätter', correct: false, why: 'Die Keimblätter entstehen nach der Einnistung.' },
+    ],
+    explanation: 'Reihenfolge: Zygote → Furchung → Morula → Blastozyste → Nidation (Tag 6–7) → Gastrulation (Woche 3).',
+  },
+  {
+    id: 'bio-entw-q9', topicId: 'bio-entwicklung', entryId: 'bio-entwicklung-plazenta', kind: 'single',
+    prompt: 'Was transportiert die Nabelschnurvene?',
+    options: [
+      { text: 'Sauerstoffreiches Blut von der Plazenta zum Kind', correct: true, why: 'Die Vene führt zum Herzen des Kindes hin und ist hier die sauerstoffreiche Leitung.' },
+      { text: 'Sauerstoffarmes Blut vom Kind zur Plazenta', correct: false, why: 'Das leisten die beiden Nabelschnurarterien.' },
+      { text: 'Mütterliches Blut zum Kind', correct: false, why: 'Die Blutkreisläufe sind getrennt.' },
+      { text: 'Fruchtwasser', correct: false, why: 'Fruchtwasser wird nicht über die Nabelschnur transportiert.' },
+      { text: 'Nur Hormone, kein Blut', correct: false, why: 'Die Nabelschnurgefäße führen Blut.' },
+    ],
+    explanation: 'Im fetalen Kreislauf ist es umgekehrt zum Erwachsenen: Die Vene führt sauerstoffreiches Blut.',
+  },
+  {
+    id: 'bio-entw-q10', topicId: 'bio-entwicklung', entryId: 'bio-entwicklung-embryo', kind: 'single',
+    prompt: 'Wie lange dauert eine Schwangerschaft ab dem ersten Tag der letzten Regelblutung gerechnet?',
+    options: [
+      { text: 'Etwa 40 Wochen', correct: true, why: 'Das ist die klinisch übliche Rechnung.' },
+      { text: 'Etwa 38 Wochen', correct: false, why: 'So lange dauert sie ab dem Zeitpunkt der Befruchtung.' },
+      { text: 'Etwa 36 Wochen', correct: false, why: 'Zu kurz für eine reife Geburt.' },
+      { text: 'Etwa 42 Wochen', correct: false, why: 'Ab 42 Wochen spricht man von Übertragung.' },
+      { text: 'Etwa 30 Wochen', correct: false, why: 'Das entspräche einer deutlichen Frühgeburt.' },
+    ],
+    explanation: 'Der Unterschied von zwei Wochen ergibt sich, weil der Eisprung etwa zwei Wochen nach Blutungsbeginn erfolgt.',
+  },
+];

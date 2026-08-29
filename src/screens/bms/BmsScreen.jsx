@@ -72,20 +72,38 @@ function LexikonView() {
     return () => { active = false; };
   }, [allContent, query]);
 
-  const results = useMemo(() => {
-    const term = query.trim().toLowerCase();
-    if (term.length < 2 || !allContent) return null;
-    const hits = [];
+  // Der Suchindex wird einmal je Datenstand gebaut, nicht bei jedem Tastendruck:
+  // Sonst würden für jeden Buchstaben alle 140 Einträge neu zusammengesetzt und
+  // kleingeschrieben, was auf dem Telefon spürbar ruckelt.
+  const searchIndex = useMemo(() => {
+    if (!allContent) return null;
+    const rows = [];
     for (const id of SUBJECT_ORDER) {
       for (const topic of allContent[id].topics) {
         for (const entry of topic.entries) {
-          const haystack = `${entry.title} ${entry.text} ${entry.facts.join(' ')}`.toLowerCase();
-          if (haystack.includes(term)) hits.push({ subjectId: id, topic, entry });
+          rows.push({
+            subjectId: id,
+            topic,
+            entry,
+            haystack: `${entry.title} ${entry.text} ${entry.facts.join(' ')}`.toLowerCase(),
+          });
         }
       }
     }
-    return hits.slice(0, 40);
-  }, [allContent, query]);
+    return rows;
+  }, [allContent]);
+
+  const results = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    if (term.length < 2 || !searchIndex) return null;
+    const hits = [];
+    for (const row of searchIndex) {
+      if (!row.haystack.includes(term)) continue;
+      hits.push({ subjectId: row.subjectId, topic: row.topic, entry: row.entry });
+      if (hits.length === 40) break;
+    }
+    return hits;
+  }, [query, searchIndex]);
 
   const entryIds = content ? content.topics.flatMap((topic) => topic.entries.map((entry) => entry.id)) : [];
   const readCount = entryIds.filter((id) => readEntries[id]).length;

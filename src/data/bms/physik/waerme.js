@@ -1,0 +1,197 @@
+/** Physik – Thema "Wärmelehre". */
+
+export const TOPIC = {
+  id: 'phy-waerme',
+  title: 'Wärmelehre',
+  summary: 'Temperatur, Wärmemenge, Gasgesetze, Diffusion und Osmose',
+  entries: [
+    {
+      id: 'phy-waerme-waermelehre',
+      title: 'Temperatur und Wärmemenge',
+      text: 'Die Temperatur ist ein Maß für die mittlere Bewegungsenergie der Teilchen; Wärme dagegen ist übertragene Energie und fließt immer vom wärmeren zum kälteren Körper. Die absolute Temperatur wird in Kelvin gemessen und beginnt beim absoluten Nullpunkt bei rund minus 273 Grad Celsius; eine Temperaturdifferenz ist in beiden Skalen gleich groß. Wie viel Wärme ein Körper zum Erwärmen braucht, hängt von seiner Masse, der Temperaturdifferenz und der spezifischen Wärmekapazität ab. Wasser hat eine ungewöhnlich hohe Wärmekapazität und speichert daher viel Energie, was Klima und Körpertemperatur stabilisiert. Wärme wird auf drei Wegen übertragen: durch Wärmeleitung im Feststoff, durch Konvektion in Flüssigkeiten und Gasen und durch Strahlung, die als einzige kein Medium benötigt.',
+      facts: [
+        'Temperatur = mittlere Bewegungsenergie; Wärme = übertragene Energie',
+        'Absoluter Nullpunkt: 0 K = −273,15 °C',
+        'Q = c · m · ΔT',
+        'Wasser hat eine besonders hohe Wärmekapazität',
+        'Übertragung: Leitung, Konvektion, Strahlung – nur Strahlung ohne Medium',
+      ],
+      formulas: ['Q = c · m · ΔT', 'T(K) = T(°C) + 273,15'],
+      related: ['phy-waerme-gase', 'che-stoffe-aggregat', 'phy-waerme-osmose'],
+    },
+    {
+      id: 'phy-waerme-gase',
+      title: 'Gasgesetze',
+      text: 'Für ein eingeschlossenes Gas hängen Druck, Volumen und Temperatur zusammen. Bei konstanter Temperatur sind Druck und Volumen umgekehrt proportional: Halbiert man das Volumen, verdoppelt sich der Druck. Bei konstantem Druck ist das Volumen der absoluten Temperatur proportional, bei konstantem Volumen gilt dasselbe für den Druck. Entscheidend ist, dass in all diesen Beziehungen die absolute Temperatur in Kelvin einzusetzen ist – mit Grad Celsius liefert die Rechnung falsche Ergebnisse. Anschaulich erklärt das Teilchenmodell diese Gesetze: Höhere Temperatur bedeutet schnellere Teilchen, die häufiger und heftiger auf die Wand stoßen und so den Druck erhöhen.',
+      facts: [
+        'Bei konstanter Temperatur: p · V = konstant',
+        'Bei konstantem Druck: V proportional zu T (in Kelvin)',
+        'Bei konstantem Volumen: p proportional zu T (in Kelvin)',
+        'Immer in Kelvin rechnen, nie in Grad Celsius',
+        'Druck entsteht durch Stöße der Teilchen auf die Gefäßwand',
+      ],
+      formulas: ['p · V / T = konstant'],
+      related: ['phy-waerme-waermelehre', 'che-stoffe-aggregat', 'phy-mechanik-druck'],
+    },
+    {
+      id: 'phy-waerme-osmose',
+      title: 'Diffusion und Osmose',
+      text: 'Diffusion ist die selbsttätige Durchmischung von Teilchen aufgrund ihrer Wärmebewegung; sie verläuft vom Ort höherer zu dem niedrigerer Konzentration und braucht keine Energiezufuhr. Sie läuft umso schneller ab, je höher die Temperatur, je größer der Konzentrationsunterschied und je kleiner die Teilchen sind. Osmose ist der Sonderfall, bei dem eine halbdurchlässige Membran nur das Lösungsmittel passieren lässt: Das Wasser wandert dann zur stärker konzentrierten Lösung, weil der gelöste Stoff die Membran nicht überwinden kann. Der Druck, der dieses Einströmen gerade verhindern würde, heißt osmotischer Druck. Für Zellen ist das entscheidend: In einer hypotonischen Umgebung nehmen sie Wasser auf und können platzen, in einer hypertonischen geben sie Wasser ab und schrumpfen, in einer isotonischen bleiben sie unverändert.',
+      facts: [
+        'Diffusion läuft ohne Energieaufwand entlang des Konzentrationsgefälles',
+        'Osmose: nur das Lösungsmittel passiert die Membran',
+        'Wasser wandert zur höher konzentrierten Lösung',
+        'Hypoton: Zelle schwillt; hyperton: Zelle schrumpft; isoton: unverändert',
+        'Höhere Temperatur beschleunigt die Diffusion',
+      ],
+      related: ['bio-zelle-transport', 'phy-waerme-waermelehre', 'che-stoffe-loesungen'],
+    },
+  ],
+};
+
+export const QUESTIONS = [
+  {
+    id: 'phy-wae-q1', topicId: 'phy-waerme', entryId: 'phy-waerme-waermelehre', kind: 'single',
+    prompt: 'Wie viel Kelvin entsprechen 27 Grad Celsius?',
+    options: [
+      { text: 'Etwa 300 K', correct: true, why: '27 + 273 = 300.' },
+      { text: 'Etwa 27 K', correct: false, why: 'Die Skalen sind gegeneinander verschoben.' },
+      { text: 'Etwa 246 K', correct: false, why: 'Hier wurde subtrahiert statt addiert.' },
+      { text: 'Etwa 573 K', correct: false, why: 'Hier wurde zweimal addiert.' },
+      { text: 'Etwa 0 K', correct: false, why: '0 K ist der absolute Nullpunkt bei −273 °C.' },
+    ],
+    explanation: 'Kelvin und Celsius unterscheiden sich nur im Nullpunkt, nicht in der Schrittweite.',
+  },
+  {
+    id: 'phy-wae-q2', topicId: 'phy-waerme', entryId: 'phy-waerme-waermelehre', kind: 'single',
+    prompt: 'Was beschreibt die Temperatur eines Körpers im Teilchenmodell?',
+    options: [
+      { text: 'Die mittlere Bewegungsenergie seiner Teilchen', correct: true, why: 'Schnellere Teilchen bedeuten höhere Temperatur.' },
+      { text: 'Die Gesamtenergie aller Teilchen', correct: false, why: 'Diese hängt zusätzlich von der Teilchenzahl ab.' },
+      { text: 'Die Zahl der Teilchen', correct: false, why: 'Das ist die Stoffmenge.' },
+      { text: 'Die Masse der Teilchen', correct: false, why: 'Die Masse ist eine Stoffeigenschaft.' },
+      { text: 'Die übertragene Wärmemenge', correct: false, why: 'Das ist die Wärme, nicht die Temperatur.' },
+    ],
+    explanation: 'Eine Tasse und ein See gleicher Temperatur enthalten sehr unterschiedliche Wärmemengen.',
+  },
+  {
+    id: 'phy-wae-q3', topicId: 'phy-waerme', entryId: 'phy-waerme-waermelehre', kind: 'single',
+    prompt: 'Welche Art der Wärmeübertragung funktioniert auch im Vakuum?',
+    options: [
+      { text: 'Wärmestrahlung', correct: true, why: 'Elektromagnetische Wellen brauchen kein Medium.' },
+      { text: 'Wärmeleitung', correct: false, why: 'Sie braucht Materie, in der die Energie weitergegeben wird.' },
+      { text: 'Konvektion', correct: false, why: 'Sie beruht auf strömenden Flüssigkeiten oder Gasen.' },
+      { text: 'Diffusion', correct: false, why: 'Auch sie setzt Teilchen voraus.' },
+      { text: 'Keine der genannten', correct: false, why: 'Die Strahlung überträgt Energie sehr wohl durchs Vakuum.' },
+    ],
+    explanation: 'Deshalb erreicht uns die Sonnenwärme trotz des Vakuums im Weltall.',
+  },
+  {
+    id: 'phy-wae-q4', topicId: 'phy-waerme', entryId: 'phy-waerme-waermelehre', kind: 'single',
+    prompt: 'Warum eignet sich Wasser besonders gut als Wärmespeicher?',
+    options: [
+      { text: 'Weil es eine hohe spezifische Wärmekapazität hat', correct: true, why: 'Es nimmt viel Energie auf, ohne sich stark zu erwärmen.' },
+      { text: 'Weil es eine niedrige Wärmekapazität hat', correct: false, why: 'Dann würde es sich rasch erwärmen und schnell abkühlen.' },
+      { text: 'Weil es leicht verdampft', correct: false, why: 'Verdampfen würde den Speicher gerade leeren.' },
+      { text: 'Weil es den Strom leitet', correct: false, why: 'Die Leitfähigkeit ist hier ohne Bedeutung.' },
+      { text: 'Weil es transparent ist', correct: false, why: 'Die Durchsichtigkeit spielt keine Rolle.' },
+    ],
+    explanation: 'Dieselbe Eigenschaft macht Küstenklimata ausgeglichener als Kontinentalklimata.',
+  },
+  {
+    id: 'phy-wae-q5', topicId: 'phy-waerme', entryId: 'phy-waerme-gase', kind: 'single',
+    prompt: 'Ein eingeschlossenes Gas wird bei gleichbleibender Temperatur auf das halbe Volumen zusammengedrückt. Was geschieht mit dem Druck?',
+    options: [
+      { text: 'Er verdoppelt sich', correct: true, why: 'Bei konstanter Temperatur ist p · V konstant.' },
+      { text: 'Er halbiert sich', correct: false, why: 'Druck und Volumen verhalten sich umgekehrt.' },
+      { text: 'Er bleibt gleich', correct: false, why: 'Die Teilchen stoßen jetzt häufiger auf die Wand.' },
+      { text: 'Er vervierfacht sich', correct: false, why: 'Die Beziehung ist nicht quadratisch.' },
+      { text: 'Er sinkt auf ein Viertel', correct: false, why: 'Der Druck steigt bei Kompression.' },
+    ],
+    explanation: 'Weniger Raum bedeutet mehr Stöße je Zeit auf dieselbe Wandfläche.',
+  },
+  {
+    id: 'phy-wae-q6', topicId: 'phy-waerme', entryId: 'phy-waerme-gase', kind: 'single',
+    prompt: 'In welcher Einheit ist die Temperatur bei Gasgesetzberechnungen einzusetzen?',
+    options: [
+      { text: 'In Kelvin', correct: true, why: 'Nur die absolute Temperatur ist proportional zum Volumen bzw. Druck.' },
+      { text: 'In Grad Celsius', correct: false, why: 'Der verschobene Nullpunkt verfälscht die Proportionalität.' },
+      { text: 'In Grad Fahrenheit', correct: false, why: 'Auch hier stimmt der Nullpunkt nicht.' },
+      { text: 'In Joule', correct: false, why: 'Joule ist die Einheit der Energie.' },
+      { text: 'Die Einheit ist beliebig', correct: false, why: 'Sie entscheidet über die Richtigkeit des Ergebnisses.' },
+    ],
+    explanation: 'Bei 0 °C wäre das Volumen sonst rechnerisch null – ein deutlicher Hinweis auf den Fehler.',
+  },
+  {
+    id: 'phy-wae-q7', topicId: 'phy-waerme', entryId: 'phy-waerme-osmose', kind: 'single',
+    prompt: 'In welche Richtung wandert Wasser bei der Osmose?',
+    options: [
+      { text: 'Zur Seite mit der höheren Konzentration gelöster Teilchen', correct: true, why: 'Der gelöste Stoff kann die Membran nicht passieren, das Wasser schon.' },
+      { text: 'Zur Seite mit der niedrigeren Konzentration', correct: false, why: 'Das würde den Unterschied noch verstärken.' },
+      { text: 'In beide Richtungen gleich stark', correct: false, why: 'Netto überwiegt eine Richtung.' },
+      { text: 'Es wandert nur unter Energiezufuhr', correct: false, why: 'Osmose ist ein passiver Vorgang.' },
+      { text: 'Nur bei erhöhter Temperatur', correct: false, why: 'Wärme beschleunigt den Vorgang, ist aber keine Bedingung.' },
+    ],
+    explanation: 'Merke: Das Wasser folgt dem gelösten Stoff, den es nicht erreichen kann.',
+  },
+  {
+    id: 'phy-wae-q8', topicId: 'phy-waerme', entryId: 'phy-waerme-osmose', kind: 'single',
+    prompt: 'Was geschieht mit einer roten Blutzelle in destilliertem Wasser?',
+    options: [
+      { text: 'Sie nimmt Wasser auf und kann platzen', correct: true, why: 'Die Umgebung ist hypotonisch.' },
+      { text: 'Sie gibt Wasser ab und schrumpft', correct: false, why: 'Das geschieht in einer hypertonischen Lösung.' },
+      { text: 'Sie bleibt unverändert', correct: false, why: 'Das gilt nur in einer isotonischen Lösung.' },
+      { text: 'Sie nimmt Salz auf', correct: false, why: 'In destilliertem Wasser ist kein Salz vorhanden.' },
+      { text: 'Sie teilt sich', correct: false, why: 'Reife rote Blutkörperchen teilen sich nicht.' },
+    ],
+    explanation: 'Deshalb werden Infusionen isotonisch angesetzt – mit rund 0,9 Prozent Kochsalz.',
+  },
+  {
+    id: 'phy-wae-q9', topicId: 'phy-waerme', entryId: 'phy-waerme-osmose', kind: 'single',
+    prompt: 'Welche Bedingung beschleunigt die Diffusion?',
+    options: [
+      { text: 'Eine höhere Temperatur', correct: true, why: 'Die Teilchen bewegen sich schneller.' },
+      { text: 'Ein kleinerer Konzentrationsunterschied', correct: false, why: 'Ein großes Gefälle treibt die Diffusion an.' },
+      { text: 'Größere Teilchen', correct: false, why: 'Große Teilchen diffundieren langsamer.' },
+      { text: 'Eine dickere Membran', correct: false, why: 'Ein längerer Weg verlangsamt den Vorgang.' },
+      { text: 'Eine kleinere Austauschfläche', correct: false, why: 'Weniger Fläche bedeutet weniger Durchsatz.' },
+    ],
+    explanation: 'Die Lungenbläschen bündeln alle förderlichen Faktoren: große Fläche, kurze Strecke, starkes Gefälle.',
+  },
+  {
+    id: 'phy-wae-q10', topicId: 'phy-waerme', entryId: 'phy-waerme-waermelehre', kind: 'single',
+    prompt: 'In welche Richtung fließt Wärme von selbst?',
+    options: [
+      { text: 'Vom wärmeren zum kälteren Körper', correct: true, why: 'Der Ausgleich erfolgt stets in diese Richtung.' },
+      { text: 'Vom kälteren zum wärmeren Körper', correct: false, why: 'Das erfordert eine Wärmepumpe und Energiezufuhr.' },
+      { text: 'Vom größeren zum kleineren Körper', correct: false, why: 'Die Größe ist nicht maßgeblich.' },
+      { text: 'Vom schwereren zum leichteren Körper', correct: false, why: 'Die Masse entscheidet nicht über die Richtung.' },
+      { text: 'In beide Richtungen gleich stark', correct: false, why: 'Netto überwiegt eine Richtung, bis Ausgleich herrscht.' },
+    ],
+    explanation: 'Ein Kühlschrank kehrt diese Richtung um – dafür braucht er elektrische Energie.',
+  },
+  {
+    id: 'phy-wae-q11', topicId: 'phy-waerme', entryId: 'phy-waerme-gase', kind: 'single',
+    prompt: 'Ein starres Gefäß mit Gas wird erwärmt. Was geschieht?',
+    options: [
+      { text: 'Der Druck steigt', correct: true, why: 'Bei konstantem Volumen wächst der Druck mit der absoluten Temperatur.' },
+      { text: 'Das Volumen steigt', correct: false, why: 'Ein starres Gefäß lässt keine Volumenänderung zu.' },
+      { text: 'Der Druck sinkt', correct: false, why: 'Schnellere Teilchen stoßen heftiger gegen die Wand.' },
+      { text: 'Es ändert sich nichts', correct: false, why: 'Die Temperaturerhöhung wirkt sich auf den Druck aus.' },
+      { text: 'Die Teilchenzahl steigt', correct: false, why: 'Das Gefäß ist geschlossen.' },
+    ],
+    explanation: 'Deshalb dürfen Spraydosen nicht erhitzt werden – der Innendruck steigt gefährlich.',
+  },
+  {
+    id: 'phy-wae-q12', topicId: 'phy-waerme', entryId: 'phy-waerme-osmose', kind: 'multi',
+    prompt: 'Welche zwei Aussagen über Diffusion und Osmose sind richtig? (2 aus 5)',
+    options: [
+      { text: 'Diffusion benötigt keine Energiezufuhr', correct: true, why: 'Sie beruht allein auf der Wärmebewegung der Teilchen.' },
+      { text: 'Bei der Osmose passiert nur das Lösungsmittel die Membran', correct: true, why: 'Der gelöste Stoff wird zurückgehalten.' },
+      { text: 'Diffusion läuft gegen das Konzentrationsgefälle', correct: false, why: 'Das leistet nur der aktive Transport.' },
+      { text: 'Osmose erfordert ATP', correct: false, why: 'Sie ist ein passiver Vorgang.' },
+      { text: 'Kleine Teilchen diffundieren langsamer als große', correct: false, why: 'Kleine Teilchen sind schneller unterwegs.' },
+    ],
+    explanation: 'Passiv heißt: entlang des Gefälles und ohne Energieaufwand – das gilt für beide Vorgänge.',
+  },
+];

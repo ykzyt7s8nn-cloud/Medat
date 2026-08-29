@@ -1,0 +1,196 @@
+/** Mathematik – Thema "Statistik und Wahrscheinlichkeit". */
+
+export const TOPIC = {
+  id: 'mat-stat',
+  title: 'Statistik und Wahrscheinlichkeit',
+  summary: 'Mittelwerte, Streuung, Wahrscheinlichkeitsrechnung',
+  entries: [
+    {
+      id: 'mat-stat-lage',
+      title: 'Mittelwert, Median und Modus',
+      text: 'Das arithmetische Mittel ist die Summe aller Werte geteilt durch ihre Anzahl; es reagiert empfindlich auf Ausreißer, weil ein einzelner sehr großer Wert es stark verschiebt. Der Median ist der mittlere Wert der geordneten Liste – bei gerader Anzahl das Mittel der beiden mittleren – und bleibt von Ausreißern nahezu unberührt, weshalb er bei schiefen Verteilungen wie Einkommen aussagekräftiger ist. Der Modus ist der am häufigsten vorkommende Wert und kann mehrfach vorliegen. Bei einer symmetrischen Verteilung fallen alle drei Maße zusammen, bei einer rechtsschiefen liegt das arithmetische Mittel über dem Median. Wichtig ist, dass für den Median die Werte zuerst der Größe nach geordnet werden müssen.',
+      facts: [
+        'Arithmetisches Mittel: Summe geteilt durch Anzahl',
+        'Median: mittlerer Wert der geordneten Liste',
+        'Der Median ist robust gegenüber Ausreißern, das Mittel nicht',
+        'Modus: der häufigste Wert, kann mehrfach auftreten',
+        'Vor der Medianbestimmung immer sortieren',
+      ],
+      related: ['mat-stat-streuung', 'mat-stat-wahrscheinlichkeit', 'mat-grundlagen-bruch'],
+    },
+    {
+      id: 'mat-stat-streuung',
+      title: 'Streuung und Darstellung',
+      text: 'Die Spannweite ist die Differenz aus größtem und kleinstem Wert und damit das einfachste Streuungsmaß, allerdings sehr anfällig für Ausreißer. Die Standardabweichung beschreibt, wie stark die Werte im Mittel vom arithmetischen Mittel abweichen; ein kleiner Wert bedeutet eine eng um den Mittelwert liegende Verteilung. Zwei Datenreihen können denselben Mittelwert haben und sich in der Streuung dennoch stark unterscheiden – deshalb sagt ein Mittelwert allein wenig aus. Zur Darstellung dienen Balken- und Säulendiagramme für Häufigkeiten, Kreisdiagramme für Anteile an einem Ganzen und Liniendiagramme für Verläufe über die Zeit. Bei der Bewertung von Grafiken ist auf die Achsenskalierung zu achten, denn eine abgeschnittene Achse übertreibt Unterschiede optisch.',
+      facts: [
+        'Spannweite = Maximum minus Minimum',
+        'Standardabweichung misst die mittlere Abweichung vom Mittelwert',
+        'Gleicher Mittelwert bedeutet nicht gleiche Verteilung',
+        'Kreisdiagramm für Anteile, Liniendiagramm für Verläufe',
+        'Abgeschnittene Achsen übertreiben Unterschiede',
+      ],
+      related: ['mat-stat-lage', 'mat-stat-wahrscheinlichkeit', 'mat-funktion-linear'],
+    },
+    {
+      id: 'mat-stat-wahrscheinlichkeit',
+      title: 'Wahrscheinlichkeitsrechnung',
+      text: 'Bei gleich wahrscheinlichen Ergebnissen ist die Wahrscheinlichkeit eines Ereignisses die Zahl der günstigen geteilt durch die Zahl der möglichen Fälle; sie liegt stets zwischen null und eins. Die Gegenwahrscheinlichkeit ist eins minus die Wahrscheinlichkeit des Ereignisses und vereinfacht viele Aufgaben, etwa die Frage nach mindestens einem Treffer. Bei unabhängigen Ereignissen, die gemeinsam eintreten sollen, werden die Wahrscheinlichkeiten multipliziert; bei einander ausschließenden Ereignissen, von denen eines eintreten soll, werden sie addiert. Ein häufiger Denkfehler ist die Annahme, ein Zufallsgerät habe ein Gedächtnis: Nach fünfmal Kopf ist die Wahrscheinlichkeit für Kopf beim sechsten Wurf unverändert ein Halb.',
+      facts: [
+        'P = günstige / mögliche Fälle, stets zwischen 0 und 1',
+        'Gegenwahrscheinlichkeit: P(nicht A) = 1 − P(A)',
+        'Und-Verknüpfung unabhängiger Ereignisse: multiplizieren',
+        'Oder-Verknüpfung ausschließender Ereignisse: addieren',
+        'Zufallsgeräte haben kein Gedächtnis',
+      ],
+      formulas: ['P(A) = günstige / mögliche', 'P(A und B) = P(A) · P(B) bei Unabhängigkeit'],
+      related: ['mat-stat-lage', 'mat-grundlagen-bruch', 'bio-humangen-risiko'],
+    },
+  ],
+};
+
+export const QUESTIONS = [
+  {
+    id: 'mat-sta-q1', topicId: 'mat-stat', entryId: 'mat-stat-lage', kind: 'single',
+    prompt: 'Wie groß ist das arithmetische Mittel der Werte 4, 6, 8 und 10?',
+    options: [
+      { text: '7', correct: true, why: 'Die Summe 28 geteilt durch 4 ergibt 7.' },
+      { text: '6', correct: false, why: 'Das ist einer der Einzelwerte.' },
+      { text: '8', correct: false, why: 'Auch das ist ein Einzelwert.' },
+      { text: '28', correct: false, why: 'Das ist die Summe ohne Division.' },
+      { text: '14', correct: false, why: 'Hier wurde durch 2 statt durch 4 geteilt.' },
+    ],
+    explanation: 'Hier fallen Mittelwert und Median zusammen, weil die Werte symmetrisch verteilt sind.',
+  },
+  {
+    id: 'mat-sta-q2', topicId: 'mat-stat', entryId: 'mat-stat-lage', kind: 'single',
+    prompt: 'Wie groß ist der Median der Werte 3, 12, 5, 9 und 40?',
+    options: [
+      { text: '9', correct: true, why: 'Sortiert: 3, 5, 9, 12, 40 – der mittlere Wert ist 9.' },
+      { text: '5', correct: false, why: 'Das ist der zweite Wert der sortierten Liste.' },
+      { text: '12', correct: false, why: 'Das ist der vierte Wert.' },
+      { text: '13,8', correct: false, why: 'Das ist das arithmetische Mittel.' },
+      { text: '40', correct: false, why: 'Das ist der Ausreißer.' },
+    ],
+    explanation: 'Erst sortieren, dann den mittleren Wert nehmen – der Ausreißer 40 verzerrt den Median nicht.',
+  },
+  {
+    id: 'mat-sta-q3', topicId: 'mat-stat', entryId: 'mat-stat-lage', kind: 'single',
+    prompt: 'Warum ist der Median bei Einkommensverteilungen aussagekräftiger als das arithmetische Mittel?',
+    options: [
+      { text: 'Weil er von einzelnen sehr hohen Werten kaum beeinflusst wird', correct: true, why: 'Er hängt nur von der Position ab, nicht vom Betrag der Ausreißer.' },
+      { text: 'Weil er immer größer ist als das Mittel', correct: false, why: 'Bei rechtsschiefen Verteilungen ist er kleiner.' },
+      { text: 'Weil er leichter zu berechnen ist', correct: false, why: 'Die Rechenmühe ist nicht das Argument.' },
+      { text: 'Weil er alle Werte gleich stark gewichtet', correct: false, why: 'Genau das tut das arithmetische Mittel.' },
+      { text: 'Weil er die Streuung angibt', correct: false, why: 'Der Median ist ein Lagemaß, kein Streuungsmaß.' },
+    ],
+    explanation: 'Ein einziges Spitzeneinkommen hebt das Mittel spürbar, den Median dagegen kaum.',
+  },
+  {
+    id: 'mat-sta-q4', topicId: 'mat-stat', entryId: 'mat-stat-streuung', kind: 'single',
+    prompt: 'Was beschreibt die Standardabweichung?',
+    options: [
+      { text: 'Wie stark die Werte im Mittel vom Mittelwert abweichen', correct: true, why: 'Sie ist das gebräuchlichste Streuungsmaß.' },
+      { text: 'Den häufigsten Wert der Verteilung', correct: false, why: 'Das ist der Modus.' },
+      { text: 'Den mittleren Wert der geordneten Liste', correct: false, why: 'Das ist der Median.' },
+      { text: 'Die Differenz aus größtem und kleinstem Wert', correct: false, why: 'Das ist die Spannweite.' },
+      { text: 'Die Summe aller Werte', correct: false, why: 'Das ist keine statistische Kennzahl der Streuung.' },
+    ],
+    explanation: 'Zwei Reihen mit gleichem Mittelwert können sehr unterschiedliche Standardabweichungen haben.',
+  },
+  {
+    id: 'mat-sta-q5', topicId: 'mat-stat', entryId: 'mat-stat-streuung', kind: 'single',
+    prompt: 'Wie groß ist die Spannweite der Werte 12, 7, 19, 4 und 15?',
+    options: [
+      { text: '15', correct: true, why: '19 minus 4 ergibt 15.' },
+      { text: '11,4', correct: false, why: 'Das ist das arithmetische Mittel.' },
+      { text: '12', correct: false, why: 'Das ist der Median.' },
+      { text: '19', correct: false, why: 'Das ist nur der größte Wert.' },
+      { text: '4', correct: false, why: 'Das ist nur der kleinste Wert.' },
+    ],
+    explanation: 'Die Spannweite ist einfach zu berechnen, aber sehr empfindlich gegenüber Ausreißern.',
+  },
+  {
+    id: 'mat-sta-q6', topicId: 'mat-stat', entryId: 'mat-stat-wahrscheinlichkeit', kind: 'single',
+    prompt: 'Wie hoch ist die Wahrscheinlichkeit, mit einem fairen Würfel eine gerade Zahl zu werfen?',
+    options: [
+      { text: '1/2', correct: true, why: 'Drei von sechs Augenzahlen sind gerade.' },
+      { text: '1/3', correct: false, why: 'Das entspräche zwei günstigen Fällen.' },
+      { text: '1/6', correct: false, why: 'Das ist die Wahrscheinlichkeit einer bestimmten Augenzahl.' },
+      { text: '2/3', correct: false, why: 'Das entspräche vier günstigen Fällen.' },
+      { text: '3/2', correct: false, why: 'Wahrscheinlichkeiten sind nie größer als 1.' },
+    ],
+    explanation: 'Günstige durch mögliche Fälle: 3 von 6 ergibt ein Halb.',
+  },
+  {
+    id: 'mat-sta-q7', topicId: 'mat-stat', entryId: 'mat-stat-wahrscheinlichkeit', kind: 'single',
+    prompt: 'Wie hoch ist die Wahrscheinlichkeit, mit zwei Würfen einer fairen Münze zweimal Kopf zu erhalten?',
+    options: [
+      { text: '1/4', correct: true, why: 'Bei unabhängigen Ereignissen multipliziert man: ½ · ½.' },
+      { text: '1/2', correct: false, why: 'Das gilt für einen einzelnen Wurf.' },
+      { text: '1', correct: false, why: 'Sicher ist das Ergebnis keineswegs.' },
+      { text: '1/3', correct: false, why: 'Die drei Ausgänge sind nicht gleich wahrscheinlich.' },
+      { text: '2/2', correct: false, why: 'Das ergäbe eine Wahrscheinlichkeit von 1.' },
+    ],
+    explanation: 'Bei "und" wird multipliziert, bei einander ausschließenden "oder"-Fällen addiert.',
+  },
+  {
+    id: 'mat-sta-q8', topicId: 'mat-stat', entryId: 'mat-stat-wahrscheinlichkeit', kind: 'single',
+    prompt: 'Eine faire Münze zeigt fünfmal hintereinander Kopf. Wie hoch ist die Wahrscheinlichkeit für Kopf beim sechsten Wurf?',
+    options: [
+      { text: '1/2', correct: true, why: 'Die Würfe sind unabhängig, die Münze hat kein Gedächtnis.' },
+      { text: 'Deutlich unter 1/2', correct: false, why: 'Das wäre der Spielerfehlschluss.' },
+      { text: 'Deutlich über 1/2', correct: false, why: 'Auch das unterstellt eine Abhängigkeit.' },
+      { text: '1/64', correct: false, why: 'Das ist die Wahrscheinlichkeit für sechsmal Kopf in Folge von Anfang an.' },
+      { text: '0', correct: false, why: 'Kopf bleibt möglich.' },
+    ],
+    explanation: 'Vor dem ersten Wurf ist eine Serie unwahrscheinlich – für den nächsten Wurf zählt nur dieser.',
+  },
+  {
+    id: 'mat-sta-q9', topicId: 'mat-stat', entryId: 'mat-stat-wahrscheinlichkeit', kind: 'single',
+    prompt: 'Ein Ereignis hat die Wahrscheinlichkeit 0,3. Wie hoch ist die Gegenwahrscheinlichkeit?',
+    options: [
+      { text: '0,7', correct: true, why: 'P(nicht A) = 1 − 0,3.' },
+      { text: '0,3', correct: false, why: 'Das ist die Wahrscheinlichkeit des Ereignisses selbst.' },
+      { text: '−0,3', correct: false, why: 'Wahrscheinlichkeiten sind nie negativ.' },
+      { text: '1,3', correct: false, why: 'Wahrscheinlichkeiten sind nie größer als 1.' },
+      { text: '0,5', correct: false, why: 'Das gilt nur bei P(A) = 0,5.' },
+    ],
+    explanation: 'Der Umweg über das Gegenereignis vereinfacht besonders Aufgaben mit "mindestens".',
+  },
+  {
+    id: 'mat-sta-q10', topicId: 'mat-stat', entryId: 'mat-stat-lage', kind: 'single',
+    prompt: 'Was ist der Modus einer Datenreihe?',
+    options: [
+      { text: 'Der am häufigsten vorkommende Wert', correct: true, why: 'Er kann auch mehrfach vorliegen.' },
+      { text: 'Der mittlere Wert der geordneten Liste', correct: false, why: 'Das ist der Median.' },
+      { text: 'Der Durchschnitt aller Werte', correct: false, why: 'Das ist das arithmetische Mittel.' },
+      { text: 'Der größte Wert', correct: false, why: 'Das ist das Maximum.' },
+      { text: 'Die Differenz von Maximum und Minimum', correct: false, why: 'Das ist die Spannweite.' },
+    ],
+    explanation: 'Bei kategorialen Daten wie Blutgruppen ist der Modus oft das einzig sinnvolle Lagemaß.',
+  },
+  {
+    id: 'mat-sta-q11', topicId: 'mat-stat', entryId: 'mat-stat-streuung', kind: 'single',
+    prompt: 'Warum kann ein Diagramm mit abgeschnittener y-Achse irreführen?',
+    options: [
+      { text: 'Weil kleine Unterschiede optisch stark übertrieben wirken', correct: true, why: 'Die Balkenhöhen sind dann nicht mehr proportional zu den Werten.' },
+      { text: 'Weil die Werte dadurch falsch berechnet werden', correct: false, why: 'Die Zahlen selbst bleiben korrekt.' },
+      { text: 'Weil dadurch der Mittelwert steigt', correct: false, why: 'Die Darstellung ändert die Kennzahlen nicht.' },
+      { text: 'Weil Kreisdiagramme grundsätzlich besser sind', correct: false, why: 'Auch Kreisdiagramme haben Schwächen.' },
+      { text: 'Weil die Streuung dadurch sinkt', correct: false, why: 'Die Streuung der Daten bleibt unverändert.' },
+    ],
+    explanation: 'Beim Lesen einer Grafik immer zuerst auf die Achsenskalierung schauen.',
+  },
+  {
+    id: 'mat-sta-q12', topicId: 'mat-stat', entryId: 'mat-stat-wahrscheinlichkeit', kind: 'multi',
+    prompt: 'Welche zwei Aussagen zur Wahrscheinlichkeitsrechnung sind richtig? (2 aus 5)',
+    options: [
+      { text: 'Eine Wahrscheinlichkeit liegt stets zwischen 0 und 1', correct: true, why: '0 bedeutet unmöglich, 1 bedeutet sicher.' },
+      { text: 'Bei unabhängigen Ereignissen, die beide eintreten sollen, wird multipliziert', correct: true, why: 'Das ist die Und-Regel.' },
+      { text: 'Wahrscheinlichkeiten können größer als 1 werden', correct: false, why: 'Der Wert 1 entspricht bereits der Sicherheit.' },
+      { text: 'Bei unabhängigen Ereignissen wird immer addiert', correct: false, why: 'Addiert wird bei einander ausschließenden Oder-Fällen.' },
+      { text: 'Nach vielen gleichen Ergebnissen wird das Gegenteil wahrscheinlicher', correct: false, why: 'Das ist der Spielerfehlschluss.' },
+    ],
+    explanation: 'Die beiden Kernregeln lauten: "und" heißt multiplizieren, ausschließendes "oder" heißt addieren.',
+  },
+];

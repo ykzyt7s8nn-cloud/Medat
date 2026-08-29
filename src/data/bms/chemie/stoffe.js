@@ -1,0 +1,208 @@
+/** Chemie – Thema "Stoffe, Gemische und Lösungen". */
+
+export const TOPIC = {
+  id: 'che-stoffe',
+  title: 'Stoffe und Gemische',
+  summary: 'Reinstoffe, Trennverfahren, Aggregatzustände, Lösungen',
+  entries: [
+    {
+      id: 'che-stoffe-einteilung',
+      title: 'Einteilung der Stoffe',
+      text: 'Reinstoffe haben eine feste Zusammensetzung und feste Kennwerte wie Schmelz- und Siedepunkt. Sie gliedern sich in Elemente, die aus nur einer Atomsorte bestehen, und Verbindungen, in denen mehrere Elemente in einem festen Verhältnis chemisch gebunden sind. Stoffgemische enthalten dagegen mehrere Reinstoffe in beliebigem Verhältnis, die ihre Eigenschaften behalten; ihre Bestandteile lassen sich mit physikalischen Verfahren trennen. Homogene Gemische wie Lösungen, Legierungen und Gasgemische erscheinen einheitlich, heterogene wie Suspensionen, Emulsionen und Gemenge zeigen erkennbar mehrere Phasen. Entscheidend ist der Unterschied zwischen der chemischen Verbindung, die nur durch eine chemische Reaktion zu zerlegen ist, und dem Gemisch, das ein Trennverfahren genügt.',
+      facts: [
+        'Reinstoff: feste Zusammensetzung und feste Kennwerte',
+        'Element = eine Atomsorte, Verbindung = mehrere in festem Verhältnis',
+        'Gemische lassen sich physikalisch trennen, Verbindungen nur chemisch',
+        'Homogen = einheitlich, heterogen = mehrere sichtbare Phasen',
+        'Luft ist ein homogenes Gemisch, kein Reinstoff',
+      ],
+      related: ['che-stoffe-trennung', 'che-stoffe-loesungen', 'che-stoech-mol'],
+    },
+    {
+      id: 'che-stoffe-trennung',
+      title: 'Trennverfahren',
+      text: 'Jedes Trennverfahren nutzt einen Eigenschaftsunterschied der Bestandteile. Filtrieren trennt nach der Teilchengröße und eignet sich für Feststoffe in Flüssigkeiten. Das Eindampfen nutzt den Unterschied im Siedepunkt und liefert den gelösten Feststoff zurück, während die Destillation den flüchtigeren Bestandteil auffängt und für Flüssigkeitsgemische verwendet wird. Die Extraktion nutzt unterschiedliche Löslichkeit, die Chromatographie unterschiedliche Wanderungsgeschwindigkeit auf einem Trägermaterial, das Zentrifugieren die Dichte. Wesentlich ist: Bei allen diesen Verfahren bleiben die Stoffe chemisch unverändert, es entstehen keine neuen Stoffe.',
+      facts: [
+        'Filtrieren: Teilchengröße; Destillation: Siedepunkt',
+        'Extraktion: Löslichkeit; Chromatographie: Wanderungsgeschwindigkeit',
+        'Zentrifugieren und Sedimentieren: Dichte',
+        'Trennverfahren sind physikalisch, es entstehen keine neuen Stoffe',
+        'Eindampfen liefert den gelösten Stoff, Destillation das Lösungsmittel',
+      ],
+      related: ['che-stoffe-einteilung', 'che-stoffe-loesungen', 'che-stoffe-aggregat'],
+    },
+    {
+      id: 'che-stoffe-aggregat',
+      title: 'Aggregatzustände und Übergänge',
+      text: 'Im Feststoff sitzen die Teilchen auf festen Plätzen und schwingen nur; die Flüssigkeit hat ein festes Volumen, aber keine feste Form, weil die Teilchen aneinander vorbeigleiten; im Gas bewegen sie sich weitgehend frei und füllen jeden Raum aus. Die Übergänge heißen Schmelzen und Erstarren, Verdampfen und Kondensieren sowie Sublimieren und Resublimieren für den direkten Wechsel zwischen fest und gasförmig. Beim Übergang bleibt die Temperatur trotz Energiezufuhr konstant, weil die gesamte Energie zum Lösen der Anziehungskräfte verbraucht wird – diese Haltepunkte sieht man deutlich in der Erwärmungskurve. Schmelz- und Siedepunkt sind Stoffkonstanten und dienen daher zur Identifikation von Reinstoffen.',
+      facts: [
+        'Fest: feste Form und Volumen; flüssig: nur festes Volumen; gasförmig: keines von beidem',
+        'Sublimieren: fest direkt zu gasförmig',
+        'Während des Übergangs bleibt die Temperatur konstant',
+        'Schmelz- und Siedepunkt sind Kennwerte von Reinstoffen',
+        'Beim Übergang werden nur zwischenmolekulare Kräfte überwunden',
+      ],
+      related: ['che-bindung-kraefte', 'che-stoffe-einteilung', 'phy-waerme-waermelehre'],
+    },
+    {
+      id: 'che-stoffe-loesungen',
+      title: 'Lösungen und Löslichkeit',
+      text: 'Beim Lösen umlagern Teilchen des Lösungsmittels die Teilchen des gelösten Stoffes; bei Wasser spricht man von Hydratation. Ein Salz zerfällt dabei in seine Ionen, was die elektrische Leitfähigkeit der Lösung erklärt. Die Löslichkeit gibt an, wie viel Stoff sich bei einer bestimmten Temperatur höchstens lösen lässt; ist dieser Wert erreicht, ist die Lösung gesättigt. Bei Feststoffen steigt die Löslichkeit meist mit der Temperatur, bei Gasen nimmt sie dagegen mit steigender Temperatur ab und mit steigendem Druck zu – deshalb perlt ein warmes Mineralwasser stärker aus. Für die Löslichkeit gilt weiterhin die Regel, dass sich polare Stoffe in polaren und unpolare in unpolaren Lösungsmitteln lösen.',
+      facts: [
+        'Salze zerfallen beim Lösen in Ionen und machen die Lösung leitfähig',
+        'Gesättigt heißt: mehr löst sich bei dieser Temperatur nicht',
+        'Feststoffe lösen sich meist besser in der Wärme',
+        'Gase lösen sich besser bei Kälte und hohem Druck',
+        'Polar löst polar, unpolar löst unpolar',
+      ],
+      related: ['che-bindung-polaritaet', 'che-stoech-konzentration', 'che-stoffe-trennung'],
+    },
+  ],
+};
+
+export const QUESTIONS = [
+  {
+    id: 'che-stf-q1', topicId: 'che-stoffe', entryId: 'che-stoffe-einteilung', kind: 'single',
+    prompt: 'Welcher der folgenden Stoffe ist ein Reinstoff?',
+    options: [
+      { text: 'Destilliertes Wasser', correct: true, why: 'Es besteht ausschließlich aus Wassermolekülen.' },
+      { text: 'Luft', correct: false, why: 'Luft ist ein homogenes Gasgemisch.' },
+      { text: 'Milch', correct: false, why: 'Milch ist eine Emulsion, also ein heterogenes Gemisch.' },
+      { text: 'Messing', correct: false, why: 'Messing ist eine Legierung aus Kupfer und Zink.' },
+      { text: 'Mineralwasser', correct: false, why: 'Es enthält gelöste Salze und Gase.' },
+    ],
+    explanation: 'Reinstoffe erkennt man an festen Kennwerten wie einem scharfen Siedepunkt.',
+  },
+  {
+    id: 'che-stf-q2', topicId: 'che-stoffe', entryId: 'che-stoffe-einteilung', kind: 'single',
+    prompt: 'Worin unterscheidet sich eine chemische Verbindung von einem Gemisch?',
+    options: [
+      { text: 'Die Bestandteile sind in festem Verhältnis chemisch gebunden', correct: true, why: 'Sie lässt sich nur durch eine chemische Reaktion zerlegen.' },
+      { text: 'Sie besteht immer aus nur einem Element', correct: false, why: 'Das wäre die Definition eines Elements.' },
+      { text: 'Sie ist immer homogen, ein Gemisch immer heterogen', correct: false, why: 'Auch Gemische können homogen sein.' },
+      { text: 'Sie lässt sich durch Filtrieren trennen', correct: false, why: 'Physikalische Verfahren trennen nur Gemische.' },
+      { text: 'Sie liegt stets flüssig vor', correct: false, why: 'Der Aggregatzustand ist kein Kriterium.' },
+    ],
+    explanation: 'Wasser ist eine Verbindung, Salzwasser ein Gemisch – nur Letzteres trennt ein Trennverfahren.',
+  },
+  {
+    id: 'che-stf-q3', topicId: 'che-stoffe', entryId: 'che-stoffe-trennung', kind: 'single',
+    prompt: 'Welches Verfahren trennt ein Gemisch aus Wasser und Ethanol?',
+    options: [
+      { text: 'Destillation', correct: true, why: 'Beide sind flüssig, unterscheiden sich aber im Siedepunkt.' },
+      { text: 'Filtration', correct: false, why: 'Filtrieren setzt unterschiedliche Teilchengrößen voraus.' },
+      { text: 'Sieben', correct: false, why: 'Sieben trennt grobe Feststoffe.' },
+      { text: 'Magnetscheidung', correct: false, why: 'Weder Wasser noch Ethanol ist magnetisch.' },
+      { text: 'Sedimentieren', correct: false, why: 'Die beiden Flüssigkeiten sind vollständig mischbar.' },
+    ],
+    explanation: 'Bei der Destillation wird zuerst der Stoff mit dem niedrigeren Siedepunkt aufgefangen – hier Ethanol.',
+  },
+  {
+    id: 'che-stf-q4', topicId: 'che-stoffe', entryId: 'che-stoffe-trennung', kind: 'single',
+    prompt: 'Welche Eigenschaft nutzt die Filtration?',
+    options: [
+      { text: 'Den Unterschied in der Teilchengröße', correct: true, why: 'Der Filter hält größere Teilchen zurück.' },
+      { text: 'Den Unterschied im Siedepunkt', correct: false, why: 'Das nutzt die Destillation.' },
+      { text: 'Den Unterschied in der Löslichkeit', correct: false, why: 'Das nutzt die Extraktion.' },
+      { text: 'Den Unterschied in der Ladung', correct: false, why: 'Das nutzt die Elektrophorese.' },
+      { text: 'Den Unterschied in der Farbe', correct: false, why: 'Die Farbe ist kein Trennkriterium.' },
+    ],
+    explanation: 'Filtrieren eignet sich für Suspensionen, nicht für echte Lösungen – dort sind die Teilchen zu klein.',
+  },
+  {
+    id: 'che-stf-q5', topicId: 'che-stoffe', entryId: 'che-stoffe-aggregat', kind: 'single',
+    prompt: 'Wie heißt der direkte Übergang vom festen in den gasförmigen Zustand?',
+    options: [
+      { text: 'Sublimieren', correct: true, why: 'Der flüssige Zustand wird dabei übersprungen.' },
+      { text: 'Kondensieren', correct: false, why: 'Das ist der Übergang von gasförmig zu flüssig.' },
+      { text: 'Schmelzen', correct: false, why: 'Schmelzen führt von fest zu flüssig.' },
+      { text: 'Erstarren', correct: false, why: 'Erstarren führt von flüssig zu fest.' },
+      { text: 'Verdampfen', correct: false, why: 'Verdampfen führt von flüssig zu gasförmig.' },
+    ],
+    explanation: 'Trockeneis aus festem Kohlendioxid sublimiert – es hinterlässt keine Pfütze.',
+  },
+  {
+    id: 'che-stf-q6', topicId: 'che-stoffe', entryId: 'che-stoffe-aggregat', kind: 'single',
+    prompt: 'Warum bleibt die Temperatur beim Schmelzen eines Reinstoffs trotz Energiezufuhr konstant?',
+    options: [
+      { text: 'Weil die zugeführte Energie zum Lösen der Anziehungskräfte verbraucht wird', correct: true, why: 'Sie erhöht nicht die Bewegungsenergie, sondern trennt die Teilchen.' },
+      { text: 'Weil keine Energie mehr aufgenommen wird', correct: false, why: 'Der Stoff nimmt weiterhin Energie auf.' },
+      { text: 'Weil die Wärme vollständig abgestrahlt wird', correct: false, why: 'Die Abstrahlung erklärt den Haltepunkt nicht.' },
+      { text: 'Weil sich die Masse verringert', correct: false, why: 'Die Masse bleibt erhalten.' },
+      { text: 'Weil sich der Stoff chemisch verändert', correct: false, why: 'Ein Aggregatzustandswechsel ist ein physikalischer Vorgang.' },
+    ],
+    explanation: 'In der Erwärmungskurve zeigt sich das als waagerechter Abschnitt beim Schmelz- und Siedepunkt.',
+  },
+  {
+    id: 'che-stf-q7', topicId: 'che-stoffe', entryId: 'che-stoffe-loesungen', kind: 'single',
+    prompt: 'Wie verändert sich die Löslichkeit eines Gases in Wasser bei steigender Temperatur?',
+    options: [
+      { text: 'Sie nimmt ab', correct: true, why: 'Die stärkere Teilchenbewegung treibt das Gas aus der Lösung.' },
+      { text: 'Sie nimmt zu', correct: false, why: 'Das gilt für die meisten Feststoffe, nicht für Gase.' },
+      { text: 'Sie bleibt konstant', correct: false, why: 'Die Temperaturabhängigkeit ist deutlich.' },
+      { text: 'Sie nimmt zuerst zu und dann ab', correct: false, why: 'Der Verlauf ist gleichsinnig fallend.' },
+      { text: 'Sie hängt nur vom Druck ab', correct: false, why: 'Auch der Druck spielt eine Rolle, aber die Temperatur ebenso.' },
+    ],
+    explanation: 'Deshalb ist warmes Sprudelwasser schaler und warme Gewässer sind sauerstoffärmer.',
+  },
+  {
+    id: 'che-stf-q8', topicId: 'che-stoffe', entryId: 'che-stoffe-loesungen', kind: 'single',
+    prompt: 'Warum leitet eine Kochsalzlösung den elektrischen Strom?',
+    options: [
+      { text: 'Weil das Salz in frei bewegliche Ionen zerfällt', correct: true, why: 'Die Ionen transportieren die Ladung durch die Lösung.' },
+      { text: 'Weil Wasser selbst ein guter Leiter ist', correct: false, why: 'Reines Wasser leitet nur äußerst schwach.' },
+      { text: 'Weil sich Elektronen frei durch die Lösung bewegen', correct: false, why: 'Ein Elektronengas gibt es nur in Metallen.' },
+      { text: 'Weil beim Lösen Atombindungen entstehen', correct: false, why: 'Atombindungen leiten den Strom nicht.' },
+      { text: 'Weil die Lösung erwärmt wird', correct: false, why: 'Die Temperatur ist nicht die Ursache.' },
+    ],
+    explanation: 'Erst gelöste oder geschmolzene Salze leiten – im festen Gitter sind die Ionen unbeweglich.',
+  },
+  {
+    id: 'che-stf-q9', topicId: 'che-stoffe', entryId: 'che-stoffe-einteilung', kind: 'single',
+    prompt: 'Welches Gemisch ist heterogen?',
+    options: [
+      { text: 'Eine Suspension aus Kreide in Wasser', correct: true, why: 'Die Bestandteile sind mit bloßem Auge unterscheidbar.' },
+      { text: 'Zuckerwasser', correct: false, why: 'Der Zucker ist echt gelöst, das Gemisch ist homogen.' },
+      { text: 'Luft', correct: false, why: 'Gasgemische sind homogen.' },
+      { text: 'Messing', correct: false, why: 'Legierungen sind homogene Gemische.' },
+      { text: 'Essig', correct: false, why: 'Essigsäure ist in Wasser vollständig gelöst.' },
+    ],
+    explanation: 'Emulsion, Suspension und Gemenge sind die klassischen heterogenen Gemische.',
+  },
+  {
+    id: 'che-stf-q10', topicId: 'che-stoffe', entryId: 'che-stoffe-trennung', kind: 'single',
+    prompt: 'Ein Salz soll aus einer wässrigen Lösung zurückgewonnen werden. Welches Verfahren eignet sich?',
+    options: [
+      { text: 'Eindampfen', correct: true, why: 'Das Wasser verdampft, das Salz bleibt als Feststoff zurück.' },
+      { text: 'Filtrieren', correct: false, why: 'Gelöste Ionen passieren jeden Filter.' },
+      { text: 'Dekantieren', correct: false, why: 'Es gibt keinen Bodensatz zum Abgießen.' },
+      { text: 'Zentrifugieren', correct: false, why: 'Gelöste Teilchen setzen sich nicht ab.' },
+      { text: 'Extrahieren mit Öl', correct: false, why: 'Salze lösen sich nicht in unpolaren Lösungsmitteln.' },
+    ],
+    explanation: 'Will man umgekehrt das Wasser gewinnen, destilliert man statt einzudampfen.',
+  },
+  {
+    id: 'che-stf-q11', topicId: 'che-stoffe', entryId: 'che-stoffe-aggregat', kind: 'multi',
+    prompt: 'Welche zwei Aussagen über den flüssigen Zustand treffen zu? (2 aus 5)',
+    options: [
+      { text: 'Das Volumen ist festgelegt, die Form nicht', correct: true, why: 'Flüssigkeiten nehmen die Form des Gefäßes an.' },
+      { text: 'Die Teilchen gleiten aneinander vorbei', correct: true, why: 'Sie sind beweglich, bleiben aber in Kontakt.' },
+      { text: 'Die Teilchen sitzen auf festen Gitterplätzen', correct: false, why: 'Das gilt für den festen Zustand.' },
+      { text: 'Die Flüssigkeit füllt jeden verfügbaren Raum aus', correct: false, why: 'Das tun nur Gase.' },
+      { text: 'Es wirken keine Anziehungskräfte zwischen den Teilchen', correct: false, why: 'Ohne sie wäre der Stoff gasförmig.' },
+    ],
+    explanation: 'Die drei Zustände unterscheiden sich in der Beweglichkeit der Teilchen und der Stärke der Kräfte.',
+  },
+  {
+    id: 'che-stf-q12', topicId: 'che-stoffe', entryId: 'che-stoffe-loesungen', kind: 'single',
+    prompt: 'Was bedeutet es, dass eine Lösung gesättigt ist?',
+    options: [
+      { text: 'Bei dieser Temperatur löst sich kein weiterer Stoff mehr', correct: true, why: 'Gelöster und ungelöster Anteil stehen im Gleichgewicht.' },
+      { text: 'Die Lösung ist besonders konzentriert und leitet daher gut', correct: false, why: 'Die Leitfähigkeit ist nicht das Kriterium der Sättigung.' },
+      { text: 'Es ist kein Lösungsmittel mehr vorhanden', correct: false, why: 'Lösungsmittel ist reichlich vorhanden.' },
+      { text: 'Die Lösung ist chemisch neutral', correct: false, why: 'Sättigung und pH-Wert haben nichts miteinander zu tun.' },
+      { text: 'Der Stoff hat sich vollständig zersetzt', correct: false, why: 'Beim Lösen findet keine Zersetzung statt.' },
+    ],
+    explanation: 'Erhöht man die Temperatur, lässt sich bei den meisten Feststoffen wieder mehr lösen.',
+  },
+];

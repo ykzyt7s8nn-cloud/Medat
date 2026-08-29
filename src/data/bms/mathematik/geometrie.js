@@ -1,0 +1,198 @@
+/** Mathematik – Thema "Geometrie". */
+
+export const TOPIC = {
+  id: 'mat-geo',
+  title: 'Geometrie',
+  summary: 'Flächen, Körper, Umfang, Volumen und Maßstab',
+  entries: [
+    {
+      id: 'mat-geo-flaechen',
+      title: 'Flächen und Umfänge',
+      text: 'Die Fläche eines Rechtecks ist das Produkt aus Länge und Breite, die eines Dreiecks das halbe Produkt aus Grundseite und zugehöriger Höhe. Beim Parallelogramm zählt ebenfalls die Höhe, nicht die schräge Seite; beim Trapez wird der Mittelwert der beiden parallelen Seiten mit der Höhe multipliziert. Der Umfang eines Kreises ist zweimal Pi mal Radius, seine Fläche Pi mal Radius zum Quadrat. Entscheidend für viele Aufgaben ist das Skalierungsverhalten: Verdoppelt man alle Längen einer Figur, verdoppelt sich ihr Umfang, ihre Fläche vervierfacht sich jedoch, weil zwei Längenmaße eingehen. Beim Maßstab wird derselbe Zusammenhang oft übersehen: Ein Maßstab von eins zu hundert bedeutet für Flächen den Faktor zehntausend.',
+      facts: [
+        'Dreieck: A = ½ · g · h; Parallelogramm: A = g · h',
+        'Kreis: U = 2 · π · r; A = π · r²',
+        'Verdoppelte Längen: Umfang mal 2, Fläche mal 4',
+        'Beim Parallelogramm zählt die Höhe, nicht die Schrägseite',
+        'Maßstab 1:100 bedeutet für Flächen den Faktor 1:10000',
+      ],
+      formulas: ['A_Kreis = π · r²', 'A_Dreieck = ½ · g · h'],
+      related: ['mat-geo-koerper', 'mat-funktion-trigonometrie', 'mat-geo-einheiten'],
+    },
+    {
+      id: 'mat-geo-koerper',
+      title: 'Körper und Volumen',
+      text: 'Das Volumen eines Quaders ist das Produkt aus Länge, Breite und Höhe; bei jedem Prisma und jedem Zylinder gilt allgemeiner Grundfläche mal Höhe. Bei Pyramide und Kegel kommt der Faktor ein Drittel hinzu, das Volumen einer Kugel ist vier Drittel Pi mal Radius hoch drei. Auch hier ist das Skalierungsverhalten prüfungsrelevant: Verdoppelt man alle Längen eines Körpers, verachtfacht sich sein Volumen, während sich die Oberfläche nur vervierfacht. Daraus folgt, dass große Körper im Verhältnis weniger Oberfläche haben als kleine – ein Zusammenhang, der in der Biologie die Wärmeabgabe von Tieren und die Größenbegrenzung von Zellen erklärt.',
+      facts: [
+        'Prisma und Zylinder: V = Grundfläche · Höhe',
+        'Pyramide und Kegel: V = ⅓ · Grundfläche · Höhe',
+        'Kugel: V = 4/3 · π · r³',
+        'Verdoppelte Längen: Oberfläche mal 4, Volumen mal 8',
+        'Große Körper haben relativ weniger Oberfläche als kleine',
+      ],
+      formulas: ['V_Zylinder = π · r² · h', 'V_Kugel = 4/3 · π · r³'],
+      related: ['mat-geo-flaechen', 'mat-geo-einheiten', 'bio-zelle-grundlagen'],
+    },
+    {
+      id: 'mat-geo-einheiten',
+      title: 'Einheiten und Umrechnungen',
+      text: 'Längenmaße unterscheiden sich um Zehnerpotenzen: Ein Meter hat hundert Zentimeter und tausend Millimeter. Bei Flächen geht jede Umrechnung quadratisch ein, weshalb ein Quadratmeter zehntausend Quadratzentimeter enthält und nicht hundert. Bei Volumina ist der Faktor kubisch: Ein Kubikmeter fasst eine Million Kubikzentimeter. Besonders nützlich ist die Beziehung, dass ein Liter genau einem Kubikdezimeter entspricht und ein Milliliter einem Kubikzentimeter. Bei Geschwindigkeiten rechnet man von Kilometern je Stunde in Meter je Sekunde, indem man durch 3,6 dividiert, und in umgekehrter Richtung, indem man mit 3,6 multipliziert.',
+      facts: [
+        '1 m² = 10 000 cm²; 1 m³ = 1 000 000 cm³',
+        '1 Liter = 1 dm³; 1 mL = 1 cm³',
+        'Flächen quadratisch, Volumina kubisch umrechnen',
+        'km/h in m/s: durch 3,6 dividieren',
+        'Bei Zeitangaben zuerst in Sekunden umrechnen',
+      ],
+      formulas: ['v(m/s) = v(km/h) / 3,6'],
+      related: ['mat-geo-flaechen', 'mat-geo-koerper', 'phy-atom-groessen'],
+    },
+  ],
+};
+
+export const QUESTIONS = [
+  {
+    id: 'mat-geo-q1', topicId: 'mat-geo', entryId: 'mat-geo-flaechen', kind: 'single',
+    prompt: 'Welche Fläche hat ein Dreieck mit der Grundseite 8 cm und der Höhe 5 cm?',
+    options: [
+      { text: '20 cm²', correct: true, why: 'A = ½ · 8 · 5 = 20.' },
+      { text: '40 cm²', correct: false, why: 'Hier wurde der Faktor ½ vergessen.' },
+      { text: '13 cm²', correct: false, why: 'Hier wurde addiert.' },
+      { text: '10 cm²', correct: false, why: 'Dieser Wert lässt sich nicht herleiten.' },
+      { text: '80 cm²', correct: false, why: 'Hier ist eine Zehnerpotenz verrutscht.' },
+    ],
+    explanation: 'Der Faktor ½ ist die häufigste Fehlerquelle bei der Dreiecksfläche.',
+  },
+  {
+    id: 'mat-geo-q2', topicId: 'mat-geo', entryId: 'mat-geo-flaechen', kind: 'single',
+    prompt: 'Wie verändert sich die Fläche eines Quadrats, wenn man die Seitenlänge verdoppelt?',
+    options: [
+      { text: 'Sie vervierfacht sich', correct: true, why: 'Zwei Längenmaße gehen ein, also 2 · 2.' },
+      { text: 'Sie verdoppelt sich', correct: false, why: 'Das gilt für den Umfang.' },
+      { text: 'Sie verachtfacht sich', correct: false, why: 'Das gilt für das Volumen eines Körpers.' },
+      { text: 'Sie bleibt gleich', correct: false, why: 'Die Fläche wächst mit der Seitenlänge.' },
+      { text: 'Sie halbiert sich', correct: false, why: 'Sie wird größer, nicht kleiner.' },
+    ],
+    explanation: 'Merke die Reihe: Länge mal 2, Fläche mal 4, Volumen mal 8.',
+  },
+  {
+    id: 'mat-geo-q3', topicId: 'mat-geo', entryId: 'mat-geo-flaechen', kind: 'single',
+    prompt: 'Welche Fläche hat ein Kreis mit dem Radius 3 cm (π ≈ 3,14)?',
+    options: [
+      { text: 'Etwa 28,3 cm²', correct: true, why: 'A = π · r² = 3,14 · 9 ≈ 28,3.' },
+      { text: 'Etwa 18,8 cm²', correct: false, why: 'Das ist der Umfang, nicht die Fläche.' },
+      { text: 'Etwa 9,4 cm²', correct: false, why: 'Hier wurde der Radius nicht quadriert.' },
+      { text: 'Etwa 6 cm²', correct: false, why: 'Das ist der Durchmesser in Zentimetern.' },
+      { text: 'Etwa 113 cm²', correct: false, why: 'Das wäre die Fläche bei Radius 6.' },
+    ],
+    explanation: 'Nicht verwechseln: Umfang mit 2πr, Fläche mit πr².',
+  },
+  {
+    id: 'mat-geo-q4', topicId: 'mat-geo', entryId: 'mat-geo-koerper', kind: 'single',
+    prompt: 'Welches Volumen hat ein Zylinder mit Grundfläche 20 cm² und Höhe 10 cm?',
+    options: [
+      { text: '200 cm³', correct: true, why: 'V = Grundfläche · Höhe = 20 · 10.' },
+      { text: '30 cm³', correct: false, why: 'Hier wurde addiert.' },
+      { text: '66,7 cm³', correct: false, why: 'Der Faktor ⅓ gilt für Kegel und Pyramide.' },
+      { text: '2 cm³', correct: false, why: 'Hier wurde dividiert.' },
+      { text: '2000 cm³', correct: false, why: 'Eine Zehnerpotenz zu viel.' },
+    ],
+    explanation: 'Für Prisma und Zylinder gilt schlicht Grundfläche mal Höhe.',
+  },
+  {
+    id: 'mat-geo-q5', topicId: 'mat-geo', entryId: 'mat-geo-koerper', kind: 'single',
+    prompt: 'Wie verändert sich das Volumen eines Würfels, wenn man alle Kanten verdoppelt?',
+    options: [
+      { text: 'Es verachtfacht sich', correct: true, why: 'Drei Längenmaße gehen ein: 2 · 2 · 2.' },
+      { text: 'Es verdoppelt sich', correct: false, why: 'Das gilt für eine einzelne Kante.' },
+      { text: 'Es vervierfacht sich', correct: false, why: 'Das gilt für die Oberfläche.' },
+      { text: 'Es bleibt gleich', correct: false, why: 'Das Volumen wächst mit der Kantenlänge.' },
+      { text: 'Es versechsfacht sich', correct: false, why: 'Sechs ist die Zahl der Würfelflächen, nicht der Faktor.' },
+    ],
+    explanation: 'Weil das Volumen schneller wächst als die Oberfläche, sinkt das Verhältnis von Oberfläche zu Volumen.',
+  },
+  {
+    id: 'mat-geo-q6', topicId: 'mat-geo', entryId: 'mat-geo-koerper', kind: 'single',
+    prompt: 'Welches Volumen hat ein Kegel mit Grundfläche 30 cm² und Höhe 6 cm?',
+    options: [
+      { text: '60 cm³', correct: true, why: 'V = ⅓ · 30 · 6 = 60.' },
+      { text: '180 cm³', correct: false, why: 'Hier wurde der Faktor ⅓ vergessen.' },
+      { text: '36 cm³', correct: false, why: 'Hier wurde addiert.' },
+      { text: '90 cm³', correct: false, why: 'Dieser Wert lässt sich nicht herleiten.' },
+      { text: '5 cm³', correct: false, why: 'Hier wurde dividiert statt multipliziert.' },
+    ],
+    explanation: 'Kegel und Pyramide haben ein Drittel des Volumens des umschreibenden Zylinders bzw. Prismas.',
+  },
+  {
+    id: 'mat-geo-q7', topicId: 'mat-geo', entryId: 'mat-geo-einheiten', kind: 'single',
+    prompt: 'Wie viele Quadratzentimeter hat ein Quadratmeter?',
+    options: [
+      { text: '10 000', correct: true, why: '100 cm mal 100 cm ergibt 10 000 cm².' },
+      { text: '100', correct: false, why: 'Das ist der Faktor bei Längen, nicht bei Flächen.' },
+      { text: '1000', correct: false, why: 'Dieser Faktor gilt für Meter und Millimeter.' },
+      { text: '1 000 000', correct: false, why: 'Das ist der Faktor bei Volumina.' },
+      { text: '10', correct: false, why: 'Deutlich zu klein.' },
+    ],
+    explanation: 'Bei Flächen wird der Längenfaktor quadriert, bei Volumina hoch drei genommen.',
+  },
+  {
+    id: 'mat-geo-q8', topicId: 'mat-geo', entryId: 'mat-geo-einheiten', kind: 'single',
+    prompt: 'Wie viele Milliliter sind 2,5 Liter?',
+    options: [
+      { text: '2500 mL', correct: true, why: 'Ein Liter hat 1000 Milliliter.' },
+      { text: '250 mL', correct: false, why: 'Eine Zehnerpotenz zu wenig.' },
+      { text: '25 mL', correct: false, why: 'Zwei Zehnerpotenzen zu wenig.' },
+      { text: '25000 mL', correct: false, why: 'Eine Zehnerpotenz zu viel.' },
+      { text: '0,0025 mL', correct: false, why: 'Hier wurde in die falsche Richtung gerechnet.' },
+    ],
+    explanation: 'Nützliche Merkbeziehung: 1 Liter = 1 dm³ und 1 Milliliter = 1 cm³.',
+  },
+  {
+    id: 'mat-geo-q9', topicId: 'mat-geo', entryId: 'mat-geo-einheiten', kind: 'single',
+    prompt: 'Wie viel sind 72 km/h in m/s?',
+    options: [
+      { text: '20 m/s', correct: true, why: '72 geteilt durch 3,6 ergibt 20.' },
+      { text: '72 m/s', correct: false, why: 'Die Einheit muss umgerechnet werden.' },
+      { text: '259 m/s', correct: false, why: 'Hier wurde multipliziert statt dividiert.' },
+      { text: '2 m/s', correct: false, why: 'Eine Zehnerpotenz zu wenig.' },
+      { text: '36 m/s', correct: false, why: 'Hier wurde nur halbiert.' },
+    ],
+    explanation: 'Von km/h nach m/s durch 3,6 teilen, in die Gegenrichtung mit 3,6 malnehmen.',
+  },
+  {
+    id: 'mat-geo-q10', topicId: 'mat-geo', entryId: 'mat-geo-flaechen', kind: 'single',
+    prompt: 'Ein Plan hat den Maßstab 1:100. Welche Fläche entspricht 1 cm² auf dem Plan in Wirklichkeit?',
+    options: [
+      { text: '10 000 cm²', correct: true, why: 'Der Längenfaktor 100 geht quadratisch ein.' },
+      { text: '100 cm²', correct: false, why: 'Das wäre der Faktor bei Längen.' },
+      { text: '1 000 000 cm²', correct: false, why: 'Das wäre der Faktor bei Volumina.' },
+      { text: '10 cm²', correct: false, why: 'Deutlich zu klein.' },
+      { text: '1 cm²', correct: false, why: 'Der Maßstab wurde nicht angewendet.' },
+    ],
+    explanation: '10 000 cm² entsprechen einem Quadratmeter – so lässt sich das Ergebnis prüfen.',
+  },
+  {
+    id: 'mat-geo-q11', topicId: 'mat-geo', entryId: 'mat-geo-flaechen', kind: 'single',
+    prompt: 'Welche Größe wird bei der Flächenberechnung eines Parallelogramms verwendet?',
+    options: [
+      { text: 'Die Höhe senkrecht zur Grundseite', correct: true, why: 'Die schräge Seite ist länger und ergäbe einen zu großen Wert.' },
+      { text: 'Die Länge der schrägen Seite', correct: false, why: 'Damit würde die Fläche überschätzt.' },
+      { text: 'Die Diagonale', correct: false, why: 'Die Diagonale geht in die Formel nicht ein.' },
+      { text: 'Der Umfang', correct: false, why: 'Der Umfang bestimmt die Fläche nicht.' },
+      { text: 'Der halbe Umfang', correct: false, why: 'Auch das ergibt keine Fläche.' },
+    ],
+    explanation: 'Dasselbe gilt beim Dreieck und beim Trapez: stets die Höhe, nie die Schrägseite.',
+  },
+  {
+    id: 'mat-geo-q12', topicId: 'mat-geo', entryId: 'mat-geo-koerper', kind: 'multi',
+    prompt: 'Welche zwei Aussagen zum Verhältnis von Oberfläche und Volumen sind richtig? (2 aus 5)',
+    options: [
+      { text: 'Bei doppelter Kantenlänge wächst die Oberfläche auf das Vierfache', correct: true, why: 'Flächen skalieren quadratisch.' },
+      { text: 'Kleine Körper haben im Verhältnis mehr Oberfläche als große', correct: true, why: 'Das Volumen wächst schneller als die Oberfläche.' },
+      { text: 'Oberfläche und Volumen wachsen gleich schnell', correct: false, why: 'Das Volumen wächst kubisch, die Oberfläche quadratisch.' },
+      { text: 'Bei doppelter Kantenlänge verdoppelt sich das Volumen', correct: false, why: 'Es verachtfacht sich.' },
+      { text: 'Große Körper geben relativ mehr Wärme ab als kleine', correct: false, why: 'Sie geben relativ weniger ab, weil ihre Oberfläche im Verhältnis kleiner ist.' },
+    ],
+    explanation: 'Dieses Skalierungsgesetz begrenzt die Zellgröße und erklärt die Körperform großer Tiere.',
+  },
+];

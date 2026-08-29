@@ -1,7 +1,9 @@
-# MedAT KFF Trainer
+# MedAT Trainer
 
-Übungs-App für die vier KFF-Untertests des österreichischen Medizin-Aufnahmetests
-(MedAT). React + Vite + TailwindCSS, als PWA installierbar, vollständig offline
+Übungs-App für den österreichischen Medizin-Aufnahmetest (MedAT) mit zwei
+Bereichen: **KFF** (kognitive Fähigkeiten und Fertigkeiten) und **BMS**
+(Basiskenntnistest für Medizinische Studien).
+React + Vite + TailwindCSS, als PWA installierbar, vollständig offline
 nutzbar – **kein Backend, keine externen APIs, keine Anmeldung**. Alle Aufgaben
 werden auf dem Gerät erzeugt, Fortschritt und Einstellungen liegen ausschließlich
 im `localStorage`.
@@ -24,6 +26,32 @@ Alle fünf KFF-Untertests des MedAT:
 Dazu ein **Simulationsmodus**, der alle fünf Untertests in der echten
 MedAT-Reihenfolge mit Originalzeiten durchläuft und am Ende einen geschätzten
 KFF-Prozentrang ausgibt.
+
+## BMS – Basiskenntnistest
+
+Der BMS macht 40 % der MedAT-Gesamtwertung aus. Der Bereich hat zwei Ansichten:
+
+**Lexikon** – 140 Stichwörter auf Maturaniveau, nach Fach und Thema geordnet und
+über alle Fächer hinweg durchsuchbar. Jeder Eintrag hat eine Erklärung in
+mehreren Sätzen, Schlüsselfakten als Stichpunkte, bei Bedarf Formeln und eine
+Merkhilfe sowie Querverweise auf verwandte Stichwörter. Gelesene Einträge werden
+mitgezählt.
+
+**Quiz** – Fragen im MedAT-Format (1 aus 5, gelegentlich x aus 5, letzte Option
+teilweise „Keine der angegebenen Antwortmöglichkeiten ist korrekt"). Nach jeder
+Antwort erklärt die App, warum die richtige Antwort richtig und die gewählte
+falsch ist, und verlinkt den passenden Lexikoneintrag.
+
+| Fach | Themen | Einträge | Fragen | Simulation |
+|---|---|---|---|---|
+| Biologie | 9 | 65 | 110 | 40 Fragen / 30 min |
+| Chemie | 10 | 43 | 120 | 24 Fragen / 18 min |
+| Physik | 5 | 19 | 60 | 18 Fragen / 16 min |
+| Mathematik | 4 | 13 | 48 | 12 Fragen / 11 min |
+| **Gesamt** | **28** | **140** | **338** | **94 Fragen / 75 min** |
+
+Trainieren lässt sich ein einzelnes Fach, ein einzelnes Thema oder die komplette
+BMS-Simulation mit allen vier Fächern nacheinander.
 
 ## Lernfunktionen
 
@@ -81,6 +109,12 @@ src/
     nouns.js           1427 Substantive ohne Umlaute/ß, anagramm-eindeutig
     syllogismTerms.js  70 Begriffstripel
     testConfig.js      Zeitlimits, Aufgabenzahlen, Simulationsablauf
+    bms/               BMS-Inhalte, ein Modul je Thema
+      index.js           Fächer, Zeiten, Datenschema, Lazy-Loader
+      biologie/          9 Themenmodule
+      chemie/            10 Themenmodule
+      physik/            5 Themenmodule
+      mathematik/        4 Themenmodule
   engines/         Aufgabengenerierung, frei von React
     figures.js         Konvexe Grundformen, Zerlegung, widerlegte Distraktoren
     memory.js          Allergieausweise + 13 Fragetypen
@@ -91,6 +125,7 @@ src/
   hooks/           useCountdown, useFeedback, useSwipe, useTheme
   components/      UI-Bausteine, Layout, Diagramme, Ausweiskarte
   screens/         Tabs und Untertests (lazy geladen)
+    bms/               Lexikon, Eintragsdetail, Quiz, BMS-Simulation
 ```
 
 ### Grundsätze für Daten und Dateien
@@ -105,8 +140,12 @@ src/
   Streak, Bestwert und Verlauf werden beim Lesen berechnet und nie doppelt
   abgelegt.
 * **Speicherschlüssel sind versioniert** (`medat-kff.settings.v1`,
-  `medat-kff.progress.v1`) und werden beim Laden zusammengeführt, damit neue
-  Felder alte Daten nicht zerstören.
+  `medat-kff.progress.v1`, `medat-bms.progress.v1`) und werden beim Laden
+  zusammengeführt, damit neue Felder alte Daten nicht zerstören.
+* **Ein Thema, eine Datei.** Die BMS-Inhalte liegen als je ein Modul pro
+  Hauptthema unter `src/data/bms/<fach>/`; zusammengesetzt wird erst in der
+  `index.js` des Fachs. So lässt sich ein Thema überarbeiten, ohne die übrigen
+  anzufassen, und jedes Fach wird als eigener Chunk nachgeladen.
 * **Datenbank-Invarianten werden geprüft, nicht gehofft** – siehe
   `npm run selftest`.
 
