@@ -11,17 +11,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Screen from '../../components/layout/Screen.jsx';
 import AnswerOption from '../../components/ui/AnswerOption.jsx';
-import Button from '../../components/ui/Button.jsx';
-import Icon from '../../components/ui/Icon.jsx';
 import TimerBar from '../../components/ui/TimerBar.jsx';
-import ExamNavigator from '../../components/ExamNavigator.jsx';
+import TaskNavigator from '../../components/TaskNavigator.jsx';
 import ResultView from '../../components/ResultView.jsx';
 import TestIntro from '../../components/TestIntro.jsx';
 import { DIFFICULTIES, TESTS } from '../../data/testConfig.js';
 import { generateWordFluencySet } from '../../engines/wordFluency.js';
 import { useCountdown } from '../../hooks/useCountdown.js';
-import { useExamSession } from '../../hooks/useExamSession.js';
-import { secondsSince } from '../../lib/format.js';
+import { useTaskSession } from '../../hooks/useTaskSession.js';
 import { useFeedback } from '../../hooks/useFeedback.js';
 import { useNavigation } from '../../store/useNavigation.js';
 import { useProgress } from '../../store/useProgress.js';
@@ -60,16 +57,13 @@ export default function WordFluencyTest({ embedded = false, onFinish, focusTags 
   const timerSetting = useSettings((state) => state.timers.wordFluency);
   const examMode = useSettings((state) => state.mode === 'pruefung');
   const feedback = useFeedback();
-  const exam = useExamSession(TEST.questionCount);
+  const session = useTaskSession(TEST.questionCount);
 
   const useTimer = embedded ? true : timerSetting;
   const [phase, setPhase] = useState(embedded ? 'running' : 'intro');
   const [tasks, setTasks] = useState([]);
-  const [practiceIndex, setPracticeIndex] = useState(0);
-  const [selected, setSelected] = useState(null);
   const [results, setResults] = useState([]);
   const startedAt = useRef(Date.now());
-  const taskStartedAt = useRef(Date.now());
 
   const finish = useCallback(
     (finalResults) => {
@@ -97,11 +91,11 @@ export default function WordFluencyTest({ embedded = false, onFinish, focusTags 
     [addResult, difficulty, embedded, feedback, onFinish],
   );
 
-  /** Prüfungsmodus: alles auf einmal auswerten. */
-  const submitExam = useCallback(() => {
-    const timings = exam.collectTimings();
+  /** Auswertung – in beiden Modi derselbe Weg, aus Aufgaben und Antworten. */
+  const submit = useCallback(() => {
+    const timings = session.collectTimings();
     const items = tasks.map((task, i) => {
-      const given = exam.answers[i];
+      const given = session.answers[i];
       const givenOption = task.options.find((option) => option.letter === given);
       return {
         id: `wf-${i}`,
@@ -118,25 +112,22 @@ export default function WordFluencyTest({ embedded = false, onFinish, focusTags 
     });
     setResults(items);
     finish(items);
-  }, [exam, finish, tasks]);
+  }, [finish, session, tasks]);
 
   const countdown = useCountdown(TEST.testSeconds, {
     enabled: useTimer && phase === 'running',
     autoStart: embedded,
-    onExpire: () => (examMode ? submitExam() : finish(results)),
+    onExpire: () => submit(),
   });
 
   const start = useCallback(() => {
     startedAt.current = Date.now();
     setTasks(generateWordFluencySet(TEST.questionCount, difficulty, { onlyBands: focusTags }));
-    setPracticeIndex(0);
-    setSelected(null);
     setResults([]);
-    exam.reset();
-    taskStartedAt.current = Date.now();
+    session.reset();
     setPhase('running');
     countdown.reset(TEST.testSeconds);
-  }, [countdown, difficulty, exam, focusTags]);
+  }, [countdown, difficulty, focusTags, session]);
 
   useEffect(() => {
     if (embedded && tasks.length === 0) {
@@ -145,42 +136,21 @@ export default function WordFluencyTest({ embedded = false, onFinish, focusTags 
     }
   }, [difficulty, embedded, focusTags, tasks.length]);
 
-  const index = examMode ? exam.index : practiceIndex;
+  const { index } = session;
   const task = tasks[index];
+  const revealed = !examMode && Boolean(session.revealed[index]);
 
   const answer = (option) => {
+    if (revealed) return;
+    session.setAnswer(index, option.letter);
     if (examMode) {
       feedback.tap();
-      exam.setAnswer(index, option.letter);
       return;
     }
-    if (selected) return;
-    setSelected(option.letter);
+    // Übungsmodus: sofort auflösen, die Aufgabe bleibt danach unveränderlich.
+    session.reveal(index);
     if (option.correct) feedback.correct();
     else feedback.wrong();
-
-    const entry = {
-      id: `wf-${index}`,
-      number: index + 1,
-      correct: option.correct,
-      prompt: `${task.scrambled.join(' ')} – Anfangsbuchstabe?`,
-      correctText: task.correctOption === 'e' ? 'Keine Antwort ist richtig' : task.correctLetter,
-      givenText: option.text,
-      word: task.word,
-      band: task.band,
-      seconds: secondsSince(taskStartedAt.current),
-      explanation: `Das gesuchte Wort lautet „${task.word}“.`,
-    };
-    setResults((current) => [...current, entry]);
-  };
-
-  const advance = () => {
-    if (index + 1 >= tasks.length) finish(results);
-    else {
-      setPracticeIndex(index + 1);
-      setSelected(null);
-      taskStartedAt.current = Date.now();
-    }
   };
 
   if (phase === 'intro') {
@@ -233,8 +203,7 @@ export default function WordFluencyTest({ embedded = false, onFinish, focusTags 
 
   if (!task) return null;
 
-  const chosenLetter = examMode ? exam.answers[index] : selected;
-  const revealed = !examMode && Boolean(selected);
+  const chosenLetter = session.answers[index];
 
   return (
     <Screen
@@ -250,29 +219,24 @@ export default function WordFluencyTest({ embedded = false, onFinish, focusTags 
         />
       }
       footer={
-        examMode ? (
-          <ExamNavigator
-            count={tasks.length}
-            index={index}
-            answers={exam.answers}
-            flags={exam.flags}
-            answeredCount={exam.answeredCount}
-            onGoTo={exam.goTo}
-            onPrevious={exam.previous}
-            onNext={exam.next}
-            onToggleFlag={() => exam.toggleFlag(index)}
-            onSubmit={submitExam}
-          />
-        ) : (
-          revealed && (
-            <div className="px-3 py-3">
-              <Button size="lg" onClick={advance}>
-                {index + 1 >= tasks.length ? 'Auswertung ansehen' : 'Nächste Aufgabe'}
-                <Icon name="chevronRight" className="h-5 w-5" />
-              </Button>
-            </div>
-          )
-        )
+        <TaskNavigator
+          count={tasks.length}
+          index={index}
+          answers={session.answers}
+          flags={session.flags}
+          answeredCount={session.answeredCount}
+          onGoTo={session.goTo}
+          onPrevious={session.previous}
+          onSkip={session.skip}
+          onNext={session.next}
+          onToggleFlag={() => session.toggleFlag(index)}
+          onSubmit={submit}
+          practice={!examMode}
+          revealed={revealed}
+          isCorrect={(i) => session.answers[i] === tasks[i]?.correctOption}
+          firstOpenIndex={session.firstOpen()}
+          submitLabel={examMode ? 'Abgeben' : 'Auswerten'}
+        />
       }
     >
       <div className="space-y-4">
@@ -281,7 +245,7 @@ export default function WordFluencyTest({ embedded = false, onFinish, focusTags 
           {revealed && (
             <p
               className={`mt-4 animate-pop text-center text-[22px] font-bold ${
-                results[results.length - 1]?.correct ? 'text-ios-green' : 'text-ios-red'
+                session.answers[index] === task.correctOption ? 'text-ios-green' : 'text-ios-red'
               }`}
             >
               {task.word}
@@ -299,7 +263,7 @@ export default function WordFluencyTest({ embedded = false, onFinish, focusTags 
               ? 'idle'
               : option.correct
                 ? 'correct'
-                : option.letter === selected
+                : option.letter === chosenLetter
                   ? 'wrong'
                   : 'idle';
             return (

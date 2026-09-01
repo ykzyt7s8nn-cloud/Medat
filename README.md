@@ -62,10 +62,18 @@ die Anzahl der Teilstücke. Der gleichnamige Screen zeigt Trefferquote und
 Zeitbedarf je Kategorie und startet auf Wunsch einen Durchgang, der nur die
 schwachen Kategorien zieht.
 
-**Übungs- und Prüfungsmodus** – Im Übungsmodus wird nach jeder Aufgabe
-aufgelöst. Im Prüfungsmodus gibt es keine Auflösung, dafür Überspringen,
-Markieren zum Wiederkommen, eine Aufgabenübersicht und Abgabe am Ende – so wie
-im echten Test, wo die Zeiteinteilung mit über das Ergebnis entscheidet.
+**Freie Navigation in jedem Untertest** – Wie im echten MedAT arbeitet man einen
+Untertest nicht zwingend der Reihe nach ab: Jede Aufgabe lässt sich
+überspringen und bleibt im Stapel, über die Zahlenleiste springt man direkt zu
+jeder anderen, Aufgaben lassen sich zum Wiederkommen markieren, und „x offen ·
+zur nächsten" führt zur nächsten unbeantworteten. So bleibt man nicht an einer
+Aufgabe hängen, holt anderswo Punkte und knobelt am Ende an den offenen.
+
+**Übungs- und Prüfungsmodus** – Beide nutzen dieselbe Mechanik; der Unterschied
+ist allein die Auflösung. Im Übungsmodus wird eine Aufgabe nach dem Beantworten
+sofort aufgedeckt und bleibt danach unveränderlich – in der Zahlenleiste sieht
+man dann auch, was richtig und was falsch war. Im Prüfungsmodus bleibt alles bis
+zur Abgabe verdeckt, so wie im echten Test.
 
 **Tempo-Auswertung** – Jede Aufgabe wird auf eine Zehntelsekunde genau gemessen.
 Das Ergebnis rechnet hoch, ob das Tempo für das Zeitlimit reicht, und benennt
@@ -122,7 +130,7 @@ src/
     wordFluency.js     Buchstabensalat mit Shuffle-Garantie
     syllogism.js       Venn-Modellprüfung über alle 128 Modelle
   store/           Zustand-Stores (settings/progress persistiert, navigation nicht)
-  hooks/           useCountdown, useFeedback, useSwipe, useTheme
+  hooks/           useCountdown, useTaskSession, useFeedback, useSwipe, useTheme
   components/      UI-Bausteine, Layout, Diagramme, Ausweiskarte
   screens/         Tabs und Untertests (lazy geladen)
     bms/               Lexikon, Eintragsdetail, Quiz, BMS-Simulation

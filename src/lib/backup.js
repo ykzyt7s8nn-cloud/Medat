@@ -6,14 +6,19 @@
  * automatische Aufräumung von Safari bei lange ungenutzten Seiten. Deshalb
  * lässt sich alles als JSON-Datei sichern und wieder einspielen.
  *
- * Die Datei enthält ausschließlich Übungsdaten: Ergebnisse, Kategorie-
- * Statistik und Einstellungen. Keine Namen, keine Geräte-Informationen.
+ * Die Datei enthält ausschließlich Übungsdaten: KFF-Ergebnisse, Kategorie-
+ * Statistik, BMS-Fortschritt und Einstellungen. Keine Namen, keine Geräte-
+ * Informationen.
+ *
+ * Version 2 sichert zusätzlich den BMS-Fortschritt. Ältere Dateien lassen sich
+ * weiterhin einspielen – der BMS-Teil bleibt dann unangetastet.
  */
+import { BMS_PROGRESS_KEY } from '../store/useBmsProgress.js';
 import { PROGRESS_KEY } from '../store/useProgress.js';
 import { SETTINGS_KEY } from '../store/useSettings.js';
 
 export const BACKUP_FORMAT = 'medat-kff-backup';
-export const BACKUP_VERSION = 1;
+export const BACKUP_VERSION = 2;
 
 /** Alle sicherungswürdigen Daten als Objekt. */
 export function collectBackup() {
@@ -31,6 +36,7 @@ export function collectBackup() {
     exportedAt: new Date().toISOString(),
     progress: read(PROGRESS_KEY),
     settings: read(SETTINGS_KEY),
+    bms: read(BMS_PROGRESS_KEY),
   };
 }
 
@@ -60,18 +66,22 @@ export function parseBackup(text) {
   if (data.format !== BACKUP_FORMAT) {
     return { ok: false, error: 'Das ist keine Sicherung dieser App.' };
   }
-  if (!data.progress && !data.settings) {
+  if (!data.progress && !data.settings && !data.bms) {
     return { ok: false, error: 'Die Sicherung enthält keine Daten.' };
   }
 
   const history = data.progress?.state?.history ?? [];
   const tagStats = data.progress?.state?.tagStats ?? {};
+  const bmsHistory = data.bms?.state?.history ?? [];
+  const readEntries = data.bms?.state?.readEntries ?? {};
   return {
     ok: true,
     data,
     summary: {
       exercises: Array.isArray(history) ? history.length : 0,
       tests: Object.keys(tagStats).length,
+      bmsQuizzes: Array.isArray(bmsHistory) ? bmsHistory.length : 0,
+      bmsRead: Object.values(readEntries).filter(Boolean).length,
       exportedAt: data.exportedAt ?? null,
       hasSettings: Boolean(data.settings),
     },
@@ -85,6 +95,7 @@ export function parseBackup(text) {
 export function applyBackup(data) {
   if (data.progress) localStorage.setItem(PROGRESS_KEY, JSON.stringify(data.progress));
   if (data.settings) localStorage.setItem(SETTINGS_KEY, JSON.stringify(data.settings));
+  if (data.bms) localStorage.setItem(BMS_PROGRESS_KEY, JSON.stringify(data.bms));
 }
 
 /**

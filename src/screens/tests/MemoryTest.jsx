@@ -21,11 +21,12 @@ import ProgressRing from '../../components/ui/ProgressRing.jsx';
 import Tappable from '../../components/ui/Tappable.jsx';
 import TimerBar from '../../components/ui/TimerBar.jsx';
 import ResultView from '../../components/ResultView.jsx';
+import TaskNavigator from '../../components/TaskNavigator.jsx';
 import TestIntro from '../../components/TestIntro.jsx';
 import { TESTS } from '../../data/testConfig.js';
 import { generateMemorySession } from '../../engines/memory.js';
 import { formatTime, useCountdown } from '../../hooks/useCountdown.js';
-import { secondsSince } from '../../lib/format.js';
+import { useTaskSession } from '../../hooks/useTaskSession.js';
 import { useFeedback } from '../../hooks/useFeedback.js';
 import { useSwipe } from '../../hooks/useSwipe.js';
 import { useNavigation } from '../../store/useNavigation.js';
@@ -132,24 +133,13 @@ export default function MemoryTest({
   const useTimer = embedded ? true : timerSetting;
   const [stage, setStage] = useState(initialStage ?? 'intro');
   const [session, setSession] = useState(providedSession ?? null);
-  const [index, setIndex] = useState(0);
-  const [answers, setAnswers] = useState({});
   const [results, setResults] = useState([]);
   const startedAt = useRef(Date.now());
 
-  // Zeit je Frage: Die Prüfphase erlaubt Vor- und Zurückspringen, deshalb wird
-  // die Verweildauer je Frage aufsummiert statt einmalig gemessen.
-  const timingsRef = useRef({});
-  const questionStartedAt = useRef(Date.now());
-  const currentQuestionIdRef = useRef(null);
-
-  const flushTiming = useCallback(() => {
-    const id = currentQuestionIdRef.current;
-    if (!id) return;
-    const delta = secondsSince(questionStartedAt.current);
-    timingsRef.current[id] = (timingsRef.current[id] ?? 0) + delta;
-    questionStartedAt.current = Date.now();
-  }, []);
+  // Die Prüfphase läuft über dasselbe Sitzungsmodell wie die übrigen Untertests:
+  // freies Springen, Überspringen, Markieren – und die Verweildauer je Frage
+  // wird aufsummiert, weil man mehrfach zurückkommen kann.
+  const quiz = useTaskSession(TEST.questionCount);
 
   /* --- Lernphase ------------------------------------------------------- */
   const learnCountdown = useCountdown(TEST.learnSeconds, {
@@ -171,12 +161,11 @@ export default function MemoryTest({
 
   /* --- Prüfphase -------------------------------------------------------- */
   const finish = useCallback(
-    (finalAnswers) => {
-      flushTiming();
-      const timings = timingsRef.current;
+    () => {
+      const timings = quiz.collectTimings();
       const questions = session?.questions ?? [];
       const items = questions.map((question, i) => {
-        const given = finalAnswers[question.id];
+        const given = quiz.answers[i];
         const correctOption = question.options.find((option) => option.correct);
         return {
           id: question.id,
@@ -189,7 +178,7 @@ export default function MemoryTest({
           cardIds: question.cardIds,
           typeId: question.typeId,
           typeLabel: question.typeLabel,
-          seconds: timings[question.id] ?? 0,
+          seconds: timings[i] ?? 0,
         };
       });
       const score = items.filter((item) => item.correct).length;
@@ -213,25 +202,21 @@ export default function MemoryTest({
       setStage('result');
       onFinish?.({ testId: TEST.id, score, max: questions.length, seconds, results: items });
     },
-    [addResult, embedded, feedback, flushTiming, onFinish, session],
+    [addResult, embedded, feedback, onFinish, quiz, session],
   );
 
   const quizCountdown = useCountdown(TEST.testSeconds, {
     enabled: useTimer && stage === 'quiz',
     autoStart: false,
-    onExpire: () => finish(answers),
+    onExpire: () => finish(),
   });
 
   const startQuiz = useCallback(() => {
-    setIndex(0);
-    setAnswers({});
-    timingsRef.current = {};
-    currentQuestionIdRef.current = null;
+    quiz.reset();
     startedAt.current = Date.now();
-    questionStartedAt.current = Date.now();
     setStage('quiz');
     quizCountdown.reset(TEST.testSeconds);
-  }, [quizCountdown]);
+  }, [quiz, quizCountdown]);
 
   const startLearn = useCallback(
     (existing) => {
@@ -257,13 +242,6 @@ export default function MemoryTest({
     // bei jedem Tick und dürfen deshalb nicht in die Abhängigkeiten.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [embedded, initialStage]);
-
-  // Beim Wechsel der Frage die Uhr auf die neue Frage stellen
-  useEffect(() => {
-    if (stage !== 'quiz' || !session) return;
-    currentQuestionIdRef.current = session.questions[index]?.id ?? null;
-    questionStartedAt.current = Date.now();
-  }, [index, session, stage]);
 
   const startBreak = () => {
     setStage('break');
@@ -362,24 +340,13 @@ export default function MemoryTest({
   }
 
   if (stage === 'quiz' && session) {
+    const { index } = quiz;
     const question = session.questions[index];
-    const selected = answers[question.id];
-    const answered = Object.keys(answers).length;
+    const selected = quiz.answers[index];
 
     const choose = (option) => {
       feedback.tap();
-      setAnswers((current) => ({ ...current, [question.id]: option.letter }));
-    };
-
-    const advance = () => {
-      flushTiming();
-      if (index + 1 >= session.questions.length) finish(answers);
-      else setIndex(index + 1);
-    };
-
-    const goBack = () => {
-      flushTiming();
-      setIndex(Math.max(0, index - 1));
+      quiz.setAnswer(index, option.letter);
     };
 
     return (
@@ -392,24 +359,24 @@ export default function MemoryTest({
             total={TEST.testSeconds}
             enabled={useTimer}
             accent={TEST.accent}
-            progressLabel={`Frage ${index + 1} von ${session.questions.length} · ${answered} beantwortet`}
+            progressLabel={`Frage ${index + 1} von ${session.questions.length}`}
           />
         }
         footer={
-          <div className="flex gap-2 px-3 py-3">
-            <Button
-              variant="neutral"
-              size="md"
-              onClick={goBack}
-              disabled={index === 0}
-            >
-              <Icon name="chevronLeft" className="h-5 w-5" />
-            </Button>
-            <Button size="md" className="flex-1" onClick={advance}>
-              {index + 1 >= session.questions.length ? 'Abgeben und auswerten' : 'Nächste Frage'}
-              <Icon name="chevronRight" className="h-5 w-5" />
-            </Button>
-          </div>
+          <TaskNavigator
+            count={session.questions.length}
+            index={index}
+            answers={quiz.answers}
+            flags={quiz.flags}
+            answeredCount={quiz.answeredCount}
+            onGoTo={quiz.goTo}
+            onPrevious={quiz.previous}
+            onSkip={quiz.skip}
+            onNext={quiz.next}
+            onToggleFlag={() => quiz.toggleFlag(index)}
+            onSubmit={finish}
+            firstOpenIndex={quiz.firstOpen()}
+          />
         }
       >
         <div className="space-y-4">

@@ -10,6 +10,7 @@ import Button from '../components/ui/Button.jsx';
 import Icon from '../components/ui/Icon.jsx';
 import Segmented from '../components/ui/Segmented.jsx';
 import Toggle from '../components/ui/Toggle.jsx';
+import { supportsHaptics } from '../hooks/useFeedback.js';
 import { BREAK_DURATIONS, DIFFICULTIES, TESTS, TEST_ORDER } from '../data/testConfig.js';
 import { useProgress } from '../store/useProgress.js';
 import { useSettings } from '../store/useSettings.js';
@@ -26,6 +27,9 @@ function Section({ title, footnote, children }) {
   );
 }
 
+// Einmal je Sitzung ermitteln – das Ergebnis ändert sich zur Laufzeit nicht.
+const hapticsAvailable = supportsHaptics();
+
 export default function SettingsScreen() {
   const settings = useSettings();
   const resetProgress = useProgress((state) => state.resetAll);
@@ -36,7 +40,7 @@ export default function SettingsScreen() {
       <div className="space-y-6 pb-6">
         <Section
           title="Modus"
-          footnote="Im Prüfungsmodus kannst du Aufgaben überspringen, zum Wiederkommen markieren und erst am Ende abgeben – so wie im echten MedAT. Der Gedächtnistest arbeitet immer so."
+          footnote="Überspringen, Markieren und freies Springen zwischen den Aufgaben gibt es in beiden Modi. Der Unterschied: Im Übungsmodus wird nach dem Beantworten sofort aufgelöst, im Prüfungsmodus erst bei der Abgabe – so wie im echten MedAT. Der Gedächtnistest arbeitet immer so."
         >
           <div className="px-4 py-3">
             <Segmented
@@ -130,10 +134,17 @@ export default function SettingsScreen() {
             <span className="min-w-0 flex-1 pr-2">
               Haptisches Feedback
               <span className="block text-[12px] text-black/45 dark:text-white/45">
-                Vibration, sofern das Gerät sie unterstützt
+                {hapticsAvailable
+                  ? 'Kurze Vibration bei Tipp und Auflösung'
+                  : 'Dieses Gerät gibt keine Vibration aus'}
               </span>
             </span>
-            <Toggle checked={settings.haptics} onChange={() => settings.toggle('haptics')} label="Haptisches Feedback" />
+            <Toggle
+              checked={settings.haptics && hapticsAvailable}
+              disabled={!hapticsAvailable}
+              onChange={() => settings.toggle('haptics')}
+              label="Haptisches Feedback"
+            />
           </div>
         </Section>
 

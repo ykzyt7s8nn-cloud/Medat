@@ -145,6 +145,9 @@ export function BackupSection() {
             Enthält {pending.summary.exercises} {pending.summary.exercises === 1 ? 'Übung' : 'Übungen'}
             {pending.summary.tests > 0
               && ` und Kategorie-Statistik für ${pending.summary.tests} ${pending.summary.tests === 1 ? 'Untertest' : 'Untertests'}`}
+            {pending.summary.bmsQuizzes > 0
+              && `, ${pending.summary.bmsQuizzes} ${pending.summary.bmsQuizzes === 1 ? 'BMS-Durchgang' : 'BMS-Durchgänge'}`}
+            {pending.summary.bmsRead > 0 && ` und ${pending.summary.bmsRead} gelesene Lexikoneinträge`}
             {pending.summary.hasSettings && ', dazu die Einstellungen'}. Erstellt am{' '}
             {formatDate(pending.summary.exportedAt)}.
           </p>

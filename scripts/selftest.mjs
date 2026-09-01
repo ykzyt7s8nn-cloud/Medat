@@ -50,6 +50,7 @@ import {
   generateFigureTask,
 } from '../src/engines/figures.js';
 import { polygonArea } from '../src/lib/geometry.js';
+import { isAnswered } from '../src/hooks/useTaskSession.js';
 import {
   BMS_TOTAL,
   NO_ANSWER_LABEL as BMS_NO_ANSWER_LABEL,
@@ -473,6 +474,23 @@ check('Aufgabensatz hat 15 Aufgaben ohne direkte Formwiederholung',
   && figureSet.every((task, i) => i === 0 || task.shapeId !== figureSet[i - 1].shapeId));
 const setNone = figureSet.filter((task) => task.correctLetter === 'e').length;
 check(`Im Durchgang sind 2–4 Aufgaben mit e) als Lösung (${setNone})`, setNone >= 2 && setNone <= 4);
+
+/* ------------------------------------------------------------- Durchgänge */
+section('Durchgänge: offen oder beantwortet');
+
+// Von dieser Unterscheidung hängt alles ab, was den Untertest steuerbar macht:
+// die Zahlenleiste, das Überspringen und der Sprung zur nächsten offenen
+// Aufgabe. Ein Fehler hier fiele erst mitten im Durchgang auf.
+check('Nicht gesetzte Antwort gilt als offen',
+  !isAnswered(undefined) && !isAnswered(null) && !isAnswered(''));
+check('Ein Buchstabe gilt als beantwortet', isAnswered('a') && isAnswered('e'));
+check('Leere Mehrfachauswahl gilt als offen', !isAnswered([]));
+check('Gefüllte Mehrfachauswahl gilt als beantwortet', isAnswered([0]) && isAnswered([0, 3]));
+check('Halb ausgefüllte Zahlenfolge gilt als offen',
+  !isAnswered(['12', '']) && !isAnswered(['', '']) && !isAnswered(['-', '5']));
+check('Vollständige Zahlenfolge gilt als beantwortet',
+  isAnswered(['12', '18']) && isAnswered(['-4', '-9']));
+check('Die Null ist eine gültige Antwort', isAnswered(['0', '0']) && isAnswered([0]));
 
 /* --------------------------------------------------------------------- BMS */
 section('BMS: Lexikon und Fragen');

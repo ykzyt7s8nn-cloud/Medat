@@ -17,14 +17,13 @@ import Button from '../../components/ui/Button.jsx';
 import Icon from '../../components/ui/Icon.jsx';
 import Tappable from '../../components/ui/Tappable.jsx';
 import TimerBar from '../../components/ui/TimerBar.jsx';
-import ExamNavigator from '../../components/ExamNavigator.jsx';
+import TaskNavigator from '../../components/TaskNavigator.jsx';
 import ResultView from '../../components/ResultView.jsx';
 import QuestionCard, { correctCount, isAnswerCorrect } from '../../components/bms/QuestionCard.jsx';
 import { SUBJECTS, loadSubject } from '../../data/bms/index.js';
 import { shuffle } from '../../lib/random.js';
-import { secondsSince } from '../../lib/format.js';
 import { useCountdown } from '../../hooks/useCountdown.js';
-import { useExamSession } from '../../hooks/useExamSession.js';
+import { useTaskSession } from '../../hooks/useTaskSession.js';
 import { useFeedback } from '../../hooks/useFeedback.js';
 import { useNavigation } from '../../store/useNavigation.js';
 import { useBmsProgress } from '../../store/useBmsProgress.js';
@@ -85,18 +84,14 @@ export default function BmsQuizScreen({
 
   const subject = SUBJECTS[subjectId];
   const questionCount = count ?? subject.questionCount;
-  const exam = useExamSession(questionCount);
+  const session = useTaskSession(questionCount);
 
   const [content, setContent] = useState(null);
   const [phase, setPhase] = useState(pickTopics ? 'topics' : 'running');
   const [selectedTopics, setSelectedTopics] = useState(presetTopics ?? []);
   const [questions, setQuestions] = useState([]);
-  const [practiceIndex, setPracticeIndex] = useState(0);
-  const [selection, setSelection] = useState([]);
-  const [revealed, setRevealed] = useState(false);
   const [results, setResults] = useState([]);
   const startedAt = useRef(Date.now());
-  const questionStartedAt = useRef(Date.now());
 
   useEffect(() => {
     let active = true;
@@ -119,7 +114,6 @@ export default function BmsQuizScreen({
     const built = buildQuestions(presetTopics ?? selectedTopics);
     setQuestions(built);
     startedAt.current = Date.now();
-    questionStartedAt.current = Date.now();
   }, [buildQuestions, content, phase, presetTopics, questions.length, selectedTopics]);
 
   const topicTitle = useCallback(
@@ -175,53 +169,42 @@ export default function BmsQuizScreen({
     };
   }, []);
 
-  const submitExam = useCallback(() => {
-    const timings = exam.collectTimings();
+  /** Auswertung – in beiden Modi derselbe Weg, aus Fragen und Antworten. */
+  const submit = useCallback(() => {
+    const timings = session.collectTimings();
     const items = questions.map((question, index) =>
-      toItem(question, index, exam.answers[index] ?? [], timings[index] ?? 0));
+      toItem(question, index, session.answers[index] ?? [], timings[index] ?? 0));
     finish(items);
-  }, [exam, finish, questions, toItem]);
+  }, [finish, questions, session, toItem]);
 
   const countdown = useCountdown(subject.seconds, {
     enabled: phase === 'running' && (embedded || examMode),
     autoStart: embedded,
-    onExpire: () => (examMode || embedded ? submitExam() : finish(results)),
+    onExpire: () => submit(),
   });
 
-  const index = examMode ? exam.index : practiceIndex;
+  const { index } = session;
   const question = questions[index];
-  const chosen = examMode ? (exam.answers[index] ?? []) : selection;
+  const chosen = session.answers[index] ?? [];
+  const revealed = !examMode && Boolean(session.revealed[index]);
 
   const toggleOption = (optionIndex) => {
-    if (!question || (!examMode && revealed)) return;
+    if (!question || revealed) return;
     feedback.tap();
     const single = question.kind !== 'multi';
-    const current = chosen;
     const next = single
       ? [optionIndex]
-      : current.includes(optionIndex)
-        ? current.filter((i) => i !== optionIndex)
-        : [...current, optionIndex];
-    if (examMode) exam.setAnswer(index, next);
-    else setSelection(next);
+      : chosen.includes(optionIndex)
+        ? chosen.filter((i) => i !== optionIndex)
+        : [...chosen, optionIndex];
+    session.setAnswer(index, next);
   };
 
+  /** Übungsmodus: auflösen, die Frage bleibt danach unveränderlich. */
   const check = () => {
-    const item = toItem(question, index, selection, secondsSince(questionStartedAt.current));
-    if (item.correct) feedback.correct();
+    session.reveal(index);
+    if (isAnswerCorrect(question, chosen)) feedback.correct();
     else feedback.wrong();
-    setResults((current) => [...current, item]);
-    setRevealed(true);
-  };
-
-  const advance = () => {
-    if (index + 1 >= questions.length) finish(results);
-    else {
-      setPracticeIndex(index + 1);
-      setSelection([]);
-      setRevealed(false);
-      questionStartedAt.current = Date.now();
-    }
   };
 
   /* ------------------------------------------------------------ Rendering */
@@ -246,7 +229,7 @@ export default function BmsQuizScreen({
         onStart={() => {
           setQuestions(buildQuestions(selectedTopics));
           startedAt.current = Date.now();
-          questionStartedAt.current = Date.now();
+          session.reset();
           setPhase('running');
         }}
         onClose={closeScreen}
@@ -313,48 +296,47 @@ export default function BmsQuizScreen({
         />
       }
       footer={
-        examMode ? (
-          <ExamNavigator
-            count={questions.length}
-            index={index}
-            answers={Object.fromEntries(
-              Object.entries(exam.answers).map(([key, value]) => [key, value?.length ? value.join(',') : undefined]),
-            )}
-            flags={exam.flags}
-            answeredCount={Object.values(exam.answers).filter((value) => value?.length).length}
-            onGoTo={exam.goTo}
-            onPrevious={exam.previous}
-            onNext={exam.next}
-            onToggleFlag={() => exam.toggleFlag(index)}
-            onSubmit={submitExam}
-          />
-        ) : (
-          <div className="px-3 py-3">
-            {revealed ? (
-              <Button size="lg" onClick={advance}>
-                {index + 1 >= questions.length ? 'Auswertung ansehen' : 'Nächste Frage'}
-                <Icon name="chevronRight" className="h-5 w-5" />
-              </Button>
-            ) : (
+        <>
+          {/* Im Übungsmodus wird erst geprüft, dann weitergeblättert. */}
+          {!examMode && !revealed && (
+            <div className="px-3 pb-1">
               <Button size="lg" onClick={check} disabled={!canCheck}>
                 {canCheck ? 'Prüfen' : `Noch ${needed - chosen.length} auswählen`}
               </Button>
-            )}
-          </div>
-        )
+            </div>
+          )}
+          <TaskNavigator
+            count={questions.length}
+            index={index}
+            answers={session.answers}
+            flags={session.flags}
+            answeredCount={session.answeredCount}
+            onGoTo={session.goTo}
+            onPrevious={session.previous}
+            onSkip={session.skip}
+            onNext={session.next}
+            onToggleFlag={() => session.toggleFlag(index)}
+            onSubmit={submit}
+            practice={!examMode}
+            revealed={revealed}
+            isCorrect={(i) => isAnswerCorrect(questions[i], session.answers[i] ?? [])}
+            firstOpenIndex={session.firstOpen()}
+            submitLabel={examMode ? 'Abgeben' : 'Auswerten'}
+          />
+        </>
       }
     >
       <div className="space-y-4">
-        <QuestionCard question={question} selection={chosen} onToggle={toggleOption} revealed={!examMode && revealed} />
+        <QuestionCard question={question} selection={chosen} onToggle={toggleOption} revealed={revealed} />
 
-        {!examMode && revealed && (
+        {revealed && (
           <section className="ios-card animate-slide-up space-y-3 px-4 py-4">
             <h3
               className={`text-[15px] font-semibold ${
-                results[results.length - 1]?.correct ? 'text-ios-green' : 'text-ios-red'
+                isAnswerCorrect(question, chosen) ? 'text-ios-green' : 'text-ios-red'
               }`}
             >
-              {results[results.length - 1]?.correct ? 'Richtig' : 'Falsch'}
+              {isAnswerCorrect(question, chosen) ? 'Richtig' : 'Falsch'}
             </h3>
             <p className="text-[14px] leading-relaxed text-black/70 dark:text-white/70">{question.explanation}</p>
             <Button

@@ -15,7 +15,7 @@ import Icon from '../../components/ui/Icon.jsx';
 import NumberKeypad from '../../components/ui/NumberKeypad.jsx';
 import Tappable from '../../components/ui/Tappable.jsx';
 import TimerBar from '../../components/ui/TimerBar.jsx';
-import ExamNavigator from '../../components/ExamNavigator.jsx';
+import TaskNavigator from '../../components/TaskNavigator.jsx';
 import ResultView from '../../components/ResultView.jsx';
 import SeriesAnalysis from '../../components/SeriesAnalysis.jsx';
 import TestIntro from '../../components/TestIntro.jsx';
@@ -28,9 +28,8 @@ import {
   generateNumberSeriesTask,
 } from '../../engines/numberSeries.js';
 import { pick } from '../../lib/random.js';
-import { secondsSince } from '../../lib/format.js';
 import { useCountdown } from '../../hooks/useCountdown.js';
-import { useExamSession } from '../../hooks/useExamSession.js';
+import { useTaskSession } from '../../hooks/useTaskSession.js';
 import { useFeedback } from '../../hooks/useFeedback.js';
 import { useNavigation } from '../../store/useNavigation.js';
 import { useProgress } from '../../store/useProgress.js';
@@ -46,43 +45,48 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
   const adaptive = useSettings((state) => state.adaptiveNumberSeries);
   const examMode = useSettings((state) => state.mode === 'pruefung');
   const feedback = useFeedback();
-  const exam = useExamSession(TEST.questionCount);
+  const session = useTaskSession(TEST.questionCount);
 
   const [phase, setPhase] = useState(embedded ? 'running' : 'intro');
-  // Übungsmodus: eine Aufgabe nach der anderen.
-  // Prüfungsmodus: alle Aufgaben liegen vor, man springt frei zwischen ihnen.
-  const [task, setTask] = useState(null);
-  const [examTasks, setExamTasks] = useState([]);
-  const [answers, setAnswers] = useState(['', '']);
+  // Ein Aufgabensatz für beide Modi, damit man frei zwischen den Aufgaben
+  // springen kann. Nur im adaptiven Übungsmodus entstehen die Aufgaben nach und
+  // nach – dort muss die Stufe die bisherigen Antworten kennen.
+  const [tasks, setTasks] = useState([]);
   const [activeField, setActiveField] = useState(0);
-  const [checked, setChecked] = useState(null);
   const [results, setResults] = useState([]);
   const levelRef = useRef(START_LEVEL[difficulty] ?? 3);
   const streakRef = useRef({ correct: 0, wrong: 0 });
   const lastFamilyRef = useRef(null);
-  const taskStartedAt = useRef(Date.now());
   const startedAt = useRef(Date.now());
 
   // In der Simulation gilt immer das Originalzeitlimit.
   const useTimer = embedded ? true : timerSetting;
 
-  const nextTask = useCallback(() => {
+  // Adaptiv geht nur im Übungsmodus: Ohne sofortige Auflösung gibt es kein
+  // Signal, an dem sich die Stufe ausrichten könnte.
+  const usesAdaptive = !examMode && adaptive && difficulty !== 'gemischt';
+
+  const buildTask = useCallback(() => {
     const floor = MIN_LEVEL[difficulty] ?? 1;
     // Im adaptiven Modus schwankt die Stufe um ±1 um den aktuellen Stand –
     // sonst kämen mehrere Aufgaben am Stück aus demselben Schwierigkeitsband.
     const jitter = pick([-1, 0, 0, 1]);
-    const options = adaptive && difficulty !== 'gemischt'
-      ? { level: Math.min(7, Math.max(floor, levelRef.current + jitter)), excludeFamily: lastFamilyRef.current }
-      : { difficulty, excludeFamily: lastFamilyRef.current };
+    const options = { level: Math.min(7, Math.max(floor, levelRef.current + jitter)), excludeFamily: lastFamilyRef.current };
     if (focusTags?.length) options.onlyFamilies = focusTags;
     const task = generateNumberSeriesTask(options);
     lastFamilyRef.current = task.family;
-    taskStartedAt.current = Date.now();
-    setTask(task);
-    setAnswers(['', '']);
-    setActiveField(0);
-    setChecked(null);
-  }, [adaptive, difficulty, focusTags]);
+    return task;
+  }, [difficulty, focusTags]);
+
+  /** Aufgaben bis einschließlich upto bereitstellen (nur im adaptiven Modus nötig). */
+  const ensureTasks = useCallback((upto) => {
+    setTasks((current) => {
+      if (current.length > upto) return current;
+      const next = [...current];
+      while (next.length <= upto) next.push(buildTask());
+      return next;
+    });
+  }, [buildTask]);
 
   const finish = useCallback(
     (finalResults) => {
@@ -110,11 +114,11 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
     [addResult, difficulty, embedded, feedback, onFinish],
   );
 
-  /** Prüfungsmodus: alle Aufgaben am Ende auswerten. */
-  const submitExam = useCallback(() => {
-    const timings = exam.collectTimings();
-    const items = examTasks.map((item, i) => {
-      const given = exam.answers[i] ?? ['', ''];
+  /** Auswertung – in beiden Modi derselbe Weg, aus Aufgaben und Antworten. */
+  const submit = useCallback(() => {
+    const timings = session.collectTimings();
+    const items = tasks.map((item, i) => {
+      const given = session.answers[i] ?? ['', ''];
       const outcome = checkNumberSeriesAnswer(item, given);
       return {
         id: `ns-${i}`,
@@ -133,50 +137,56 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
     });
     setResults(items);
     finish(items);
-  }, [exam, examTasks, finish]);
+  }, [finish, session, tasks]);
 
   const countdown = useCountdown(TEST.testSeconds, {
     enabled: useTimer && phase === 'running',
     autoStart: embedded,
-    onExpire: () => (examMode ? submitExam() : finish(results)),
+    onExpire: () => submit(),
   });
 
-  const start = () => {
+  const begin = useCallback(() => {
     startedAt.current = Date.now();
     levelRef.current = START_LEVEL[difficulty] ?? 3;
     streakRef.current = { correct: 0, wrong: 0 };
+    lastFamilyRef.current = null;
     setResults([]);
-    if (examMode) {
-      // Im Prüfungsmodus muss der ganze Satz vorab feststehen, damit man frei
-      // zwischen den Aufgaben springen kann.
-      setExamTasks(generateNumberSeriesSet(TEST.questionCount, difficulty, {
-        onlyFamilies: focusTags ?? undefined,
-      }));
-      exam.reset();
-      setAnswers(['', '']);
-      setActiveField(0);
-      setChecked(null);
-    } else {
-      nextTask();
-    }
+    setActiveField(0);
+    session.reset();
+    // Ohne Adaptivität steht der ganze Satz sofort fest – das sichert die
+    // Mischung der Regelfamilien über den Durchgang hinweg.
+    if (usesAdaptive) setTasks([buildTask()]);
+    else setTasks(generateNumberSeriesSet(TEST.questionCount, difficulty, { onlyFamilies: focusTags ?? undefined }));
+  }, [buildTask, difficulty, focusTags, session, usesAdaptive]);
+
+  const start = () => {
+    begin();
     setPhase('running');
     countdown.reset(TEST.testSeconds);
   };
 
-  // In der Simulation gibt es keinen Intro-Screen: sofort erste Aufgabe erzeugen.
+  // In der Simulation gibt es keinen Intro-Screen: sofort loslegen.
   useEffect(() => {
-    if (embedded && !task) {
-      startedAt.current = Date.now();
-      nextTask();
-    }
-  }, [embedded, nextTask, task]);
+    if (embedded && tasks.length === 0) begin();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [embedded, tasks.length]);
 
-  const currentTask = examMode ? examTasks[exam.index] : task;
-  const currentAnswers = examMode ? (exam.answers[exam.index] ?? ['', '']) : answers;
+  const { index } = session;
+  const currentTask = tasks[index];
+  const currentAnswers = session.answers[index] ?? ['', ''];
+  const revealed = !examMode && Boolean(session.revealed[index]);
+  const checked = revealed && currentTask ? checkNumberSeriesAnswer(currentTask, currentAnswers) : null;
+
+  /** Navigation: im adaptiven Modus wird die Zielaufgabe bei Bedarf erst erzeugt. */
+  const goTo = (target) => {
+    const i = Math.max(0, Math.min(TEST.questionCount - 1, target));
+    if (usesAdaptive) ensureTasks(i);
+    session.goTo(i);
+    setActiveField(0);
+  };
 
   const writeAnswers = (updater) => {
-    if (examMode) exam.setAnswer(exam.index, updater(exam.answers[exam.index] ?? ['', '']));
-    else setAnswers(updater);
+    session.setAnswer(index, updater(session.answers[index] ?? ['', '']));
   };
 
   const inputDigit = (digit) => {
@@ -211,8 +221,8 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
   };
 
   const check = () => {
-    const outcome = checkNumberSeriesAnswer(task, answers);
-    setChecked(outcome);
+    const outcome = checkNumberSeriesAnswer(currentTask, currentAnswers);
+    session.reveal(index);
     if (outcome.correct) {
       feedback.correct();
       streakRef.current.correct += 1;
@@ -230,31 +240,9 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
         streakRef.current.wrong = 0;
       }
     }
-
-    const entry = {
-      id: `ns-${results.length}`,
-      number: results.length + 1,
-      correct: outcome.correct,
-      prompt: `${task.visible.join(', ')}, __, __`,
-      correctText: task.solution.join(', '),
-      givenText: answers.some((value) => value !== '') ? answers.map((v) => v || '–').join(', ') : 'keine Eingabe',
-      explanation: task.rule,
-      level: task.level,
-      family: task.family,
-      familyLabel: task.familyLabel,
-      full: task.full,
-      seconds: secondsSince(taskStartedAt.current),
-    };
-    setResults((current) => [...current, entry]);
   };
 
-  const advance = () => {
-    if (results.length >= TEST.questionCount) finish(results);
-    else nextTask();
-  };
-
-  const complete = results.length;
-  const canCheck = answers.every((value) => value !== '' && value !== '-');
+  const canCheck = currentAnswers.every((value) => value !== '' && value !== '-');
 
   if (phase === 'intro') {
     return (
@@ -316,51 +304,44 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
           total={TEST.testSeconds}
           enabled={useTimer}
           accent={TEST.accent}
-          progressLabel={examMode
-            ? `Aufgabe ${exam.index + 1} von ${TEST.questionCount}`
-            : `Aufgabe ${Math.min(complete + 1, TEST.questionCount)} von ${TEST.questionCount} · Stufe ${task?.level ?? '–'}`}
+          progressLabel={`Aufgabe ${index + 1} von ${TEST.questionCount}${examMode ? '' : ` · Stufe ${currentTask?.level ?? '–'}`}`}
         />
       }
       footer={
         <>
           {/* Nach dem Prüfen weicht die Tastatur der Erklärung */}
-          {(examMode || !checked) && (
+          {!checked && (
             <NumberKeypad onInput={inputDigit} onDelete={deleteDigit} onToggleSign={toggleSign} />
           )}
-          {examMode ? (
-            <ExamNavigator
-              count={examTasks.length}
-              index={exam.index}
-              answers={Object.fromEntries(
-                Object.entries(exam.answers).map(([key, value]) => [
-                  key,
-                  Array.isArray(value) && value.every((v) => v !== '' && v !== '-') ? value.join(',') : undefined,
-                ]),
-              )}
-              flags={exam.flags}
-              answeredCount={Object.values(exam.answers).filter(
-                (value) => Array.isArray(value) && value.every((v) => v !== '' && v !== '-'),
-              ).length}
-              onGoTo={(i) => { exam.goTo(i); setActiveField(0); }}
-              onPrevious={() => { exam.previous(); setActiveField(0); }}
-              onNext={() => { exam.next(); setActiveField(0); }}
-              onToggleFlag={() => exam.toggleFlag(exam.index)}
-              onSubmit={submitExam}
-            />
-          ) : (
-            <div className="px-3 pb-3">
-              {checked ? (
-                <Button size="lg" onClick={advance}>
-                  {results.length >= TEST.questionCount ? 'Auswertung ansehen' : 'Nächste Aufgabe'}
-                  <Icon name="chevronRight" className="h-5 w-5" />
-                </Button>
-              ) : (
-                <Button size="lg" onClick={check} disabled={!canCheck}>
-                  Prüfen
-                </Button>
-              )}
+          {/* Im Übungsmodus wird erst geprüft, dann weitergeblättert. */}
+          {!examMode && !checked && (
+            <div className="px-3 pb-1">
+              <Button size="lg" onClick={check} disabled={!canCheck}>
+                Prüfen
+              </Button>
             </div>
           )}
+          <TaskNavigator
+            count={TEST.questionCount}
+            index={index}
+            answers={session.answers}
+            flags={session.flags}
+            answeredCount={session.answeredCount}
+            onGoTo={goTo}
+            onPrevious={() => goTo(index - 1)}
+            onSkip={() => {
+              const target = session.nextOpenAfter(index);
+              goTo(target === null ? index + 1 : target);
+            }}
+            onNext={() => goTo(index + 1)}
+            onToggleFlag={() => session.toggleFlag(index)}
+            onSubmit={submit}
+            practice={!examMode}
+            revealed={revealed}
+            isCorrect={(i) => Boolean(tasks[i]) && checkNumberSeriesAnswer(tasks[i], session.answers[i] ?? ['', '']).correct}
+            firstOpenIndex={session.firstOpen()}
+            submitLabel={examMode ? 'Abgeben' : 'Auswerten'}
+          />
         </>
       }
     >
@@ -377,13 +358,13 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
                 </span>
               ))}
               {[0, 1].map((index) => {
-                const state = !examMode && checked
+                const state = checked
                   ? (checked.correctFlags[index] ? 'correct' : 'wrong')
                   : 'idle';
                 return (
                   <Tappable
                     key={`input-${index}`}
-                    onClick={() => (examMode || !checked) && setActiveField(index)}
+                    onClick={() => !checked && setActiveField(index)}
                     aria-label={`${index === 0 ? 'Achte' : 'Neunte'} Zahl`}
                     className={`tabular min-w-[64px] rounded-xl px-2.5 py-2 text-[19px] font-bold ${
                       state === 'correct'
@@ -400,14 +381,14 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
                 );
               })}
             </div>
-            {(examMode || !checked) && (
+            {!checked && (
               <p className="mt-4 text-center text-[13px] text-black/45 dark:text-white/45">
                 Tippe ein Feld an, um es zu füllen · Feld {activeField + 1} aktiv
               </p>
             )}
           </section>
 
-          {!examMode && checked && (
+          {checked && (
             <section
               className={`ios-card animate-slide-up px-4 py-4 ${
                 checked.correct ? 'ring-2 ring-ios-green' : 'ring-2 ring-ios-red'
@@ -419,22 +400,22 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
               </p>
               {!checked.correct && (
                 <p className="mt-1 text-[15px]">
-                  Richtige Lösung: <span className="tabular font-semibold">{task.solution.join(', ')}</span>
+                  Richtige Lösung: <span className="tabular font-semibold">{currentTask.solution.join(', ')}</span>
                 </p>
               )}
-              <p className="mt-2 text-[14px] text-black/60 dark:text-white/60">{task.rule}</p>
+              <p className="mt-2 text-[14px] text-black/60 dark:text-white/60">{currentTask.rule}</p>
               {!checked.correct && (
                 <div className="mt-3 border-t border-black/5 pt-3 dark:border-white/10">
                   <p className="mb-2 text-[12px] font-medium uppercase tracking-wide text-black/45 dark:text-white/45">
                     So kommst du drauf
                   </p>
-                  <SeriesAnalysis values={task.full} family={task.family} />
+                  <SeriesAnalysis values={currentTask.full} family={currentTask.family} />
                 </div>
               )}
             </section>
           )}
 
-          {(examMode || !checked) && (
+          {!checked && (
             <p className="px-1 text-center text-[13px] text-black/45 dark:text-white/45">
               Setze die Zahlenfolge um zwei Zahlen fort.
             </p>
