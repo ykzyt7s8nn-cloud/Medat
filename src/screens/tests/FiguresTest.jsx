@@ -240,6 +240,7 @@ export default function FiguresTest({ embedded = false, onFinish, focusTags = nu
           onSubmit={submit}
           practice={!examMode}
           revealed={revealed}
+          revealedMap={session.revealed}
           isCorrect={(i) => session.answers[i] === tasks[i]?.correctLetter}
           firstOpenIndex={session.firstOpen()}
           submitLabel={examMode ? 'Abgeben' : 'Auswerten'}

@@ -28,11 +28,27 @@ export function isAnswered(value) {
   return value !== undefined && value !== null && value !== '';
 }
 
-export function useTaskSession(count) {
+/**
+ * @param {number} count Zahl der Aufgaben des Durchgangs.
+ * @param {object} [options]
+ * @param {(value: any, index: number) => boolean} [options.isComplete]
+ *   Wann eine Antwort vollständig ist. Vorgabe ist isAnswered; das BMS-Quiz
+ *   braucht mehr, weil eine „x aus 5“-Frage erst mit x Kreuzen fertig ist –
+ *   sonst gälte sie schon nach dem ersten als erledigt und würde übersprungen.
+ */
+export function useTaskSession(count, { isComplete } = {}) {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState({});
   const [flags, setFlags] = useState({});
   const [revealed, setRevealed] = useState({});
+
+  // Die Vollständigkeitsprüfung landet in einem Ref, damit sich die Rückgaben
+  // nicht bei jedem Render ändern, wenn der Aufrufer sie inline schreibt.
+  const isCompleteRef = useRef(isComplete);
+  isCompleteRef.current = isComplete;
+  const done = useCallback((i, value) => (isCompleteRef.current
+    ? isCompleteRef.current(value, i)
+    : isAnswered(value)), []);
 
   const timings = useRef({});
   const startedAt = useRef(Date.now());
@@ -62,18 +78,19 @@ export function useTaskSession(count) {
    */
   const nextOpenAfter = useCallback(
     (from) => {
+      if (count <= 0) return null;
       for (let step = 1; step <= count; step += 1) {
         const i = (from + step) % count;
-        if (!isAnswered(answers[i])) return i;
+        if (!done(i, answers[i])) return i;
       }
       return null;
     },
-    [answers, count],
+    [answers, count, done],
   );
 
   const openIndexes = useMemo(
-    () => Array.from({ length: count }, (_, i) => i).filter((i) => !isAnswered(answers[i])),
-    [answers, count],
+    () => Array.from({ length: Math.max(0, count) }, (_, i) => i).filter((i) => !done(i, answers[i])),
+    [answers, count, done],
   );
 
   const reset = useCallback(() => {
@@ -108,14 +125,13 @@ export function useTaskSession(count) {
     }, [goTo, index, nextOpenAfter]),
     nextOpenAfter,
     openIndexes,
-    /** Erste offene oder markierte Aufgabe – für „zu den offenen Aufgaben“. */
-    firstOpen: useCallback(() => {
-      for (let i = 0; i < count; i += 1) {
-        if (!isAnswered(answers[i]) || flags[i]) return i;
-      }
-      return null;
-    }, [answers, count, flags]),
-    answeredCount: Object.values(answers).filter(isAnswered).length,
+    /**
+     * Erste noch offene Aufgabe – Ziel von „N offen · zur nächsten“. Markierte,
+     * aber beantwortete Aufgaben zählen hier bewusst nicht mit, sonst stimmte
+     * das Sprungziel nicht mit der genannten Zahl überein.
+     */
+    firstOpen: useCallback(() => (openIndexes.length ? openIndexes[0] : null), [openIndexes]),
+    answeredCount: Math.max(0, count) - openIndexes.length,
     flaggedCount: Object.values(flags).filter(Boolean).length,
     /** Zeiten je Aufgabe, inklusive der gerade offenen. */
     collectTimings: useCallback(() => {

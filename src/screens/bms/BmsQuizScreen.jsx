@@ -84,12 +84,21 @@ export default function BmsQuizScreen({
 
   const subject = SUBJECTS[subjectId];
   const questionCount = count ?? subject.questionCount;
-  const session = useTaskSession(questionCount);
 
   const [content, setContent] = useState(null);
   const [phase, setPhase] = useState(pickTopics ? 'topics' : 'running');
   const [selectedTopics, setSelectedTopics] = useState(presetTopics ?? []);
   const [questions, setQuestions] = useState([]);
+
+  // Die Sitzung richtet sich nach den tatsächlich gezogenen Fragen, nicht nach
+  // dem Sollwert des Fachs: Ein einzelnes Thema hat oft weniger Fragen, als das
+  // Fach im Test umfasst. Sonst zeigte die Navigation auf Fragen, die es nicht
+  // gibt. Eine „x aus 5“-Frage gilt zudem erst mit x Kreuzen als beantwortet.
+  const session = useTaskSession(questions.length, {
+    isComplete: (value, i) => Array.isArray(value)
+      && questions[i] !== undefined
+      && value.length === correctCount(questions[i]),
+  });
   const [results, setResults] = useState([]);
   const startedAt = useRef(Date.now());
 
@@ -319,6 +328,9 @@ export default function BmsQuizScreen({
             onSubmit={submit}
             practice={!examMode}
             revealed={revealed}
+            revealedMap={session.revealed}
+            isComplete={(i) => questions[i] !== undefined
+              && (session.answers[i]?.length ?? 0) === correctCount(questions[i])}
             isCorrect={(i) => isAnswerCorrect(questions[i], session.answers[i] ?? [])}
             firstOpenIndex={session.firstOpen()}
             submitLabel={examMode ? 'Abgeben' : 'Auswerten'}

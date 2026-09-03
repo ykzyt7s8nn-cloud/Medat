@@ -540,6 +540,23 @@ for (const subjectId of SUBJECT_ORDER) {
 check(`Jedes der ${bmsTopics} Hauptthemen hat mindestens 10 Fragen`,
   thinTopics.length === 0, thinTopics.join(', '));
 
+// Ein Themen-Training zieht nur aus einem Thema und hat deshalb regelmäßig
+// weniger Fragen, als das Fach im Test umfasst. Der Quiz-Screen muss seine
+// Sitzung nach den tatsächlich gezogenen Fragen bemessen, nicht nach dem
+// Sollwert des Fachs – sonst zeigt die Navigation auf Fragen, die es nicht gibt.
+const smallerThanSubject = [];
+for (const subjectId of SUBJECT_ORDER) {
+  const { topics, questions } = bmsSubjects[subjectId];
+  const need = SUBJECTS[subjectId].questionCount;
+  for (const topic of topics) {
+    const pool = questions.filter((q) => q.topicId === topic.id).length;
+    if (pool < need) smallerThanSubject.push(`${topic.title} (${pool} < ${need})`);
+  }
+}
+check(`Themen-Pools können kleiner sein als der Fach-Sollwert (${smallerThanSubject.length} Fälle)`,
+  smallerThanSubject.length > 0,
+  'kein Fall gefunden – die Annahme hinter der dynamischen Sitzungsgröße stimmt nicht mehr');
+
 // Struktur jeder einzelnen Frage: fünf Optionen, korrekte Anzahl Lösungen,
 // Begründung je Option und ein auflösbarer Lexikonverweis.
 let malformed = 0;

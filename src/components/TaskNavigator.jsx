@@ -17,9 +17,9 @@ import Tappable from './ui/Tappable.jsx';
 import { isAnswered } from '../hooks/useTaskSession.js';
 
 /** Farbgebung einer Zahl in der Leiste. */
-function cellClass({ active, answered, correct, practice }) {
+function cellClass({ active, answered, resolved, correct }) {
   if (active) return 'bg-ios-blue text-white';
-  if (practice && answered) {
+  if (resolved) {
     return correct
       ? 'bg-ios-green/20 text-ios-green dark:bg-ios-green/25'
       : 'bg-ios-red/20 text-ios-red dark:bg-ios-red/25';
@@ -46,6 +46,10 @@ export function TaskNavigator({
   isCorrect,
   /** Übungsmodus: Die aktuelle Aufgabe ist bereits aufgelöst. */
   revealed = false,
+  /** Übungsmodus: welche Aufgaben bereits aufgelöst sind (i => true). */
+  revealedMap = null,
+  /** i => true, wenn die Antwort vollständig ist (x-aus-5 braucht x Kreuze). */
+  isComplete,
   /** Erste noch offene Aufgabe, oder null. */
   firstOpenIndex = null,
   submitLabel = 'Abgeben',
@@ -59,7 +63,7 @@ export function TaskNavigator({
   }, [index]);
 
   const openCount = count - answeredCount;
-  const currentAnswered = isAnswered(answers[index]);
+  const currentAnswered = isComplete ? isComplete(index) : isAnswered(answers[index]);
   // Im Übungsmodus zählt die Aufgabe erst als erledigt, wenn sie aufgelöst ist.
   const currentDone = practice ? revealed : currentAnswered;
   const isLast = index + 1 >= count;
@@ -68,11 +72,15 @@ export function TaskNavigator({
     <div className="space-y-2 px-3 py-3">
       <div ref={stripRef} className="scroll-area flex gap-1.5 overflow-x-auto pb-1" role="tablist" aria-label="Aufgabenübersicht">
         {Array.from({ length: count }, (_, i) => {
-          const answered = isAnswered(answers[i]);
-          const correct = practice && answered ? Boolean(isCorrect?.(i)) : false;
+          const answered = isComplete ? isComplete(i) : isAnswered(answers[i]);
+          // Richtig/falsch erst zeigen, wenn die Aufgabe auch aufgelöst ist.
+          // Bei Zahlenfolgen und im BMS liegen Antworten und Prüfen auseinander –
+          // sonst verriete die Leiste das Ergebnis vor dem Tippen auf „Prüfen“.
+          const resolved = practice && answered && (revealedMap ? Boolean(revealedMap[i]) : true);
+          const correct = resolved ? Boolean(isCorrect?.(i)) : false;
           const flagged = flags[i];
           const active = i === index;
-          const state = !answered ? 'offen' : practice ? (correct ? 'richtig' : 'falsch') : 'beantwortet';
+          const state = !answered ? 'offen' : resolved ? (correct ? 'richtig' : 'falsch') : 'beantwortet';
           return (
             <Tappable
               key={i}
@@ -82,7 +90,7 @@ export function TaskNavigator({
               data-active={active}
               onClick={() => onGoTo(i)}
               silent
-              className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[13px] font-semibold ${cellClass({ active, answered, correct, practice })}`}
+              className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[13px] font-semibold ${cellClass({ active, answered, resolved, correct })}`}
             >
               {i + 1}
               {flagged && (
@@ -111,21 +119,27 @@ export function TaskNavigator({
           {flags[index] ? 'Markiert' : 'Merken'}
         </Tappable>
 
-        {/* Unbeantwortet: überspringen und später zurückkommen. Sonst weiter
-            bzw. abgeben, wenn nichts mehr offen ist. */}
+        {/* Unbeantwortet: überspringen und später zurückkommen. Auf der letzten
+            Aufgabe führt „Weiter“ ins Leere, deshalb geht es dort zu den noch
+            offenen Aufgaben bzw. zur Abgabe. */}
         {!currentDone ? (
           <Button variant="neutral" size="md" className="flex-1" onClick={onSkip}>
             Überspringen
             <Icon name="chevronRight" className="h-5 w-5" />
           </Button>
-        ) : isLast && openCount === 0 ? (
-          <Button size="md" className="flex-1" onClick={onSubmit}>
-            {submitLabel}
-          </Button>
-        ) : (
+        ) : !isLast ? (
           <Button size="md" className="flex-1" onClick={onNext}>
             Weiter
             <Icon name="chevronRight" className="h-5 w-5" />
+          </Button>
+        ) : openCount > 0 && firstOpenIndex !== null ? (
+          <Button size="md" className="flex-1" onClick={() => onGoTo(firstOpenIndex)}>
+            Zu den offenen
+            <Icon name="chevronRight" className="h-5 w-5" />
+          </Button>
+        ) : (
+          <Button size="md" className="flex-1" onClick={onSubmit}>
+            {submitLabel}
           </Button>
         )}
       </div>

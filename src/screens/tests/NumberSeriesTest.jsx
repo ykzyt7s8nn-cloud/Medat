@@ -117,7 +117,13 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
   /** Auswertung – in beiden Modi derselbe Weg, aus Aufgaben und Antworten. */
   const submit = useCallback(() => {
     const timings = session.collectTimings();
-    const items = tasks.map((item, i) => {
+    // Im adaptiven Modus entstehen die Aufgaben nach und nach. Bricht der Timer
+    // den Durchgang ab, fehlen die nie besuchten – dann stünde die Punktzahl
+    // aus 10 neben einer Durchsicht mit drei Aufgaben. Deshalb hier auffüllen;
+    // die nachgezogenen zählen wie unbeantwortete Aufgaben als falsch.
+    const complete = [...tasks];
+    while (complete.length < TEST.questionCount) complete.push(buildTask());
+    const items = complete.map((item, i) => {
       const given = session.answers[i] ?? ['', ''];
       const outcome = checkNumberSeriesAnswer(item, given);
       return {
@@ -137,7 +143,7 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
     });
     setResults(items);
     finish(items);
-  }, [finish, session, tasks]);
+  }, [buildTask, finish, session, tasks]);
 
   const countdown = useCountdown(TEST.testSeconds, {
     enabled: useTimer && phase === 'running',
@@ -338,6 +344,7 @@ export default function NumberSeriesTest({ embedded = false, onFinish, focusTags
             onSubmit={submit}
             practice={!examMode}
             revealed={revealed}
+            revealedMap={session.revealed}
             isCorrect={(i) => Boolean(tasks[i]) && checkNumberSeriesAnswer(tasks[i], session.answers[i] ?? ['', '']).correct}
             firstOpenIndex={session.firstOpen()}
             submitLabel={examMode ? 'Abgeben' : 'Auswerten'}

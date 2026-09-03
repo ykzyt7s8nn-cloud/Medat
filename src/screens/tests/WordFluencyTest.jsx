@@ -233,6 +233,7 @@ export default function WordFluencyTest({ embedded = false, onFinish, focusTags 
           onSubmit={submit}
           practice={!examMode}
           revealed={revealed}
+          revealedMap={session.revealed}
           isCorrect={(i) => session.answers[i] === tasks[i]?.correctOption}
           firstOpenIndex={session.firstOpen()}
           submitLabel={examMode ? 'Abgeben' : 'Auswerten'}

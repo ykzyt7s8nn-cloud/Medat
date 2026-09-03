@@ -230,6 +230,7 @@ export default function ImplicationsTest({ embedded = false, onFinish, focusTags
           onSubmit={submit}
           practice={!examMode}
           revealed={revealed}
+          revealedMap={session.revealed}
           isCorrect={(i) => session.answers[i] === tasks[i]?.correctLetter}
           firstOpenIndex={session.firstOpen()}
           submitLabel={examMode ? 'Abgeben' : 'Auswerten'}
