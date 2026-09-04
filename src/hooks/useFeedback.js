@@ -1,7 +1,7 @@
 /**
- * Haptik- und Sound-Feedback.
+ * Ton- und Haptik-Feedback.
  *
- * Zwei Eigenheiten von iOS bestimmen den Aufbau:
+ * Drei Eigenheiten bestimmen den Aufbau:
  *
  * 1. Safari kennt navigator.vibrate nicht – weder auf dem iPhone noch auf dem
  *    Mac. Echte Haptik gibt es dort nur über einen Umweg: Seit iOS 17.4 löst
@@ -11,7 +11,13 @@
  *    zugesicherte Schnittstelle; wo er nicht greift, bleibt es beim visuellen
  *    Feedback der Tappable-Komponente.
  *
- * 2. Der AudioContext gehört ins Modul, nicht in den Hook. Jede tappbare Fläche
+ * 2. Über diesen Weg lässt sich weder Dauer noch Stärke steuern – es gibt genau
+ *    einen Impuls. Die Ereignisse werden deshalb über die *Anzahl* der Impulse
+ *    und ihren Abstand unterscheidbar gemacht: einmal tippen, zweimal richtig,
+ *    dreimal falsch. Auf Geräten mit echter Vibration wird zusätzlich das
+ *    passende Muster gefahren.
+ *
+ * 3. Der AudioContext gehört ins Modul, nicht in den Hook. Jede tappbare Fläche
  *    ruft useFeedback auf; läge der Kontext im Hook, entstünde pro Button ein
  *    eigener. Safari begrenzt deren Zahl hart – danach schlägt die Erzeugung
  *    fehl und der Ton bliebe stillschweigend weg.
@@ -19,15 +25,46 @@
  * Töne werden über die Web Audio API erzeugt, ohne Audiodateien, damit die App
  * vollständig offline funktioniert.
  */
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useSettings } from '../store/useSettings.js';
 
-const TONES = {
-  tap: { frequency: 660, duration: 0.05, gain: 0.05 },
-  correct: { frequency: 880, duration: 0.12, gain: 0.08 },
-  wrong: { frequency: 220, duration: 0.18, gain: 0.08 },
-  warning: { frequency: 440, duration: 0.25, gain: 0.07 },
-  done: { frequency: 1046, duration: 0.2, gain: 0.08 },
+/**
+ * Ein Ereignis je Zeile: Ton, Vibrationsmuster für echte Vibration und die
+ * Impulsfolge für den iOS-Weg. `beiJedemTippen` markiert die Ereignisse, die
+ * nur auf der Tonstufe „alles“ zu hören sind.
+ */
+const EVENTS = {
+  tap: {
+    tone: { frequency: 660, duration: 0.05, gain: 0.05 },
+    vibrate: 8,
+    ticks: 1,
+    gap: 0,
+    onEveryTap: true,
+  },
+  correct: {
+    tone: { frequency: 880, duration: 0.12, gain: 0.08 },
+    vibrate: [12, 40, 12],
+    ticks: 2,
+    gap: 80,
+  },
+  wrong: {
+    tone: { frequency: 220, duration: 0.18, gain: 0.08 },
+    vibrate: [45, 50, 45, 50, 45],
+    ticks: 3,
+    gap: 70,
+  },
+  warning: {
+    tone: { frequency: 440, duration: 0.25, gain: 0.07 },
+    vibrate: [20, 60, 20],
+    ticks: 2,
+    gap: 150,
+  },
+  done: {
+    tone: { frequency: 1046, duration: 0.2, gain: 0.08 },
+    vibrate: [15, 50, 15, 50, 25],
+    ticks: 3,
+    gap: 140,
+  },
 };
 
 /* ------------------------------------------------------------------ Audio */
@@ -43,13 +80,12 @@ function getAudioContext() {
   return audioContext;
 }
 
-function playTone(kind) {
-  if (!TONES[kind]) return;
+function playTone(tone) {
   try {
     const context = getAudioContext();
     if (!context) return;
     if (context.state === 'suspended') context.resume();
-    const { frequency, duration, gain } = TONES[kind];
+    const { frequency, duration, gain } = tone;
     const oscillator = context.createOscillator();
     const amplifier = context.createGain();
     oscillator.type = 'sine';
@@ -102,21 +138,23 @@ export function supportsHaptics() {
   return supportsSwitchHaptics();
 }
 
-function buzz(pattern) {
+function buzz(event, level) {
+  // Auf der Stufe „dezent“ bleibt es überall bei einem einzelnen Impuls.
+  const ticks = level === 'dezent' ? 1 : event.ticks;
+  const pattern = level === 'dezent' ? 12 : event.vibrate;
+
   // Android und Desktop-Chrome: die echte Vibration-API, inklusive Muster.
   if (typeof navigator !== 'undefined' && navigator.vibrate) {
     navigator.vibrate(pattern);
     return;
   }
-  // iOS: ein Tick je Musterschritt, denn die Dauer lässt sich nicht steuern.
+  // iOS: ein Tick je Impuls, denn Dauer und Stärke lassen sich nicht steuern.
   if (!supportsSwitchHaptics()) return;
   const input = getHapticSwitch();
   if (!input) return;
-  const ticks = Array.isArray(pattern) ? Math.ceil(pattern.length / 2) : 1;
   for (let i = 0; i < ticks; i += 1) {
-    // Die Abstände orientieren sich am Muster, damit ein „richtig" anders
-    // klingt als ein „falsch".
-    window.setTimeout(() => { input.checked = !input.checked; }, i * 90);
+    if (i === 0) input.checked = !input.checked;
+    else window.setTimeout(() => { input.checked = !input.checked; }, i * event.gap);
   }
 }
 
@@ -127,18 +165,31 @@ export function useFeedback() {
   const haptics = useSettings((state) => state.haptics);
 
   const signal = useCallback(
-    (kind, pattern) => {
-      if (sound) playTone(kind);
-      if (haptics) buzz(pattern);
+    (kind) => {
+      const event = EVENTS[kind];
+      if (!event) return;
+      const audible = sound === 'alles' || (sound === 'ergebnisse' && !event.onEveryTap);
+      if (audible) playTone(event.tone);
+      if (haptics !== 'aus') buzz(event, haptics);
     },
     [haptics, sound],
   );
 
-  return {
-    tap: useCallback(() => signal('tap', 8), [signal]),
-    correct: useCallback(() => signal('correct', [12, 40, 12]), [signal]),
-    wrong: useCallback(() => signal('wrong', 45), [signal]),
-    warning: useCallback(() => signal('warning', [20, 60, 20]), [signal]),
-    done: useCallback(() => signal('done', [15, 50, 15, 50, 25]), [signal]),
-  };
+  return useMemo(() => ({
+    tap: () => signal('tap'),
+    correct: () => signal('correct'),
+    wrong: () => signal('wrong'),
+    warning: () => signal('warning'),
+    done: () => signal('done'),
+    /**
+     * Zum Ausprobieren in den Einstellungen: spielt das Ereignis unabhängig von
+     * der Tonstufe, damit man hört und spürt, was eingestellt ist.
+     */
+    preview: (kind = 'correct') => {
+      const event = EVENTS[kind];
+      if (!event) return;
+      if (sound !== 'aus') playTone(event.tone);
+      if (haptics !== 'aus') buzz(event, haptics);
+    },
+  }), [haptics, signal, sound]);
 }

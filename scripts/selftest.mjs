@@ -13,7 +13,7 @@ import { ALLERGENS, BLOOD_TYPES } from '../src/data/allergens.js';
 import { FOREIGN_OR_TECHNICAL } from '../src/data/nouns.js';
 import { FEMALE_FIRST_NAMES, LAST_NAMES, MALE_FIRST_NAMES } from '../src/data/names.js';
 import { TERM_TRIPLES } from '../src/data/syllogismTerms.js';
-import { TESTS } from '../src/data/testConfig.js';
+import { TESTS, TEST_ORDER } from '../src/data/testConfig.js';
 import {
   FIGURES,
   generateSyllogismSet,
@@ -51,6 +51,7 @@ import {
 } from '../src/engines/figures.js';
 import { polygonArea } from '../src/lib/geometry.js';
 import { isAnswered } from '../src/hooks/useTaskSession.js';
+import { crossedMarks, marksFor } from '../src/lib/timeWarnings.js';
 import {
   BMS_TOTAL,
   NO_ANSWER_LABEL as BMS_NO_ANSWER_LABEL,
@@ -642,6 +643,27 @@ for (const subjectId of SUBJECT_ORDER) {
 }
 check('Jeder Eintrag hat Titel, ausführlichen Text und mindestens 3 Schlüsselfakten',
   thinEntries === 0, `${thinEntries} Abweichungen`);
+
+/* ---------------------------------------------------------- Zeitwarnung */
+section('Zeitwarnung');
+
+check('Lange Untertests bekommen alle drei Marken',
+  marksFor(TESTS.wordFluency.testSeconds).join() === '300,60,10'
+  && marksFor(TESTS.numberSeries.testSeconds).join() === '300,60,10');
+// Eine Marke lohnt erst, wenn danach noch ein spürbarer Teil der Zeit bleibt.
+// Bei 10 Minuten ist die 5-Minuten-Marke die Halbzeit und damit sinnvoll, bei
+// 5 Minuten wäre sie sofort fällig.
+check('Die 5-Minuten-Marke gilt ab 7,5 Minuten Zeitlimit',
+  marksFor(450).includes(300) && !marksFor(449).includes(300));
+check('Bei 10 Minuten markiert sie die Halbzeit',
+  marksFor(TESTS.implications.testSeconds).includes(300));
+check('Jeder Untertest hat mindestens eine Marke',
+  TEST_ORDER.every((id) => marksFor(TESTS[id].testSeconds).length > 0));
+check('Eine Marke löst genau beim Unterschreiten aus',
+  crossedMarks(61, 60, 900).join() === '60' && crossedMarks(60, 59, 900).length === 0);
+check('Ein Sprung über mehrere Marken meldet alle',
+  crossedMarks(70, 5, 900).join() === '60,10');
+check('Zurücklaufende Zeit meldet nichts', crossedMarks(50, 80, 900).length === 0);
 
 /* ---------------------------------------------------------- Konfiguration */
 section('Konfiguration (MedAT-Vorgaben)');

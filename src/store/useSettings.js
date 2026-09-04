@@ -33,9 +33,34 @@ const defaultSettings = {
   mode: 'uebung',
   /** 'system' | 'light' | 'dark' */
   theme: 'system',
-  sound: true,
-  haptics: true,
+  /**
+   * Ton: 'aus' | 'ergebnisse' | 'alles'
+   * „ergebnisse“ ist die Vorgabe – ein Ton bei jedem Tippen nervt schnell,
+   * beim Auflösen ist er nützlich.
+   */
+  sound: 'ergebnisse',
+  /**
+   * Haptik: 'aus' | 'dezent' | 'deutlich'
+   * „dezent“ gibt überall einen einzelnen Impuls, „deutlich“ unterscheidet die
+   * Ereignisse über die Zahl der Impulse.
+   */
+  haptics: 'deutlich',
+  /** Kurzes Signal, wenn die Zeit knapp wird (5 Min, 1 Min, 10 Sek). */
+  timeWarnings: true,
 };
+
+/** Auswahl für die Einstellungen. */
+export const SOUND_LEVELS = [
+  { id: 'aus', label: 'Aus' },
+  { id: 'ergebnisse', label: 'Auflösung' },
+  { id: 'alles', label: 'Alles' },
+];
+
+export const HAPTIC_LEVELS = [
+  { id: 'aus', label: 'Aus' },
+  { id: 'dezent', label: 'Dezent' },
+  { id: 'deutlich', label: 'Deutlich' },
+];
 
 export const useSettings = create()(
   persist(
@@ -48,12 +73,26 @@ export const useSettings = create()(
       setBreakMinutes: (minutes) => set({ breakMinutes: minutes }),
       setTheme: (theme) => set({ theme }),
       setMode: (mode) => set({ mode }),
+      setSound: (level) => set({ sound: level }),
+      setHaptics: (level) => set({ haptics: level }),
       toggle: (key) => set((state) => ({ [key]: !state[key] })),
       resetSettings: () => set({ ...defaultSettings }),
     }),
     {
       name: SETTINGS_KEY,
-      version: 1,
+      version: 2,
+      /**
+       * v1 kannte Ton und Haptik nur als An/Aus. Wer sie anhatte, bekommt die
+       * Vorgabestufe; wer sie ausgeschaltet hatte, behält „aus“.
+       */
+      migrate: (persisted, version) => {
+        if (!persisted || version >= 2) return persisted;
+        return {
+          ...persisted,
+          sound: persisted.sound === false ? 'aus' : defaultSettings.sound,
+          haptics: persisted.haptics === false ? 'aus' : defaultSettings.haptics,
+        };
+      },
       merge: (persisted, current) => ({
         ...current,
         ...persisted,

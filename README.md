@@ -75,6 +75,17 @@ sofort aufgedeckt und bleibt danach unveränderlich – in der Zahlenleiste sieh
 man dann auch, was richtig und was falsch war. Im Prüfungsmodus bleibt alles bis
 zur Abgabe verdeckt, so wie im echten Test.
 
+**Ton, Haptik und Zeitwarnung** – Beides ist dreistufig einstellbar. Der Ton
+steht auf „Auflösung“, gibt also nur bei richtig, falsch und am Ende einen
+Laut; „Alles“ ergänzt den Ton bei jedem Tippen. Die Haptik unterscheidet die
+Ereignisse über die Zahl der Impulse – einmal beim Tippen, zweimal bei richtig,
+dreimal bei falsch –, weil sich auf iOS weder Dauer noch Stärke steuern lassen;
+„Dezent“ gibt überall einen einzelnen Impuls. Zusätzlich meldet sich die App
+bei 5 Minuten, 1 Minute und 10 Sekunden Restzeit, damit man beim Üben nicht auf
+die Uhr schauen muss. Ein Knopf in den Einstellungen spielt das Feedback zur
+Probe ab; wo das Gerät keine Vibration kann, ist der Regler abgeschaltet und
+sagt das auch.
+
 **Tempo-Auswertung** – Jede Aufgabe wird auf eine Zehntelsekunde genau gemessen.
 Das Ergebnis rechnet hoch, ob das Tempo für das Zeitlimit reicht, und benennt
 Ausreißer.
@@ -131,6 +142,7 @@ src/
     syllogism.js       Venn-Modellprüfung über alle 128 Modelle
   store/           Zustand-Stores (settings/progress persistiert, navigation nicht)
   hooks/           useCountdown, useTaskSession, useFeedback, useSwipe, useTheme
+  lib/             geometry, format, backup, timeWarnings
   components/      UI-Bausteine, Layout, Diagramme, Ausweiskarte
   screens/         Tabs und Untertests (lazy geladen)
     bms/               Lexikon, Eintragsdetail, Quiz, BMS-Simulation

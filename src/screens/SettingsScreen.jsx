@@ -10,10 +10,10 @@ import Button from '../components/ui/Button.jsx';
 import Icon from '../components/ui/Icon.jsx';
 import Segmented from '../components/ui/Segmented.jsx';
 import Toggle from '../components/ui/Toggle.jsx';
-import { supportsHaptics } from '../hooks/useFeedback.js';
+import { supportsHaptics, useFeedback } from '../hooks/useFeedback.js';
 import { BREAK_DURATIONS, DIFFICULTIES, TESTS, TEST_ORDER } from '../data/testConfig.js';
 import { useProgress } from '../store/useProgress.js';
-import { useSettings } from '../store/useSettings.js';
+import { HAPTIC_LEVELS, SOUND_LEVELS, useSettings } from '../store/useSettings.js';
 
 function Section({ title, footnote, children }) {
   return (
@@ -31,6 +31,7 @@ function Section({ title, footnote, children }) {
 const hapticsAvailable = supportsHaptics();
 
 export default function SettingsScreen() {
+  const feedback = useFeedback();
   const settings = useSettings();
   const resetProgress = useProgress((state) => state.resetAll);
   const [confirmReset, setConfirmReset] = useState(false);
@@ -126,24 +127,61 @@ export default function SettingsScreen() {
               onChange={settings.setTheme}
             />
           </div>
-          <div className="ios-row">
-            <span>Sound-Effekte</span>
-            <Toggle checked={settings.sound} onChange={() => settings.toggle('sound')} label="Sound-Effekte" />
+          <div className="px-4 py-3">
+            <p className="mb-2 text-[15px]">Ton</p>
+            <Segmented
+              ariaLabel="Ton"
+              options={SOUND_LEVELS.map((level) => ({ value: level.id, label: level.label }))}
+              value={settings.sound}
+              onChange={settings.setSound}
+            />
+            <p className="mt-2 text-[12px] text-black/45 dark:text-white/45">
+              „Auflösung“ gibt nur bei richtig, falsch und am Ende einen Ton – „Alles“ zusätzlich
+              bei jedem Tippen.
+            </p>
           </div>
+
+          <div className="px-4 py-3">
+            <p className="mb-2 text-[15px]">Haptik</p>
+            <Segmented
+              ariaLabel="Haptik"
+              options={HAPTIC_LEVELS.map((level) => ({
+                value: level.id,
+                label: level.label,
+              }))}
+              value={hapticsAvailable ? settings.haptics : 'aus'}
+              onChange={hapticsAvailable ? settings.setHaptics : () => {}}
+              className={hapticsAvailable ? '' : 'opacity-40'}
+            />
+            <p className="mt-2 text-[12px] text-black/45 dark:text-white/45">
+              {hapticsAvailable
+                ? '„Dezent“ gibt überall einen einzelnen Impuls, „Deutlich“ unterscheidet die Ereignisse: einmal beim Tippen, zweimal bei richtig, dreimal bei falsch.'
+                : 'Dieses Gerät gibt keine Vibration aus. Auf dem iPhone braucht es iOS 17.4 oder neuer.'}
+            </p>
+            {hapticsAvailable && (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="mt-3 w-full"
+                silent
+                onClick={() => feedback.preview('correct')}
+              >
+                Ausprobieren
+              </Button>
+            )}
+          </div>
+
           <div className="ios-row">
             <span className="min-w-0 flex-1 pr-2">
-              Haptisches Feedback
+              Zeitwarnung
               <span className="block text-[12px] text-black/45 dark:text-white/45">
-                {hapticsAvailable
-                  ? 'Kurze Vibration bei Tipp und Auflösung'
-                  : 'Dieses Gerät gibt keine Vibration aus'}
+                Kurzes Signal bei 5 Minuten, 1 Minute und 10 Sekunden Restzeit
               </span>
             </span>
             <Toggle
-              checked={settings.haptics && hapticsAvailable}
-              disabled={!hapticsAvailable}
-              onChange={() => settings.toggle('haptics')}
-              label="Haptisches Feedback"
+              checked={settings.timeWarnings}
+              onChange={() => settings.toggle('timeWarnings')}
+              label="Zeitwarnung"
             />
           </div>
         </Section>

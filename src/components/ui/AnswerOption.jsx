@@ -3,6 +3,10 @@
  *
  * Zustände: neutral, ausgewählt, richtig, falsch. Die Farbe allein trägt nie
  * die Information – zusätzlich gibt es ein Symbol und ein aria-label.
+ *
+ * Das allgemeine Tipp-Feedback ist hier abgeschaltet: Der Screen meldet nach
+ * dem Antworten ohnehin richtig oder falsch, und zwei Signale im Abstand von
+ * Millisekunden verwischen einander zu einem unklaren Rumpeln.
  */
 import Tappable from './Tappable.jsx';
 import Icon from './Icon.jsx';
@@ -34,6 +38,7 @@ export function AnswerOption({
     <Tappable
       onClick={onClick}
       disabled={disabled}
+      silent
       aria-pressed={selected}
       aria-label={`Antwort ${letter}${stateLabel}`}
       className={`${base} ${styles[state]} ${disabled ? 'active:scale-100' : ''}`}
