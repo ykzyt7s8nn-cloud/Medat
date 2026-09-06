@@ -10,7 +10,8 @@ import Button from '../components/ui/Button.jsx';
 import Icon from '../components/ui/Icon.jsx';
 import Segmented from '../components/ui/Segmented.jsx';
 import Toggle from '../components/ui/Toggle.jsx';
-import { supportsHaptics, useFeedback } from '../hooks/useFeedback.js';
+import HapticProbe from '../components/HapticProbe.jsx';
+import { hapticMethod, supportsHaptics, useFeedback } from '../hooks/useFeedback.js';
 import { BREAK_DURATIONS, DIFFICULTIES, TESTS, TEST_ORDER } from '../data/testConfig.js';
 import { useProgress } from '../store/useProgress.js';
 import { HAPTIC_LEVELS, SOUND_LEVELS, useSettings } from '../store/useSettings.js';
@@ -29,6 +30,11 @@ function Section({ title, footnote, children }) {
 
 // Einmal je Sitzung ermitteln – das Ergebnis ändert sich zur Laufzeit nicht.
 const hapticsAvailable = supportsHaptics();
+const METHOD_LABEL = {
+  vibration: 'Weg: Vibration-API des Browsers',
+  'ios-switch': 'Weg: Schalter-Haptik von iOS (ab 17.4)',
+  keiner: 'Dieses Gerät bietet keinen Weg für Haptik',
+};
 
 export default function SettingsScreen() {
   const feedback = useFeedback();
@@ -137,7 +143,8 @@ export default function SettingsScreen() {
             />
             <p className="mt-2 text-[12px] text-black/45 dark:text-white/45">
               „Auflösung“ gibt nur bei richtig, falsch und am Ende einen Ton – „Alles“ zusätzlich
-              bei jedem Tippen.
+              bei jedem Tippen. Auf dem iPhone bleibt der Ton stumm, solange der seitliche
+              Schalter auf lautlos steht.
             </p>
           </div>
 
@@ -158,17 +165,14 @@ export default function SettingsScreen() {
                 ? '„Dezent“ gibt überall einen einzelnen Impuls, „Deutlich“ unterscheidet die Ereignisse: einmal beim Tippen, zweimal bei richtig, dreimal bei falsch.'
                 : 'Dieses Gerät gibt keine Vibration aus. Auf dem iPhone braucht es iOS 17.4 oder neuer.'}
             </p>
-            {hapticsAvailable && (
-              <Button
-                variant="secondary"
-                size="sm"
-                className="mt-3 w-full"
-                silent
-                onClick={() => feedback.preview('correct')}
-              >
-                Ausprobieren
-              </Button>
-            )}
+            <HapticProbe
+              disabled={!hapticsAvailable}
+              onTrigger={() => feedback.preview('correct')}
+            />
+            <p className="mt-2 text-[12px] text-black/35 dark:text-white/35">
+              {METHOD_LABEL[hapticMethod()]}
+              {hapticsAvailable && ' · Der Schalter wird direkt angetippt, damit die Haptik sicher ausgelöst wird.'}
+            </p>
           </div>
 
           <div className="ios-row">

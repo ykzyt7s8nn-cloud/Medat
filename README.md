@@ -82,9 +82,11 @@ Ereignisse über die Zahl der Impulse – einmal beim Tippen, zweimal bei richti
 dreimal bei falsch –, weil sich auf iOS weder Dauer noch Stärke steuern lassen;
 „Dezent“ gibt überall einen einzelnen Impuls. Zusätzlich meldet sich die App
 bei 5 Minuten, 1 Minute und 10 Sekunden Restzeit, damit man beim Üben nicht auf
-die Uhr schauen muss. Ein Knopf in den Einstellungen spielt das Feedback zur
-Probe ab; wo das Gerät keine Vibration kann, ist der Regler abgeschaltet und
-sagt das auch.
+die Uhr schauen muss. In den Einstellungen sitzt ein Probierschalter: Er ist selbst
+ein echter Switch, den man direkt antippt – der sicherste Weg, die Haptik
+auszulösen, und damit ein eindeutiger Gerätetest. Er bestätigt sichtbar, dass
+er ausgelöst hat, und nennt darunter den genutzten Weg. Wo das Gerät nichts
+anbietet, ist der Regler abgeschaltet und sagt das auch.
 
 **Tempo-Auswertung** – Jede Aufgabe wird auf eine Zehntelsekunde genau gemessen.
 Das Ergebnis rechnet hoch, ob das Tempo für das Zeitlimit reicht, und benennt

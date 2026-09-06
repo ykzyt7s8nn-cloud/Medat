@@ -6,10 +6,20 @@
  * 1. Safari kennt navigator.vibrate nicht – weder auf dem iPhone noch auf dem
  *    Mac. Echte Haptik gibt es dort nur über einen Umweg: Seit iOS 17.4 löst
  *    das Umschalten eines <input type="checkbox" switch> das systemeigene
- *    Haptik-Muster aus. Ein solches Element hängt unsichtbar im Dokument und
- *    wird programmatisch umgeschaltet. Das ist ein Kunstgriff und keine
- *    zugesicherte Schnittstelle; wo er nicht greift, bleibt es beim visuellen
- *    Feedback der Tappable-Komponente.
+ *    Haptik-Muster aus.
+ *
+ *    Dabei kommt es auf zwei Dinge an, die leicht zu übersehen sind: Es zählt
+ *    die *Aktivierung* des Schalters, nicht das Setzen seiner checked-
+ *    Eigenschaft – deshalb click() statt checked = !checked. Und das Element
+ *    muss tatsächlich gezeichnet werden; bei opacity:0 oder display:none
+ *    passiert nichts. Es hängt deshalb als 1 Pixel großes, nahezu
+ *    durchsichtiges Label in der Ecke.
+ *
+ *    Das bleibt ein Kunstgriff und keine zugesicherte Schnittstelle. Sicher
+ *    ausgelöst wird die Haptik nur, wenn der Nutzer selbst auf einen solchen
+ *    Schalter tippt – genau das macht der Probierschalter in den Einstellungen.
+ *    Ein programmatischer Klick braucht zusätzlich eine frische Nutzeraktion,
+ *    weshalb etwa die Zeitwarnung auf iOS stumm bleiben kann.
  *
  * 2. Über diesen Weg lässt sich weder Dauer noch Stärke steuern – es gibt genau
  *    einen Impuls. Die Ereignisse werden deshalb über die *Anzahl* der Impulse
@@ -113,15 +123,37 @@ let hapticSwitch = null;
 function getHapticSwitch() {
   if (hapticSwitch) return hapticSwitch;
   if (typeof document === 'undefined') return null;
+  // Das Label gehört dazu: iOS behandelt Schalter innerhalb eines Labels als
+  // eine bedienbare Einheit. Nicht ausgeblendet, nur winzig und fast
+  // durchsichtig – ein nicht gezeichnetes Element löst keine Haptik aus.
+  const label = document.createElement('label');
+  label.setAttribute('aria-hidden', 'true');
+  label.style.cssText = 'position:fixed;right:0;bottom:0;width:1px;height:1px;'
+    + 'overflow:hidden;opacity:0.01;pointer-events:none;z-index:-1;';
   const input = document.createElement('input');
   input.type = 'checkbox';
   input.setAttribute('switch', '');
-  input.setAttribute('aria-hidden', 'true');
   input.tabIndex = -1;
-  input.style.cssText = 'position:fixed;top:-100px;left:-100px;width:1px;height:1px;opacity:0;pointer-events:none;';
-  document.body.appendChild(input);
+  label.appendChild(input);
+  document.body.appendChild(label);
   hapticSwitch = input;
   return hapticSwitch;
+}
+
+/** Einen Impuls auslösen – über die Aktivierung, nicht über die Eigenschaft. */
+export function pulse() {
+  if (!supportsSwitchHaptics()) return false;
+  const input = getHapticSwitch();
+  if (!input) return false;
+  input.click();
+  return true;
+}
+
+/** Welcher Weg genutzt wird – für die Anzeige in den Einstellungen. */
+export function hapticMethod() {
+  if (typeof navigator !== 'undefined' && navigator.vibrate) return 'vibration';
+  if (supportsSwitchHaptics()) return 'ios-switch';
+  return 'keiner';
 }
 
 /** true, wenn der Browser das Switch-Element kennt (iOS 17.4+ / Safari 17.4+). */
@@ -148,13 +180,10 @@ function buzz(event, level) {
     navigator.vibrate(pattern);
     return;
   }
-  // iOS: ein Tick je Impuls, denn Dauer und Stärke lassen sich nicht steuern.
-  if (!supportsSwitchHaptics()) return;
-  const input = getHapticSwitch();
-  if (!input) return;
+  // iOS: ein Impuls je Tick, denn Dauer und Stärke lassen sich nicht steuern.
   for (let i = 0; i < ticks; i += 1) {
-    if (i === 0) input.checked = !input.checked;
-    else window.setTimeout(() => { input.checked = !input.checked; }, i * event.gap);
+    if (i === 0) pulse();
+    else window.setTimeout(pulse, i * event.gap);
   }
 }
 
