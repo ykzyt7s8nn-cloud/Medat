@@ -211,14 +211,13 @@ export function useFeedback() {
     warning: () => signal('warning'),
     done: () => signal('done'),
     /**
-     * Zum Ausprobieren in den Einstellungen: spielt das Ereignis unabhängig von
-     * der Tonstufe, damit man hört und spürt, was eingestellt ist.
+     * Nur der Ton, ohne Impuls. Der Probierschalter in den Einstellungen löst
+     * seine Impulse selbst aus und gezielt einzeln – dort wäre ein zusätzliches
+     * Muster nicht mehr auseinanderzuhalten.
      */
-    preview: (kind = 'correct') => {
+    tone: (kind = 'correct') => {
       const event = EVENTS[kind];
-      if (!event) return;
-      if (sound !== 'aus') playTone(event.tone);
-      if (haptics !== 'aus') buzz(event, haptics);
+      if (event && sound !== 'aus') playTone(event.tone);
     },
   }), [haptics, signal, sound]);
 }

@@ -4,9 +4,11 @@
  * Zustände: neutral, ausgewählt, richtig, falsch. Die Farbe allein trägt nie
  * die Information – zusätzlich gibt es ein Symbol und ein aria-label.
  *
- * Das allgemeine Tipp-Feedback ist hier abgeschaltet: Der Screen meldet nach
- * dem Antworten ohnehin richtig oder falsch, und zwei Signale im Abstand von
- * Millisekunden verwischen einander zu einem unklaren Rumpeln.
+ * Zum Tipp-Feedback: Folgt auf den Tipp sofort die Auflösung, wird es über
+ * `silent` abgeschaltet – zwei Signale im Abstand von Millisekunden verwischen
+ * einander zu einem unklaren Rumpeln. Folgt keine Auflösung (Prüfungsmodus,
+ * Mehrfachauswahl, Gedächtnistest), muss der Tipp selbst spürbar sein, sonst
+ * bleibt die Antwort ohne jede Rückmeldung.
  */
 import Tappable from './Tappable.jsx';
 import Icon from './Icon.jsx';
@@ -17,6 +19,8 @@ export function AnswerOption({
   selected = false,
   state = 'idle', // idle | correct | wrong
   disabled = false,
+  /** true, wenn direkt nach dem Tippen aufgelöst wird. */
+  silent = false,
   onClick,
 }) {
   const base = 'ios-card flex w-full items-start gap-3 px-3.5 py-3 text-left';
@@ -38,7 +42,7 @@ export function AnswerOption({
     <Tappable
       onClick={onClick}
       disabled={disabled}
-      silent
+      silent={silent}
       aria-pressed={selected}
       aria-label={`Antwort ${letter}${stateLabel}`}
       className={`${base} ${styles[state]} ${disabled ? 'active:scale-100' : ''}`}

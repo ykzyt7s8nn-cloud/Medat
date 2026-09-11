@@ -199,7 +199,6 @@ export default function BmsQuizScreen({
 
   const toggleOption = (optionIndex) => {
     if (!question || revealed) return;
-    feedback.tap();
     const single = question.kind !== 'multi';
     const next = single
       ? [optionIndex]

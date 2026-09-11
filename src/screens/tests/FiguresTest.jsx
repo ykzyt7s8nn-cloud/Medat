@@ -138,10 +138,8 @@ export default function FiguresTest({ embedded = false, onFinish, focusTags = nu
   const answer = (option) => {
     if (revealed) return;
     session.setAnswer(index, option.letter);
-    if (examMode) {
-      feedback.tap();
-      return;
-    }
+    // Der Tipp-Impuls kommt aus der Antwortfläche; hier wäre er ein zweites Signal.
+    if (examMode) return;
     // Übungsmodus: sofort auflösen, die Aufgabe bleibt danach unveränderlich.
     session.reveal(index);
     if (option.correct) feedback.correct();
@@ -288,6 +286,7 @@ export default function FiguresTest({ embedded = false, onFinish, focusTags = nu
                 key={option.letter}
                 onClick={() => answer(option)}
                 disabled={revealed}
+                silent={!examMode}
                 aria-label={`Figur ${option.letter}${state === 'correct' ? ' (richtig)' : state === 'wrong' ? ' (falsch)' : ''}`}
                 aria-pressed={option.letter === chosenLetter}
                 className={`ios-card flex flex-col items-center gap-1 px-2 py-3 ${ring}`}
@@ -335,6 +334,7 @@ export default function FiguresTest({ embedded = false, onFinish, focusTags = nu
               state={state}
               selected={noneOption.letter === chosenLetter}
               disabled={revealed}
+              silent={!examMode}
               onClick={() => answer(noneOption)}
             >
               {noneOption.text}

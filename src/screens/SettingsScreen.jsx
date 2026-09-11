@@ -167,11 +167,10 @@ export default function SettingsScreen() {
             </p>
             <HapticProbe
               disabled={!hapticsAvailable}
-              onTrigger={() => feedback.preview('correct')}
+              onTrigger={() => feedback.tone('correct')}
             />
             <p className="mt-2 text-[12px] text-black/35 dark:text-white/35">
               {METHOD_LABEL[hapticMethod()]}
-              {hapticsAvailable && ' · Der Schalter wird direkt angetippt, damit die Haptik sicher ausgelöst wird.'}
             </p>
           </div>
 

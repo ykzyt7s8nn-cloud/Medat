@@ -143,10 +143,8 @@ export default function WordFluencyTest({ embedded = false, onFinish, focusTags 
   const answer = (option) => {
     if (revealed) return;
     session.setAnswer(index, option.letter);
-    if (examMode) {
-      feedback.tap();
-      return;
-    }
+    // Der Tipp-Impuls kommt aus der Antwortfläche; hier wäre er ein zweites Signal.
+    if (examMode) return;
     // Übungsmodus: sofort auflösen, die Aufgabe bleibt danach unveränderlich.
     session.reveal(index);
     if (option.correct) feedback.correct();
@@ -274,6 +272,7 @@ export default function WordFluencyTest({ embedded = false, onFinish, focusTags 
                 state={state}
                 selected={option.letter === chosenLetter}
                 disabled={revealed}
+                silent={!examMode}
                 onClick={() => answer(option)}
               >
                 {option.letter === 'e' ? option.text : <span className="text-[17px] font-semibold">{option.text}</span>}
