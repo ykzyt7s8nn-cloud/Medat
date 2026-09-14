@@ -8,24 +8,24 @@
  *    das Umschalten eines <input type="checkbox" switch> das systemeigene
  *    Haptik-Muster aus.
  *
- *    Dabei kommt es auf zwei Dinge an, die leicht zu übersehen sind: Es zählt
+ *    Dabei kommt es auf drei Dinge an, die leicht zu übersehen sind: Es zählt
  *    die *Aktivierung* des Schalters, nicht das Setzen seiner checked-
- *    Eigenschaft – deshalb click() statt checked = !checked. Und das Element
- *    muss tatsächlich gezeichnet werden; bei opacity:0 oder display:none
- *    passiert nichts. Es hängt deshalb als 1 Pixel großes, nahezu
- *    durchsichtiges Label in der Ecke.
+ *    Eigenschaft. Das Element muss tatsächlich gezeichnet werden; bei
+ *    opacity:0 oder display:none passiert nichts. Und – am Gerät nachgeprüft –
+ *    ein programmatischer Klick genügt nicht: Spürbar wird es nur, wenn der
+ *    Finger selbst auf dem Schalter landet.
  *
- *    Das bleibt ein Kunstgriff und keine zugesicherte Schnittstelle. Sicher
- *    ausgelöst wird die Haptik nur, wenn der Nutzer selbst auf einen solchen
- *    Schalter tippt – genau das macht der Probierschalter in den Einstellungen.
- *    Ein programmatischer Klick braucht zusätzlich eine frische Nutzeraktion,
- *    weshalb etwa die Zeitwarnung auf iOS stumm bleiben kann.
+ *    Deshalb tragen die tappbaren Flächen ihren Schalter selbst (siehe
+ *    ui/Tappable.jsx): Er liegt unsichtbar über der ganzen Fläche, sodass jeder
+ *    Tipp ihn direkt trifft. Der Impuls unten über pulse() bleibt für die
+ *    Fälle, in denen niemand tippt – etwa die Zeitwarnung –; dort kann er auf
+ *    iOS folgenlos bleiben.
  *
- * 2. Über diesen Weg lässt sich weder Dauer noch Stärke steuern – es gibt genau
- *    einen Impuls. Die Ereignisse werden deshalb über die *Anzahl* der Impulse
- *    und ihren Abstand unterscheidbar gemacht: einmal tippen, zweimal richtig,
- *    dreimal falsch. Auf Geräten mit echter Vibration wird zusätzlich das
- *    passende Muster gefahren.
+ * 2. Über diesen Weg lässt sich weder Dauer noch Stärke steuern, und Impulse
+ *    ohne Tipp sind unsicher. Auf iOS gibt es deshalb einen Impuls je Tipp; was
+ *    passiert ist – richtig, falsch, fertig –, trägt dort der Ton. Auf Geräten
+ *    mit echter Vibration wird zusätzlich das passende Muster gefahren, und die
+ *    Ereignisse unterscheiden sich zusätzlich in der Zahl der Impulse.
  *
  * 3. Der AudioContext gehört ins Modul, nicht in den Hook. Jede tappbare Fläche
  *    ruft useFeedback auf; läge der Kontext im Hook, entstünde pro Button ein
@@ -40,7 +40,7 @@ import { useSettings } from '../store/useSettings.js';
 
 /**
  * Ein Ereignis je Zeile: Ton, Vibrationsmuster für echte Vibration und die
- * Impulsfolge für den iOS-Weg. `beiJedemTippen` markiert die Ereignisse, die
+ * Impulsfolge für den iOS-Weg. `onEveryTap` markiert die Ereignisse, die
  * nur auf der Tonstufe „alles“ zu hören sind.
  */
 const EVENTS = {
@@ -164,6 +164,22 @@ export function supportsSwitchHaptics() {
   return 'switch' in probe;
 }
 
+let switchPath = null;
+
+/**
+ * true, wenn die Haptik über den Schalter laufen muss, weil es keine echte
+ * Vibration gibt. Genau dann legen die tappbaren Flächen ihren eigenen
+ * Schalter unter den Finger. Das Ergebnis ändert sich zur Laufzeit nicht und
+ * wird deshalb gemerkt – die Prüfung läuft sonst bei jedem Tippen erneut.
+ */
+export function usesSwitchHaptics() {
+  if (switchPath === null) {
+    const hasVibration = typeof navigator !== 'undefined' && Boolean(navigator.vibrate);
+    switchPath = !hasVibration && supportsSwitchHaptics();
+  }
+  return switchPath;
+}
+
 /** true, wenn überhaupt eine Form von Haptik zur Verfügung steht. */
 export function supportsHaptics() {
   if (typeof navigator !== 'undefined' && navigator.vibrate) return true;
@@ -193,31 +209,29 @@ export function useFeedback() {
   const sound = useSettings((state) => state.sound);
   const haptics = useSettings((state) => state.haptics);
 
+  /**
+   * @param {string} kind Ereignis aus EVENTS.
+   * @param {object} [options]
+   * @param {boolean} [options.haptic=true] Auf false, wenn der Impuls schon
+   *   anderswo herkommt – bei einem Tipp auf eine Fläche mit eigenem Schalter
+   *   löst iOS die Haptik selbst aus, ein zweiter Impuls wäre einer zu viel.
+   */
   const signal = useCallback(
-    (kind) => {
+    (kind, { haptic = true } = {}) => {
       const event = EVENTS[kind];
       if (!event) return;
       const audible = sound === 'alles' || (sound === 'ergebnisse' && !event.onEveryTap);
       if (audible) playTone(event.tone);
-      if (haptics !== 'aus') buzz(event, haptics);
+      if (haptic && haptics !== 'aus') buzz(event, haptics);
     },
     [haptics, sound],
   );
 
   return useMemo(() => ({
-    tap: () => signal('tap'),
+    tap: (options) => signal('tap', options),
     correct: () => signal('correct'),
     wrong: () => signal('wrong'),
     warning: () => signal('warning'),
     done: () => signal('done'),
-    /**
-     * Nur der Ton, ohne Impuls. Der Probierschalter in den Einstellungen löst
-     * seine Impulse selbst aus und gezielt einzeln – dort wäre ein zusätzliches
-     * Muster nicht mehr auseinanderzuhalten.
-     */
-    tone: (kind = 'correct') => {
-      const event = EVENTS[kind];
-      if (event && sound !== 'aus') playTone(event.tone);
-    },
-  }), [haptics, signal, sound]);
+  }), [signal]);
 }

@@ -10,7 +10,6 @@ import Button from '../components/ui/Button.jsx';
 import Icon from '../components/ui/Icon.jsx';
 import Segmented from '../components/ui/Segmented.jsx';
 import Toggle from '../components/ui/Toggle.jsx';
-import HapticProbe from '../components/HapticProbe.jsx';
 import { hapticMethod, supportsHaptics, useFeedback } from '../hooks/useFeedback.js';
 import { BREAK_DURATIONS, DIFFICULTIES, TESTS, TEST_ORDER } from '../data/testConfig.js';
 import { useProgress } from '../store/useProgress.js';
@@ -34,6 +33,15 @@ const METHOD_LABEL = {
   vibration: 'Weg: Vibration-API des Browsers',
   'ios-switch': 'Weg: Schalter-Haptik von iOS (ab 17.4)',
   keiner: 'Dieses Gerät bietet keinen Weg für Haptik',
+};
+// Was das Gerät hergibt, ehrlich gesagt: Auf iOS lässt sich nur ein einzelner
+// Impuls auslösen, und auch der nur unter dem Finger.
+const HAPTIC_HINT = {
+  vibration:
+    '„Dezent“ gibt überall einen einzelnen Impuls, „Deutlich“ unterscheidet die Ereignisse: einmal beim Tippen, zweimal bei richtig, dreimal bei falsch.',
+  'ios-switch':
+    'Auf dem iPhone gibt es einen Impuls je Tipp – mehr lässt das System nicht zu. Ob eine Antwort richtig oder falsch war, unterscheidet deshalb der Ton, nicht die Haptik; aus demselben Grund bleibt die Zeitwarnung dort ein reiner Ton. „Dezent“ und „Deutlich“ unterscheiden sich erst auf Geräten mit echter Vibration.',
+  keiner: 'Dieses Gerät gibt keine Vibration aus. Auf dem iPhone braucht es iOS 17.4 oder neuer.',
 };
 
 export default function SettingsScreen() {
@@ -161,14 +169,23 @@ export default function SettingsScreen() {
               className={hapticsAvailable ? '' : 'opacity-40'}
             />
             <p className="mt-2 text-[12px] text-black/45 dark:text-white/45">
-              {hapticsAvailable
-                ? '„Dezent“ gibt überall einen einzelnen Impuls, „Deutlich“ unterscheidet die Ereignisse: einmal beim Tippen, zweimal bei richtig, dreimal bei falsch.'
-                : 'Dieses Gerät gibt keine Vibration aus. Auf dem iPhone braucht es iOS 17.4 oder neuer.'}
+              {hapticsAvailable ? HAPTIC_HINT[hapticMethod()] : HAPTIC_HINT.keiner}
             </p>
-            <HapticProbe
-              disabled={!hapticsAvailable}
-              onTrigger={() => feedback.tone('correct')}
-            />
+            {/* Der Probierknopf ist bewusst eine ganz gewöhnliche Fläche: Er
+                löst dieselbe Haptik aus wie jede Antwort im Untertest, also
+                zeigt er auch verlässlich, was dort zu erwarten ist. `silent`
+                unterdrückt nur den Tipp-Ton, damit der Ton der Auflösung
+                allein steht. */}
+            <Button
+              variant="secondary"
+              size="sm"
+              silent
+              className="mt-3 w-full"
+              disabled={!hapticsAvailable || settings.haptics === 'aus'}
+              onClick={() => feedback.correct()}
+            >
+              Haptik ausprobieren
+            </Button>
             <p className="mt-2 text-[12px] text-black/35 dark:text-white/35">
               {METHOD_LABEL[hapticMethod()]}
             </p>

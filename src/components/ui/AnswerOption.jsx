@@ -4,11 +4,10 @@
  * Zustände: neutral, ausgewählt, richtig, falsch. Die Farbe allein trägt nie
  * die Information – zusätzlich gibt es ein Symbol und ein aria-label.
  *
- * Zum Tipp-Feedback: Folgt auf den Tipp sofort die Auflösung, wird es über
- * `silent` abgeschaltet – zwei Signale im Abstand von Millisekunden verwischen
- * einander zu einem unklaren Rumpeln. Folgt keine Auflösung (Prüfungsmodus,
- * Mehrfachauswahl, Gedächtnistest), muss der Tipp selbst spürbar sein, sonst
- * bleibt die Antwort ohne jede Rückmeldung.
+ * Zum Tipp-Feedback: Folgt auf den Tipp sofort die Auflösung, wird der Ton des
+ * Tippens über `silent` abgeschaltet – zwei Töne im Abstand von Millisekunden
+ * verwischen einander. Der Impuls bleibt: Auf dem iPhone ist er die einzige
+ * Rückmeldung, die der Finger bekommen kann (siehe ui/Tappable.jsx).
  */
 import Tappable from './Tappable.jsx';
 import Icon from './Icon.jsx';

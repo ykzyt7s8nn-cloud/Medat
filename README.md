@@ -77,16 +77,25 @@ zur Abgabe verdeckt, so wie im echten Test.
 
 **Ton, Haptik und Zeitwarnung** – Beides ist dreistufig einstellbar. Der Ton
 steht auf „Auflösung“, gibt also nur bei richtig, falsch und am Ende einen
-Laut; „Alles“ ergänzt den Ton bei jedem Tippen. Die Haptik unterscheidet die
-Ereignisse über die Zahl der Impulse – einmal beim Tippen, zweimal bei richtig,
-dreimal bei falsch –, weil sich auf iOS weder Dauer noch Stärke steuern lassen;
-„Dezent“ gibt überall einen einzelnen Impuls. Zusätzlich meldet sich die App
+Laut; „Alles“ ergänzt den Ton bei jedem Tippen. Zusätzlich meldet sich die App
 bei 5 Minuten, 1 Minute und 10 Sekunden Restzeit, damit man beim Üben nicht auf
-die Uhr schauen muss. In den Einstellungen sitzt ein Probierschalter: Er ist selbst
-ein echter Switch, den man direkt antippt – der sicherste Weg, die Haptik
-auszulösen, und damit ein eindeutiger Gerätetest. Er bestätigt sichtbar, dass
-er ausgelöst hat, und nennt darunter den genutzten Weg. Wo das Gerät nichts
-anbietet, ist der Regler abgeschaltet und sagt das auch.
+die Uhr schauen muss.
+
+Die Haptik geht zwei verschiedene Wege, weil die Geräte verschieden sind. Wo es
+`navigator.vibrate` gibt, wird pro Ereignis ein eigenes Muster gefahren und
+„Deutlich“ unterscheidet sie zusätzlich über die Zahl der Impulse. Safari kennt
+die Schnittstelle nicht; dort bleibt seit iOS 17.4 nur der systemeigene
+Schalter, und der ist – am Gerät nachgeprüft – ausschließlich unter dem Finger
+zu spüren, ein programmatisch ausgelöster Impuls bleibt still. Deshalb trägt
+jede tappbare Fläche ihren eigenen, nahezu durchsichtigen Schalter über ihrer
+ganzen Breite: Jeder Tipp trifft ihn, das System gibt seinen Impuls, der Klick
+steigt von dort zum Button auf. Auf dem iPhone gibt es damit einen Impuls je
+Tipp – richtig, falsch und fertig unterscheidet dort der Ton, und die
+Zeitwarnung bleibt ein reiner Ton, weil zu ihr kein Finger gehört. Der
+Probierknopf in den Einstellungen ist bewusst eine ganz gewöhnliche Fläche: Er
+löst dieselbe Haptik aus wie jede Antwort im Untertest und zeigt darunter den
+genutzten Weg. Wo das Gerät nichts anbietet, ist der Regler abgeschaltet und
+sagt das auch.
 
 **Tempo-Auswertung** – Jede Aufgabe wird auf eine Zehntelsekunde genau gemessen.
 Das Ergebnis rechnet hoch, ob das Tempo für das Zeitlimit reicht, und benennt
