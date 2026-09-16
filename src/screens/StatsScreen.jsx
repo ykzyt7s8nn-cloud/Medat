@@ -4,11 +4,13 @@
  * Alles hier ist abgeleitet – gespeichert wird nur die Ergebnisliste
  * (siehe store/useProgress.js). Das verhindert widersprüchliche Kennzahlen.
  */
+import BmsStatsSection from '../components/bms/StatsSection.jsx';
 import Screen from '../components/layout/Screen.jsx';
 import Icon from '../components/ui/Icon.jsx';
 import LineChart from '../components/charts/LineChart.jsx';
 import Tappable from '../components/ui/Tappable.jsx';
 import { TESTS, TEST_ORDER } from '../data/testConfig.js';
+import { useActivity } from '../hooks/useActivity.js';
 import { useNavigation } from '../store/useNavigation.js';
 import { useProgress } from '../store/useProgress.js';
 import { formatTime } from '../hooks/useCountdown.js';
@@ -31,8 +33,8 @@ function StatCard({ icon, label, value, tint }) {
 export default function StatsScreen() {
   const openScreen = useNavigation((state) => state.openScreen);
   const history = useProgress((state) => state.history);
-  const streak = useProgress((state) => state.streak)();
-  const totalSeconds = useProgress((state) => state.totalSeconds)();
+  // Strähne und Gesamtzeit gelten für beide Testteile zusammen.
+  const activity = useActivity();
 
   const tagStats = useProgress((state) => state.tagStats);
 
@@ -59,12 +61,22 @@ export default function StatsScreen() {
     : null;
 
   return (
-    <Screen title="Statistik" subtitle={`${history.length} abgeschlossene Übungen`}>
+    <Screen
+      title="Statistik"
+      subtitle={`${activity.sessions} abgeschlossene Übungen – KFF und BMS`}
+    >
       <div className="space-y-4">
         <div className="flex gap-3">
-          <StatCard icon="flame" tint="#FF9500" value={`${streak}`} label={streak === 1 ? 'Tag Streak' : 'Tage Streak'} />
-          <StatCard icon="clock" tint="#007AFF" value={formatTime(totalSeconds)} label="Gesamt geübt" />
+          <StatCard
+            icon="flame"
+            tint="#FF9500"
+            value={`${activity.streak}`}
+            label={activity.streak === 1 ? 'Tag am Stück' : 'Tage am Stück'}
+          />
+          <StatCard icon="clock" tint="#007AFF" value={formatTime(activity.seconds)} label="Gesamt geübt" />
         </div>
+
+        <BmsStatsSection onOpenQuiz={(subjectId) => openScreen('bmsQuiz', { subjectId })} />
 
         <Tappable
           onClick={() => openScreen('training')}
@@ -143,7 +155,7 @@ export default function StatsScreen() {
 
         {history.length === 0 && (
           <p className="px-2 pb-4 text-center text-[14px] text-black/45 dark:text-white/45">
-            Noch keine Daten. Sobald du einen Untertest abschließt, erscheint hier dein Verlauf.
+            Noch keine Daten im KFF-Teil. Sobald du einen Untertest abschließt, erscheint hier dein Verlauf.
           </p>
         )}
       </div>

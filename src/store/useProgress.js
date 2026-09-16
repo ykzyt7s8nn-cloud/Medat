@@ -11,8 +11,8 @@
  * Summen werden gespeichert, nicht jede einzelne Aufgabe – das hält den
  * Speicher klein und die Auswertung eindeutig.
  *
- * Alles weitere Abgeleitete (Schnitt, Streak, Verlauf) wird beim Lesen
- * berechnet, damit es keine widersprüchlichen Doppeldaten gibt.
+ * Alles weitere Abgeleitete (Schnitt, Verlauf) wird beim Lesen berechnet,
+ * damit es keine widersprüchlichen Doppeldaten gibt.
  */
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
@@ -21,12 +21,6 @@ export const PROGRESS_KEY = 'medat-kff.progress.v1';
 
 /** Maximale Anzahl gespeicherter Einträge je Untertest. */
 const HISTORY_LIMIT = 200;
-
-const startOfDay = (timestamp) => {
-  const date = new Date(timestamp);
-  date.setHours(0, 0, 0, 0);
-  return date.getTime();
-};
 
 export const useProgress = create()(
   persist(
@@ -119,25 +113,10 @@ export const useProgress = create()(
         return sum / items.length;
       },
 
-      totalSeconds: () => get().history.reduce((acc, item) => acc + (item.seconds || 0), 0),
-
-      /** Anzahl aufeinanderfolgender Tage mit mindestens einer Übung (bis heute). */
-      streak: () => {
-        const days = new Set(get().history.map((item) => startOfDay(item.at)));
-        if (days.size === 0) return 0;
-        const dayMs = 24 * 60 * 60 * 1000;
-        let cursor = startOfDay(Date.now());
-        if (!days.has(cursor)) {
-          cursor -= dayMs; // Heute noch nicht geübt: Streak endet ggf. gestern
-          if (!days.has(cursor)) return 0;
-        }
-        let count = 0;
-        while (days.has(cursor)) {
-          count += 1;
-          cursor -= dayMs;
-        }
-        return count;
-      },
+      // Strähne und Gesamtzeit liegen bewusst nicht hier: Sie gelten für KFF
+      // und BMS zusammen und werden deshalb in hooks/useActivity.js aus beiden
+      // Verläufen berechnet. Zwei Zählungen nebeneinander hätten sich früher
+      // oder später widersprochen.
 
       resetAll: () => set({ history: [], tagStats: {} }),
     }),

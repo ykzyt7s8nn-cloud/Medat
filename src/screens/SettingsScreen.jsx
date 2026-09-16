@@ -12,6 +12,7 @@ import Segmented from '../components/ui/Segmented.jsx';
 import Toggle from '../components/ui/Toggle.jsx';
 import { hapticMethod, supportsHaptics, useFeedback } from '../hooks/useFeedback.js';
 import { BREAK_DURATIONS, DIFFICULTIES, TESTS, TEST_ORDER } from '../data/testConfig.js';
+import { daysUntilExam, describeDaysLeft } from '../lib/examDate.js';
 import { useProgress } from '../store/useProgress.js';
 import { HAPTIC_LEVELS, SOUND_LEVELS, useSettings } from '../store/useSettings.js';
 
@@ -53,6 +54,36 @@ export default function SettingsScreen() {
   return (
     <Screen title="Einstellungen">
       <div className="space-y-6 pb-6">
+        <Section
+          title="Testtermin"
+          footnote="Nur ein Datum, keine Uhrzeit – der MedAT findet an einem Tag statt. Auf dem Startbildschirm zählt die App die Tage mit."
+        >
+          <div className="ios-row">
+            <span className="min-w-0 flex-1 pr-2">
+              Dein MedAT
+              <span className="block text-[12px] text-black/45 dark:text-white/45">
+                {daysUntilExam(settings.examDate) === null
+                  ? 'Noch nicht eingetragen'
+                  : describeDaysLeft(daysUntilExam(settings.examDate))}
+              </span>
+            </span>
+            <input
+              type="date"
+              value={settings.examDate}
+              onChange={(event) => settings.setExamDate(event.target.value)}
+              aria-label="Datum des MedAT"
+              className="tabular shrink-0 rounded-lg bg-black/[0.06] px-2.5 py-1.5 text-[15px] outline-none dark:bg-white/10"
+            />
+          </div>
+          {settings.examDate !== '' && (
+            <div className="px-4 py-2.5">
+              <Button variant="neutral" size="sm" className="w-full" onClick={() => settings.setExamDate('')}>
+                Termin entfernen
+              </Button>
+            </div>
+          )}
+        </Section>
+
         <Section
           title="Modus"
           footnote="Überspringen, Markieren und freies Springen zwischen den Aufgaben gibt es in beiden Modi. Der Unterschied: Im Übungsmodus wird nach dem Beantworten sofort aufgelöst, im Prüfungsmodus erst bei der Abgabe – so wie im echten MedAT. Der Gedächtnistest arbeitet immer so."

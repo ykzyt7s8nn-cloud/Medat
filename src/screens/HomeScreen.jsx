@@ -5,14 +5,17 @@
  * Untertest mit letztem Ergebnis, Fortschrittsring und Anzahl der Übungen.
  * Ganz unten der Einstieg in die MedAT-Simulation.
  */
+import CountdownCard from '../components/CountdownCard.jsx';
 import Screen from '../components/layout/Screen.jsx';
 import Icon from '../components/ui/Icon.jsx';
 import ProgressRing from '../components/ui/ProgressRing.jsx';
 import Tappable from '../components/ui/Tappable.jsx';
 import { TESTS, TEST_ORDER } from '../data/testConfig.js';
+import { daysUntilExam } from '../lib/examDate.js';
+import { useActivity } from '../hooks/useActivity.js';
 import { useNavigation } from '../store/useNavigation.js';
 import { useProgress } from '../store/useProgress.js';
-import { formatTime } from '../hooks/useCountdown.js';
+import { useSettings } from '../store/useSettings.js';
 
 function TestCard({ test, onOpen }) {
   const history = useProgress((state) => state.history);
@@ -56,9 +59,11 @@ function TestCard({ test, onOpen }) {
 
 export default function HomeScreen() {
   const openScreen = useNavigation((state) => state.openScreen);
+  const setTab = useNavigation((state) => state.setTab);
   const history = useProgress((state) => state.history);
-  const streak = useProgress((state) => state.streak)();
-  const totalSeconds = useProgress((state) => state.totalSeconds)();
+  const examDate = useSettings((state) => state.examDate);
+  // Strähne und Gesamtzeit zählen beide Testteile – wer BMS übt, übt.
+  const activity = useActivity();
 
   const testsWithData = TEST_ORDER.filter((id) => history.some((item) => item.testId === id));
   const overall = testsWithData.length === 0
@@ -72,6 +77,14 @@ export default function HomeScreen() {
   return (
     <Screen title="KFF Trainer" subtitle="Kognitive Fähigkeiten und Fertigkeiten – MedAT">
       <div className="space-y-4">
+        <CountdownCard
+          daysLeft={daysUntilExam(examDate)}
+          examDate={examDate}
+          streak={activity.streak}
+          seconds={activity.seconds}
+          onOpenSettings={() => setTab('settings')}
+        />
+
         <section className="ios-card flex items-center gap-4 px-4 py-4">
           <ProgressRing value={overall / 100} size={78} strokeWidth={7} color="#007AFF" label={`Gesamtschnitt ${Math.round(overall)} Prozent`}>
             <span className="tabular text-[18px] font-bold">{Math.round(overall)}%</span>
@@ -79,18 +92,13 @@ export default function HomeScreen() {
           <div className="min-w-0 flex-1">
             <h2 className="text-[15px] font-semibold">Gesamtfortschritt</h2>
             <p className="text-[13px] text-black/50 dark:text-white/50">
-              Durchschnitt über {testsWithData.length} von 4 Untertests
+              Durchschnitt über {testsWithData.length} von {TEST_ORDER.length} Untertests
             </p>
-            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-black/50 dark:text-white/50">
-              <span className="inline-flex items-center gap-1">
-                <Icon name="flame" className="h-4 w-4 text-ios-orange" />
-                {streak} {streak === 1 ? 'Tag' : 'Tage'} Streak
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <Icon name="clock" className="h-4 w-4" />
-                {formatTime(totalSeconds)} geübt
-              </span>
-            </div>
+            <p className="mt-1 text-[12px] text-black/40 dark:text-white/40">
+              {activity.sessions === 0
+                ? 'Noch keine abgeschlossene Übung'
+                : `${activity.sessions} ${activity.sessions === 1 ? 'Durchgang' : 'Durchgänge'} insgesamt, davon ${activity.bmsSessions} im BMS`}
+            </p>
           </div>
         </section>
 

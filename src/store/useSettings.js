@@ -47,6 +47,11 @@ const defaultSettings = {
   haptics: 'deutlich',
   /** Kurzes Signal, wenn die Zeit knapp wird (5 Min, 1 Min, 10 Sek). */
   timeWarnings: true,
+  /**
+   * Termin des MedAT als „JJJJ-MM-TT“, leer heißt „nicht gesetzt“.
+   * Ein reines Datum, kein Zeitstempel – siehe lib/examDate.js.
+   */
+  examDate: '',
 };
 
 /** Auswahl für die Einstellungen. */
@@ -75,6 +80,7 @@ export const useSettings = create()(
       setMode: (mode) => set({ mode }),
       setSound: (level) => set({ sound: level }),
       setHaptics: (level) => set({ haptics: level }),
+      setExamDate: (value) => set({ examDate: value }),
       toggle: (key) => set((state) => ({ [key]: !state[key] })),
       resetSettings: () => set({ ...defaultSettings }),
     }),

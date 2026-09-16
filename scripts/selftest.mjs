@@ -61,6 +61,12 @@ import {
   withShuffledOptions,
 } from '../src/data/bms/index.js';
 import {
+  daysUntilExam,
+  describeDaysLeft,
+  formatExamDate,
+  parseExamDate,
+} from '../src/lib/examDate.js';
+import {
   INTERVALS_DAYS,
   afterCorrect,
   afterWrong,
@@ -727,6 +733,29 @@ check('Eine Lücke beendet die Strähne',
   streakFrom([heute, heute - 2 * tagMs, heute - 3 * tagMs], heute) === 1);
 check('Mehrfach am selben Tag zählt einmal',
   streakFrom([heute, heute - 3600 * 1000, heute - 7200 * 1000], heute) === 1);
+
+/* ---------------------------------------------------------- Testtermin */
+section('Testtermin');
+
+const jetzt = new Date(2026, 4, 20, 9, 0).getTime();
+check('Ein Datum wird als lokaler Tagesbeginn gelesen',
+  new Date(parseExamDate('2026-07-07')).getHours() === 0);
+check('Ohne Datum kein Countdown', daysUntilExam('', jetzt) === null);
+check('Unsinn wird abgewiesen',
+  parseExamDate('07.07.2026') === null && parseExamDate('2026-13-01') === null
+  && parseExamDate('2026-02-31') === null && parseExamDate(undefined) === null);
+check('Heute sind es null Tage', daysUntilExam('2026-05-20', jetzt) === 0);
+check('Morgen ist ein Tag', daysUntilExam('2026-05-21', jetzt) === 1);
+check('Über einen Monatswechsel wird richtig gezählt',
+  daysUntilExam('2026-06-01', jetzt) === 12);
+check('Ein vergangener Termin zählt negativ', daysUntilExam('2026-05-18', jetzt) === -2);
+check('Ab vier Wochen wird in Wochen gesprochen',
+  describeDaysLeft(28) === 'in 4 Wochen' && describeDaysLeft(27) === 'in 27 Tagen');
+check('Heute, morgen und gestern haben eigene Worte',
+  describeDaysLeft(0) === 'heute' && describeDaysLeft(1) === 'morgen'
+  && describeDaysLeft(-1) === 'gestern');
+check('Das Datum wird ausgeschrieben', /7\.\s*Juli 2026/.test(formatExamDate('2026-07-07')),
+  formatExamDate('2026-07-07'));
 
 /* ---------------------------------------------------------- Zeitwarnung */
 section('Zeitwarnung');
