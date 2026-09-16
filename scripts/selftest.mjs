@@ -60,6 +60,16 @@ import {
   loadAllSubjects,
   withShuffledOptions,
 } from '../src/data/bms/index.js';
+import { SECTIONS, SECTION_ORDER, SEK_ORDER, TV_ORDER } from '../src/data/testConfig.js';
+import { drawRegulate, drawTasks, loadSekTasks } from '../src/data/sek/index.js';
+import { QUESTIONS_PER_TEXT, drawTextTasks, loadTexts } from '../src/data/tv/index.js';
+import {
+  describeSekSolution,
+  isSekComplete,
+  pointsPerTask,
+  scoreSekTask,
+} from '../src/lib/sekScoring.js';
+import { biggestGain, weightedScore } from '../src/lib/overallScore.js';
 import {
   daysUntilExam,
   describeDaysLeft,
@@ -733,6 +743,188 @@ check('Eine Lücke beendet die Strähne',
   streakFrom([heute, heute - 2 * tagMs, heute - 3 * tagMs], heute) === 1);
 check('Mehrfach am selben Tag zählt einmal',
   streakFrom([heute, heute - 3600 * 1000, heute - 7200 * 1000], heute) === 1);
+
+/* ------------------------------------------------ SEK: Inhalte und Wertung */
+section('SEK: Inhalte');
+
+const sekTasks = Object.fromEntries(
+  await Promise.all(SEK_ORDER.map(async (id) => [id, await loadSekTasks(id)])),
+);
+
+for (const testId of SEK_ORDER) {
+  const tasks = sekTasks[testId];
+  const test = TESTS[testId];
+  check(`${test.short}: mehr Aufgaben vorhanden als ein Durchgang braucht (${tasks.length} > ${test.questionCount})`,
+    tasks.length > test.questionCount);
+  check(`${test.short}: alle Aufgaben-IDs eindeutig`,
+    new Set(tasks.map((task) => task.id)).size === tasks.length);
+  check(`${test.short}: jede Aufgabe hat eine ausführliche Situation`,
+    tasks.every((task) => task.situation && task.situation.length >= 80));
+}
+
+const recognise = sekTasks.emotionsRecognise;
+check(`Emotionen erkennen: immer ${TESTS.emotionsRecognise.emotionCount} Gefühle je Aufgabe`,
+  recognise.every((task) => task.emotions.length === TESTS.emotionsRecognise.emotionCount));
+check('Emotionen erkennen: jedes Gefühl hat eine Einschätzung und eine Begründung',
+  recognise.every((task) => task.emotions.every((emotion) =>
+    typeof emotion.likely === 'boolean' && emotion.why?.length > 10)));
+// Eine Aufgabe, in der alle fünf gleich zu beurteilen sind, wäre kein Test der
+// Unterscheidung, sondern eine Einladung zum Durchklicken.
+check('Emotionen erkennen: keine Aufgabe ist durchgehend gleich zu beantworten',
+  recognise.every((task) => {
+    const likely = task.emotions.filter((emotion) => emotion.likely).length;
+    return likely > 0 && likely < task.emotions.length;
+  }));
+check('Emotionen erkennen: Gefühlsnamen wiederholen sich nicht innerhalb einer Aufgabe',
+  recognise.every((task) => new Set(task.emotions.map((e) => e.emotion)).size === task.emotions.length));
+
+const regulate = sekTasks.emotionsRegulate;
+check(`Emotionen regulieren: immer ${TESTS.emotionsRegulate.optionCount} Vorsätze`,
+  regulate.every((task) => task.options.length === TESTS.emotionsRegulate.optionCount));
+check('Emotionen regulieren: genau ein Vorsatz trifft, und er steht in der Quelle zuerst',
+  regulate.every((task) => task.options.filter((option) => option.correct).length === 1
+    && task.options[0].correct === true));
+check('Emotionen regulieren: jede Aufgabe nennt ein Ziel',
+  regulate.every((task) => task.goal?.length > 20));
+check('Emotionen regulieren: jeder Vorsatz ist begründet',
+  regulate.every((task) => task.options.every((option) => option.why?.length > 10)));
+
+// Ungemischt käme man mit „immer a“ auf volle Punktzahl.
+const regulateMixed = regulate.map(drawRegulate);
+check(`Emotionen regulieren: gemischt steht der richtige Vorsatz nicht mehr immer vorn (${regulateMixed.filter((task) => task.options[0].correct).length} von ${regulate.length})`,
+  regulateMixed.filter((task) => task.options[0].correct).length < regulate.length * 0.7);
+
+const decision = sekTasks.socialDecision;
+check(`Soziales Entscheiden: immer ${TESTS.socialDecision.statementCount} Aussagen`,
+  decision.every((task) => task.statements.length === TESTS.socialDecision.statementCount));
+check('Soziales Entscheiden: keine Aussage wiederholt sich innerhalb einer Aufgabe',
+  decision.every((task) => new Set(task.statements).size === task.statements.length));
+check('Soziales Entscheiden: jede Aufgabe erklärt ihre Reihung',
+  decision.every((task) => task.explanation?.length > 40));
+
+section('SEK: Wertung');
+
+const drawnDecision = drawTasks('socialDecision', decision, 3);
+check('Soziales Entscheiden: das Ziehen mischt die Aussagen und merkt sich den Platz',
+  drawnDecision.every((task) => task.statements.every((statement, i) =>
+    typeof statement.rank === 'number' && statement.text.length > 0
+    && task.statements.filter((other) => other.rank === statement.rank).length === 1
+    && i < task.statements.length)));
+
+const exampleDecision = drawnDecision[0];
+// Die richtige Reihung ergibt sich aus den mitgeführten Rängen.
+const perfect = exampleDecision.statements
+  .map((statement, displayIndex) => ({ displayIndex, rank: statement.rank }))
+  .sort((a, b) => a.rank - b.rank)
+  .map((entry) => entry.displayIndex);
+check('Soziales Entscheiden: die richtige Reihung bringt volle Punktzahl',
+  scoreSekTask('socialDecision', exampleDecision, perfect) === 5);
+check('Soziales Entscheiden: zwei vertauschte Plätze kosten genau zwei Punkte',
+  scoreSekTask('socialDecision', exampleDecision,
+    [perfect[1], perfect[0], perfect[2], perfect[3], perfect[4]]) === 3);
+check('Soziales Entscheiden: unvollständig heißt offen',
+  !isSekComplete('socialDecision', exampleDecision, perfect.slice(0, 4))
+  && isSekComplete('socialDecision', exampleDecision, perfect));
+check('Soziales Entscheiden: fünf Punkte je Aufgabe',
+  pointsPerTask('socialDecision', exampleDecision) === 5);
+
+const exampleRecognise = recognise[0];
+const allRight = exampleRecognise.emotions.map((emotion) => emotion.likely);
+check('Emotionen erkennen: alles richtig gibt den Punkt',
+  scoreSekTask('emotionsRecognise', exampleRecognise, allRight) === 1);
+check('Emotionen erkennen: eine Fehleinschätzung kostet den ganzen Punkt',
+  scoreSekTask('emotionsRecognise', exampleRecognise,
+    [!allRight[0], ...allRight.slice(1)]) === 0);
+check('Emotionen erkennen: erst mit allen fünf Angaben ist die Aufgabe fertig',
+  !isSekComplete('emotionsRecognise', exampleRecognise, allRight.slice(0, 4))
+  && isSekComplete('emotionsRecognise', exampleRecognise, allRight));
+
+const exampleRegulate = regulate[0];
+const rightIndex = exampleRegulate.options.findIndex((option) => option.correct);
+check('Emotionen regulieren: der richtige Vorsatz gibt den Punkt',
+  scoreSekTask('emotionsRegulate', exampleRegulate, rightIndex) === 1
+  && scoreSekTask('emotionsRegulate', exampleRegulate, (rightIndex + 1) % 4) === 0);
+check('Emotionen regulieren: die Lösung wird als Buchstabe mit Text benannt',
+  describeSekSolution('emotionsRegulate', exampleRegulate).startsWith('a)'));
+check('Ohne Antwort gibt es in allen drei Untertests null Punkte',
+  scoreSekTask('emotionsRecognise', exampleRecognise, undefined) === 0
+  && scoreSekTask('emotionsRegulate', exampleRegulate, undefined) === 0
+  && scoreSekTask('socialDecision', exampleDecision, undefined) === 0);
+
+/* ------------------------------------------------------- Textverständnis */
+section('Textverständnis');
+
+const tvTexts = await loadTexts();
+const tvTest = TESTS[TV_ORDER[0]];
+check(`Genug Texte für Abwechslung (${tvTexts.length})`, tvTexts.length >= 6);
+check(`Jeder Text hat ${QUESTIONS_PER_TEXT} Fragen`,
+  tvTexts.every((text) => text.questions.length === QUESTIONS_PER_TEXT));
+check('Jeder Text hat mindestens drei Absätze und genug Substanz',
+  tvTexts.every((text) => text.paragraphs.length >= 3
+    && text.paragraphs.join(' ').length >= 900));
+check(`Jede Frage hat ${tvTest.optionCount} Antwortmöglichkeiten, genau eine richtig, in der Quelle zuerst`,
+  tvTexts.every((text) => text.questions.every((question) =>
+    question.options.length === tvTest.optionCount
+    && question.options.filter((option) => option.correct).length === 1
+    && question.options[0].correct === true)));
+check('Antwortmöglichkeiten wiederholen sich innerhalb einer Frage nicht',
+  tvTexts.every((text) => text.questions.every((question) =>
+    new Set(question.options.map((option) => option.text)).size === question.options.length)));
+check('Jede Frage ist erklärt',
+  tvTexts.every((text) => text.questions.every((question) => question.explanation?.length > 40)));
+check('Text- und Frage-IDs sind eindeutig',
+  new Set(tvTexts.map((text) => text.id)).size === tvTexts.length
+  && new Set(tvTexts.flatMap((text) => text.questions.map((q) => q.id))).size
+    === tvTexts.length * QUESTIONS_PER_TEXT);
+
+const tvDraw = drawTextTasks(tvTexts, tvTest.questionCount);
+check(`Ein Durchgang hat ${tvTest.questionCount} Aufgaben`, tvDraw.length === tvTest.questionCount);
+check(`Sie verteilen sich auf ${tvTest.questionCount / QUESTIONS_PER_TEXT} Texte`,
+  new Set(tvDraw.map((task) => task.textId)).size === tvTest.questionCount / QUESTIONS_PER_TEXT);
+// Die Fragen eines Textes müssen beieinander bleiben – man liest einen Text
+// und beantwortet dann dessen Fragen, nicht kreuz und quer.
+check('Die Fragen eines Textes stehen zusammen',
+  tvDraw.every((task, i) => i === 0
+    || task.textId === tvDraw[i - 1].textId
+    || !tvDraw.slice(0, i - 1).some((earlier) => earlier.textId === task.textId)));
+check('Jede Aufgabe bringt ihren Text mit',
+  tvDraw.every((task) => task.paragraphs?.length >= 3 && task.title?.length > 0));
+
+const tvMixedFirst = tvDraw.filter((task) => task.options[0].correct).length;
+check(`Gemischt liegt die richtige Antwort nicht mehr immer vorn (${tvMixedFirst} von ${tvDraw.length})`,
+  tvMixedFirst < tvDraw.length * 0.7);
+
+/* --------------------------------------------------- Gewichteter Gesamtwert */
+section('Gewichteter Gesamtwert');
+
+check('Die vier Testteile ergeben zusammen 100 %',
+  Math.abs(SECTION_ORDER.reduce((sum, id) => sum + SECTIONS[id].weight, 0) - 1) < 1e-9);
+check('Offizielle Gewichte: BMS 40, KFF 40, TV 10, SEK 10',
+  SECTIONS.bms.weight === 0.4 && SECTIONS.kff.weight === 0.4
+  && SECTIONS.tv.weight === 0.1 && SECTIONS.sek.weight === 0.1);
+
+const voll = weightedScore({ bms: 0.5, kff: 1, tv: 0, sek: 1 });
+check('Vollständige Daten werden nach Gewicht verrechnet (0,5·0,4 + 1·0,4 + 0 + 1·0,1 = 0,7)',
+  Math.abs(voll.percent - 0.7) < 1e-9, String(voll.percent));
+check('Vollständig heißt 100 % Abdeckung ohne Lücken',
+  voll.coverage === 1 && voll.missing.length === 0);
+
+// Fehlt ein Teil, werden die übrigen Gewichte hochgerechnet – sonst sähe ein
+// starker Teilwert nach einem schwachen Gesamtergebnis aus.
+const teilweise = weightedScore({ kff: 0.8 });
+check('Ohne Daten wird der Teil ausgelassen und der Rest hochgerechnet',
+  Math.abs(teilweise.percent - 0.8) < 1e-9 && Math.abs(teilweise.coverage - 0.4) < 1e-9);
+check('Die fehlenden Teile werden benannt',
+  teilweise.missing.join() === 'BMS,TV,SEK');
+check('Ganz ohne Daten gibt es keinen Wert',
+  weightedScore({}).percent === null && weightedScore({}).coverage === 0);
+
+// 40 % Gewicht bei 60 % Trefferquote wiegen schwerer als 10 % bei 20 %.
+check('Der größte Hebel berücksichtigt das Gewicht, nicht nur den Rückstand',
+  biggestGain({ bms: 0.6, tv: 0.2 }).id === 'bms');
+check('Bei gleichem Gewicht entscheidet der Rückstand',
+  biggestGain({ bms: 0.9, kff: 0.5 }).id === 'kff');
+check('Ohne Daten kein Hebel', biggestGain({}) === null);
 
 /* ---------------------------------------------------------- Testtermin */
 section('Testtermin');

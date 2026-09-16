@@ -11,7 +11,9 @@ import Icon from '../components/ui/Icon.jsx';
 import Segmented from '../components/ui/Segmented.jsx';
 import Toggle from '../components/ui/Toggle.jsx';
 import { hapticMethod, supportsHaptics, useFeedback } from '../hooks/useFeedback.js';
-import { BREAK_DURATIONS, DIFFICULTIES, TESTS, TEST_ORDER } from '../data/testConfig.js';
+import {
+  ADJUSTABLE_ORDER, BREAK_DURATIONS, DIFFICULTIES, SECTIONS, TESTS, TEST_ORDER,
+} from '../data/testConfig.js';
 import { daysUntilExam, describeDaysLeft } from '../lib/examDate.js';
 import { useProgress } from '../store/useProgress.js';
 import { HAPTIC_LEVELS, SOUND_LEVELS, useSettings } from '../store/useSettings.js';
@@ -106,10 +108,15 @@ export default function SettingsScreen() {
           </div>
         </Section>
 
-        <Section title="Timer" footnote="Ohne Timer wird im Übungsmodus ohne Zeitdruck geübt. In der MedAT-Simulation gelten immer die Originalzeiten.">
+        <Section title="Timer" footnote="Ohne Timer wird im Übungsmodus ohne Zeitdruck geübt. In den Simulationen gelten immer die Originalzeiten.">
           {TEST_ORDER.map((id) => (
             <div key={id} className="ios-row">
-              <span>{TESTS[id].short}</span>
+              <span className="min-w-0 flex-1 truncate pr-2">
+                {TESTS[id].short}
+                <span className="ml-1.5 text-[12px] text-black/35 dark:text-white/35">
+                  {SECTIONS[TESTS[id].section].short}
+                </span>
+              </span>
               <Toggle
                 checked={settings.timers[id]}
                 onChange={(value) => settings.setTimer(id, value)}
@@ -119,8 +126,11 @@ export default function SettingsScreen() {
           ))}
         </Section>
 
-        <Section title="Schwierigkeit">
-          {TEST_ORDER.filter((id) => id !== 'memory').map((id) => (
+        <Section
+          title="Schwierigkeit"
+          footnote="Nur die kognitiven Untertests werden erzeugt und lassen sich deshalb abstufen. Textverständnis und die sozial-emotionalen Untertests bestehen aus geschriebenen Aufgaben."
+        >
+          {ADJUSTABLE_ORDER.map((id) => (
             <div key={id} className="px-4 py-3">
               <p className="mb-2 text-[15px]">{TESTS[id].short}</p>
               <Segmented

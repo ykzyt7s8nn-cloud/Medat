@@ -1,16 +1,20 @@
 /**
  * Startbildschirm (Tab "Üben").
  *
- * Oben der Gesamtfortschritt als Kreisdiagramm, darunter je eine Karte pro
- * Untertest mit letztem Ergebnis, Fortschrittsring und Anzahl der Übungen.
- * Ganz unten der Einstieg in die MedAT-Simulation.
+ * Oben Testtermin und Gesamtfortschritt, darunter die Untertests – gruppiert
+ * nach Testteil, weil die drei Teile im MedAT verschieden viel zählen und man
+ * beim Planen wissen will, woran man gerade arbeitet. Ganz unten der Einstieg
+ * in die KFF-Simulation.
+ *
+ * Der BMS hat einen eigenen Tab; er ist nach Fächern gegliedert, nicht nach
+ * Untertests, und passt deshalb nicht in dieselbe Liste.
  */
 import CountdownCard from '../components/CountdownCard.jsx';
 import Screen from '../components/layout/Screen.jsx';
 import Icon from '../components/ui/Icon.jsx';
 import ProgressRing from '../components/ui/ProgressRing.jsx';
 import Tappable from '../components/ui/Tappable.jsx';
-import { TESTS, TEST_ORDER } from '../data/testConfig.js';
+import { SECTIONS, TESTS, TEST_ORDER, testsInSection } from '../data/testConfig.js';
 import { daysUntilExam } from '../lib/examDate.js';
 import { useActivity } from '../hooks/useActivity.js';
 import { useNavigation } from '../store/useNavigation.js';
@@ -75,7 +79,7 @@ export default function HomeScreen() {
     }, 0) / testsWithData.length;
 
   return (
-    <Screen title="KFF Trainer" subtitle="Kognitive Fähigkeiten und Fertigkeiten – MedAT">
+    <Screen title="Üben" subtitle="Kognitiv, Textverständnis und sozial-emotional">
       <div className="space-y-4">
         <CountdownCard
           daysLeft={daysUntilExam(examDate)}
@@ -102,14 +106,21 @@ export default function HomeScreen() {
           </div>
         </section>
 
-        <section className="space-y-3">
-          <h2 className="px-1 text-[13px] font-semibold uppercase tracking-wide text-black/45 dark:text-white/45">
-            Untertests
-          </h2>
-          {TEST_ORDER.map((id) => (
-            <TestCard key={id} test={TESTS[id]} onOpen={() => openScreen(id)} />
-          ))}
-        </section>
+        {['kff', 'tv', 'sek'].map((sectionId) => (
+          <section key={sectionId} className="space-y-3">
+            {/* Der Name darf umbrechen – abgeschnitten wäre „Kognitive
+                Fähigkeiten und …“ weniger nützlich als zwei Zeilen. */}
+            <h2 className="flex items-baseline gap-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-black/45 dark:text-white/45">
+              <span className="min-w-0 flex-1 leading-snug">{SECTIONS[sectionId].name}</span>
+              <span className="shrink-0 tabular font-normal normal-case tracking-normal">
+                {Math.round(SECTIONS[sectionId].weight * 100)} % des MedAT
+              </span>
+            </h2>
+            {testsInSection(sectionId).map((id) => (
+              <TestCard key={id} test={TESTS[id]} onOpen={() => openScreen(id)} />
+            ))}
+          </section>
+        ))}
 
         <section>
           <Tappable
@@ -120,9 +131,9 @@ export default function HomeScreen() {
               <Icon name="trophy" className="h-6 w-6" strokeWidth={2} />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-[17px] font-semibold">MedAT-Simulation</span>
+              <span className="block text-[17px] font-semibold">KFF-Simulation</span>
               <span className="mt-0.5 block text-[13px] opacity-90">
-                Alle Untertests in echter Reihenfolge mit Originalzeiten
+                Die fünf kognitiven Untertests in echter Reihenfolge mit Originalzeiten
               </span>
             </span>
             <Icon name="chevronRight" className="h-5 w-5 opacity-80" />

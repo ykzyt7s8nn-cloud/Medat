@@ -5,14 +5,16 @@
  * (siehe store/useProgress.js). Das verhindert widersprüchliche Kennzahlen.
  */
 import BmsStatsSection from '../components/bms/StatsSection.jsx';
+import OverallScoreCard from '../components/OverallScoreCard.jsx';
 import Screen from '../components/layout/Screen.jsx';
 import Icon from '../components/ui/Icon.jsx';
 import LineChart from '../components/charts/LineChart.jsx';
 import Tappable from '../components/ui/Tappable.jsx';
-import { TESTS, TEST_ORDER } from '../data/testConfig.js';
+import { KFF_ORDER, SEK_ORDER, TESTS, TEST_ORDER, TV_ORDER } from '../data/testConfig.js';
 import { useActivity } from '../hooks/useActivity.js';
 import { useNavigation } from '../store/useNavigation.js';
 import { useProgress } from '../store/useProgress.js';
+import { useBmsProgress } from '../store/useBmsProgress.js';
 import { formatTime } from '../hooks/useCountdown.js';
 import { formatDuration } from '../lib/format.js';
 
@@ -37,6 +39,7 @@ export default function StatsScreen() {
   const activity = useActivity();
 
   const tagStats = useProgress((state) => state.tagStats);
+  const bmsTopicStats = useBmsProgress((state) => state.topicStats);
 
   const perTest = TEST_ORDER.map((id) => {
     const items = history.filter((item) => item.testId === id).slice(-30);
@@ -44,16 +47,42 @@ export default function StatsScreen() {
     const average = percents.length > 0 ? percents.reduce((a, b) => a + b, 0) / percents.length : null;
     const best = percents.length > 0 ? Math.max(...percents) : null;
 
-    // Zeit pro Aufgabe aus der Kategorie-Statistik (dort wird sie pro Aufgabe
-    // gemessen, während history nur die Gesamtdauer kennt).
+    // Zeit pro Aufgabe bevorzugt aus der Kategorie-Statistik (dort wird sie je
+    // Aufgabe gemessen). Die sozial-emotionalen Untertests kennen keine
+    // Kategorien; für sie wird sie aus Gesamtdauer und Aufgabenzahl der
+    // Durchgänge geschätzt – gröber, aber besser als gar keine Angabe.
     const tags = Object.values(tagStats[id] ?? {});
     const attempts = tags.reduce((sum, tag) => sum + tag.attempts, 0);
     const tagSeconds = tags.reduce((sum, tag) => sum + tag.seconds, 0);
-    const perTask = attempts > 0 && tagSeconds > 0 ? tagSeconds / attempts : null;
+    const fromHistory = items.length > 0
+      ? items.reduce((sum, item) => sum + item.seconds, 0) / (items.length * TESTS[id].questionCount)
+      : null;
+    const perTask = attempts > 0 && tagSeconds > 0 ? tagSeconds / attempts : fromHistory;
     const budget = TESTS[id].testSeconds / TESTS[id].questionCount;
 
     return { test: TESTS[id], items, percents, average, best, perTask, budget };
   });
+
+  // Anteil richtiger Antworten je Testteil – Grundlage des gewichteten
+  // Gesamtwerts. Der BMS zählt über alle Fragen, die drei übrigen Teile über
+  // den Durchschnitt ihrer Untertests.
+  const meanOf = (ids) => {
+    const values = ids
+      .map((id) => perTest.find((entry) => entry.test.id === id)?.average)
+      .filter((value) => typeof value === 'number');
+    return values.length === 0 ? null : values.reduce((a, b) => a + b, 0) / values.length / 100;
+  };
+  const bmsAttempts = Object.values(bmsTopicStats)
+    .flatMap((topics) => Object.values(topics));
+  const bmsTried = bmsAttempts.reduce((sum, topic) => sum + topic.attempts, 0);
+  const sectionPercents = {
+    bms: bmsTried === 0
+      ? null
+      : bmsAttempts.reduce((sum, topic) => sum + topic.correct, 0) / bmsTried,
+    kff: meanOf(KFF_ORDER),
+    tv: meanOf(TV_ORDER),
+    sek: meanOf(SEK_ORDER),
+  };
 
   const withData = perTest.filter((entry) => entry.average !== null);
   const weakest = withData.length > 1
@@ -75,6 +104,8 @@ export default function StatsScreen() {
           />
           <StatCard icon="clock" tint="#007AFF" value={formatTime(activity.seconds)} label="Gesamt geübt" />
         </div>
+
+        <OverallScoreCard percents={sectionPercents} />
 
         <BmsStatsSection onOpenQuiz={(subjectId) => openScreen('bmsQuiz', { subjectId })} />
 

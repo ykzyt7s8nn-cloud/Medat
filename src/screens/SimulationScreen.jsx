@@ -1,8 +1,11 @@
 /**
- * MedAT-Simulation.
+ * KFF-Simulation.
  *
  * Durchläuft alle fünf KFF-Untertests in der echten Testreihenfolge und mit den
- * Originalzeiten.
+ * Originalzeiten. Bewusst nur der KFF-Teil: Der BMS hat eine eigene Simulation
+ * (er ist nach Fächern gegliedert), und für Textverständnis und die sozial-
+ * emotionalen Untertests wäre die genaue Abfolge am Testtag eine Annahme, die
+ * ich nicht belegen kann – dann lieber jeden für sich mit seiner Originalzeit.
  *
  * Besonderheit: Die Lernphase des Gedächtnistests liegt am Anfang, die
  * zugehörige Prüfphase erst drei Untertests später – genau wie im MedAT. Die
@@ -170,16 +173,20 @@ export default function SimulationScreen() {
 
   if (!started) {
     return (
-      <Screen title="MedAT-Simulation" onClose={closeScreen}>
+      <Screen title="KFF-Simulation" onClose={closeScreen}>
         <div className="space-y-4">
           <section className="ios-card px-4 py-5">
             <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-ios-blue/10 text-ios-blue">
               <Icon name="trophy" className="h-6 w-6" strokeWidth={2} />
             </span>
-            <h2 className="text-[19px] font-bold">Alle Untertests am Stück</h2>
+            <h2 className="text-[19px] font-bold">Die fünf kognitiven Untertests am Stück</h2>
             <p className="mt-1 text-[15px] text-black/60 dark:text-white/60">
               Echte Reihenfolge, echte Zeitlimits. Die Timer laufen unabhängig von deinen
               Timer-Einstellungen immer mit.
+            </p>
+            <p className="mt-2 text-[13px] text-black/50 dark:text-white/50">
+              Der Basiskenntnistest hat eine eigene Simulation im BMS-Tab. Textverständnis und die
+              sozial-emotionalen Untertests übst du einzeln, jeweils mit ihrer Originalzeit.
             </p>
           </section>
 

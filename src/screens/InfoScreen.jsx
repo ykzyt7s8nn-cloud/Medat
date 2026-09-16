@@ -6,7 +6,7 @@
  */
 import Screen from '../components/layout/Screen.jsx';
 import Icon from '../components/ui/Icon.jsx';
-import { TESTS, TEST_ORDER } from '../data/testConfig.js';
+import { SECTIONS, TESTS, TEST_ORDER } from '../data/testConfig.js';
 import { formatTime } from '../hooks/useCountdown.js';
 
 const DETAILS = {
@@ -35,6 +35,30 @@ const DETAILS = {
     'Die vier Aussageformen: „Alle A sind B“, „Einige A sind B“, „Alle A sind keine B“, „Einige A sind keine B“.',
     'Entscheidend ist ausschließlich die formale Logik, nicht das Weltwissen.',
   ],
+  textComprehension: [
+    '12 Aufgaben in 35 Minuten im Single-Choice-Verfahren, verteilt auf mehrere Sachtexte.',
+    'Alles ist allein aus dem Text zu beantworten – Vorwissen zum Thema bringt keinen Vorteil.',
+    'Die falschen Antworten sind typisch falsch: Sie verallgemeinern, was der Text einschränkt, kehren eine Richtung um oder stehen zwar im Text, beantworten aber die Frage nicht.',
+    'In dieser App trägt jeder Text vier Fragen; ein Durchgang zieht drei Texte.',
+  ],
+  emotionsRecognise: [
+    '14 Aufgaben in 21 Minuten. Zu jeder Situation stehen fünf Gefühle, jedes ist als eher wahrscheinlich oder eher unwahrscheinlich einzuordnen.',
+    'Gewertet wird nach dem Alles-oder-nichts-Prinzip: Den Punkt gibt es nur bei fünf richtigen Einschätzungen.',
+    'Zum Lösen hilft die Frage, worauf sich ein Gefühl richtet: Scham auf das eigene Ansehen, Schuld auf die eigene Tat, Ärger auf ein Hindernis von außen, Neid auf den Besitz eines anderen.',
+    'Mehrere Gefühle können gleichzeitig zutreffen, auch gegenläufige.',
+  ],
+  emotionsRegulate: [
+    '12 Aufgaben in 18 Minuten. Die Situation nennt ein belastendes Gefühl, die Rahmenbedingungen und ein Ziel.',
+    'Vier Vorsätze in der Ich-Form, genau einer führt am ehesten zum genannten Ziel.',
+    'Gefragt ist nicht, was sich am besten anfühlt, sondern was dem Ziel dient.',
+    'Die falschen Wege sind meist dieselben vier: vermeiden, unterdrücken, grübeln, das Ziel aufgeben.',
+  ],
+  socialDecision: [
+    '14 Aufgaben in 21 Minuten. Fünf Überlegungen sind nach ihrem Gewicht auf die Plätze a bis e zu verteilen.',
+    'Teilpunkte: Jede richtig gesetzte Marke zählt einzeln, bis zu fünf je Aufgabe.',
+    'Maßstab ist nicht die persönliche Meinung, sondern die moralische Relevanz – angelehnt an Kohlbergs Stufen.',
+    'Die Leiter von oben nach unten: das Wohl der Betroffenen, Pflicht und Folgen für die Allgemeinheit, Erwartungen des Umfelds, eigener Vorteil, vermiedene Nachteile.',
+  ],
 };
 
 export default function InfoScreen() {
@@ -42,10 +66,17 @@ export default function InfoScreen() {
     <Screen title="Info" subtitle="Die Testteile im MedAT">
       <div className="space-y-4 pb-6">
         <section className="ios-card px-4 py-4">
-          <h2 className="text-[17px] font-bold">Kognitive Fähigkeiten und Fertigkeiten</h2>
+          <h2 className="text-[17px] font-bold">Der MedAT-H im Überblick</h2>
           <p className="mt-1.5 text-[14px] leading-relaxed text-black/65 dark:text-white/65">
-            Der KFF-Teil des MedAT besteht aus fünf Untertests. Diese App trainiert alle fünf – in
-            der Simulation laufen sie in der echten Reihenfolge mit den Originalzeiten ab.
+            Der MedAT-H besteht aus vier Teilen: Basiskenntnistest 40 %, kognitive Fähigkeiten 40 %,
+            Textverständnis 10 % und sozial-emotionale Kompetenzen 10 %. Diese App deckt alle vier ab.
+            Der KFF-Teil selbst umfasst fünf Untertests; in der Simulation laufen sie in der echten
+            Reihenfolge mit den Originalzeiten ab.
+          </p>
+          <p className="mt-2 text-[13px] leading-relaxed text-black/50 dark:text-white/50">
+            Die Aufgaben zu Textverständnis und zu den sozial-emotionalen Kompetenzen sind eigens
+            für diese App geschrieben. Format, Aufgabenzahl und Zeit entsprechen den offiziellen
+            Vorgaben; Originalaufgaben sind nicht enthalten.
           </p>
         </section>
 
@@ -63,11 +94,17 @@ export default function InfoScreen() {
           </ul>
         </section>
 
-        {TEST_ORDER.map((id) => {
+        {TEST_ORDER.map((id, position) => {
           const test = TESTS[id];
           const seconds = id === 'memory' ? test.learnSeconds + test.testSeconds : test.testSeconds;
+          const startsSection = position === 0 || TESTS[TEST_ORDER[position - 1]].section !== test.section;
           return (
             <section key={id} className="ios-card px-4 py-4">
+              {startsSection && (
+                <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-black/40 dark:text-white/40">
+                  {SECTIONS[test.section].name} · {Math.round(SECTIONS[test.section].weight * 100)} %
+                </p>
+              )}
               <header className="mb-2 flex items-center gap-2.5">
                 <span
                   className="flex h-9 w-9 items-center justify-center rounded-xl"

@@ -1,19 +1,26 @@
 # MedAT Trainer
 
-Übungs-App für den österreichischen Medizin-Aufnahmetest (MedAT) mit zwei
-Bereichen: **KFF** (kognitive Fähigkeiten und Fertigkeiten) und **BMS**
-(Basiskenntnistest für Medizinische Studien).
+Übungs-App für den österreichischen Medizin-Aufnahmetest (MedAT-H). Abgedeckt
+sind alle vier Testteile mit ihren offiziellen Gewichten:
+
+| Teil | Gewicht | Umfang |
+|---|---|---|
+| **BMS** – Basiskenntnistest | 40 % | 94 Fragen in 75 min (Bio 40, Chemie 24, Physik 18, Mathe 12) |
+| **KFF** – kognitive Fähigkeiten | 40 % | fünf Untertests |
+| **TV** – Textverständnis | 10 % | 12 Aufgaben in 35 min |
+| **SEK** – sozial-emotionale Kompetenzen | 10 % | drei Untertests, zusammen 60 min |
+
 React + Vite + TailwindCSS, als PWA installierbar, vollständig offline
-nutzbar – **kein Backend, keine externen APIs, keine Anmeldung**. Alle Aufgaben
-werden auf dem Gerät erzeugt, Fortschritt und Einstellungen liegen ausschließlich
-im `localStorage`.
+nutzbar – **kein Backend, keine externen APIs, keine Anmeldung**. Die KFF-Aufgaben
+werden auf dem Gerät erzeugt, die übrigen sind geschriebene Inhalte; Fortschritt
+und Einstellungen liegen ausschließlich im `localStorage`.
 
 Optimiert für iPhone 15 Pro (393 × 852) inklusive Safe-Area-Insets, funktioniert
 aber auch auf iPad und Desktop.
 
 ## Enthaltene Untertests
 
-Alle fünf KFF-Untertests des MedAT:
+Kognitive Fähigkeiten und Fertigkeiten (KFF):
 
 | Untertest | Aufgaben | Zeit | Besonderheit |
 |---|---|---|---|
@@ -23,9 +30,33 @@ Alle fünf KFF-Untertests des MedAT:
 | Wortflüssigkeit | 15 | 20 min | Buchstabensalat, Anfangsbuchstabe gesucht |
 | Implikationen erkennen | 10 | 10 min | Syllogismen mit Venn-Diagramm-Auflösung |
 
-Dazu ein **Simulationsmodus**, der alle fünf Untertests in der echten
-MedAT-Reihenfolge mit Originalzeiten durchläuft und am Ende einen geschätzten
-KFF-Prozentrang ausgibt.
+Textverständnis und sozial-emotionale Kompetenzen:
+
+| Untertest | Aufgaben | Zeit | Besonderheit |
+|---|---|---|---|
+| Textverständnis | 12 | 35 min | 3 Sachtexte mit je 4 Fragen; der Text bleibt beim Antworten sichtbar |
+| Emotionen erkennen | 14 | 21 min | 5 Gefühle je Situation, alles oder nichts |
+| Emotionen regulieren | 12 | 18 min | 4 Vorsätze, genau einer führt zum genannten Ziel |
+| Soziales Entscheiden | 14 | 21 min | 5 Überlegungen auf a–e reihen, Teilpunkte je Marke |
+
+Dazu ein **Simulationsmodus** je Testteil: die fünf KFF-Untertests in der echten
+Reihenfolge mit Originalzeiten (mit geschätztem KFF-Prozentrang am Ende) und
+die vier BMS-Fächer am Stück.
+
+### Zur Verlässlichkeit der Inhalte
+
+Aufgabenzahlen, Zeitlimits, Formate und Gewichte folgen den offiziellen
+MedAT-H-Vorgaben. Die Aufgaben selbst sind sämtlich eigens geschrieben; die App
+enthält keine Originalaufgaben und keine Originaltexte.
+
+Bei den sozial-emotionalen Untertests gibt es keinen objektiven Lösungsschlüssel,
+sondern nur den, den der Test erwartet. Deshalb folgt hier jede Aufgabe einem
+offengelegten Prinzip, das in den Datendateien beschrieben steht: bei „Emotionen
+regulieren“ der Bezug auf das genannte Ziel, bei „Soziales Entscheiden“ eine
+Rangleiter nach Kohlberg (Wohl der Betroffenen → Pflicht und Allgemeinheit →
+Erwartungen des Umfelds → eigener Vorteil → vermiedene Nachteile). Wer das
+Prinzip lernt, hat das Übertragbare gelernt; die einzelne Aufgabe ist nur das
+Material dafür.
 
 ## BMS – Basiskenntnistest
 
@@ -97,6 +128,28 @@ löst dieselbe Haptik aus wie jede Antwort im Untertest und zeigt darunter den
 genutzten Weg. Wo das Gerät nichts anbietet, ist der Regler abgeschaltet und
 sagt das auch.
 
+**Fehlerarchiv mit Wiedervorlage** – Eine falsch beantwortete BMS-Frage kommt
+nach einem Tag wieder, bei erneut richtiger Antwort nach drei, dann nach sieben
+Tagen; dreimal in Folge richtig heißt gelernt. Ein Fehler zwischendurch setzt
+zurück. Die Abstände sind bewusst kurz – längere Ketten bringen erst über
+Monate etwas und wären vor einem Aufnahmetest in wenigen Wochen verschenkt.
+
+**Tägliche 10** – Zehn Fragen quer über alle vier BMS-Fächer: erst das heute
+Fällige, dann die schwächsten Themen, notfalls aufgefüllt, damit die Zehn auch
+am ersten Tag vollzählig sind.
+
+**Testtermin und Strähne** – Das Datum des MedAT lässt sich eintragen, dann
+zählt der Startbildschirm die Tage; ab zwei Wochen Restzeit wechselt die Karte
+die Farbe. Die Strähne zählt Tage mit mindestens einer Übung, gleich in welchem
+Testteil.
+
+**Gewichteter Gesamtwert** – Die Statistik rechnet die vier Testteile nach den
+offiziellen Gewichten zusammen und zeigt, wo Übung am meisten bringt: Zehn
+Prozentpunkte im BMS wiegen viermal so schwer wie zehn im Textverständnis. Was
+dabei ausdrücklich nicht herauskommt, ist ein Prozentrang – im echten Test wird
+der Rang gegenüber allen Mitschreibenden gewertet, nicht der Anteil richtiger
+Antworten.
+
 **Tempo-Auswertung** – Jede Aufgabe wird auf eine Zehntelsekunde genau gemessen.
 Das Ergebnis rechnet hoch, ob das Tempo für das Zeitlimit reicht, und benennt
 Ausreißer.
@@ -115,15 +168,17 @@ npm install
 npm run dev        # Entwicklungsserver
 npm run build      # Icons + Produktionsbuild nach dist/ + Precache-Liste
 npm run preview    # Produktionsbuild lokal ansehen
-npm run selftest   # Daten- und Engine-Prüfungen (84 Checks)
+npm run selftest   # Daten- und Engine-Prüfungen (199 Checks)
 npm run icons      # PWA-Icons neu generieren
 ```
 
 `npm run selftest` prüft unter anderem, ob die Syllogismus-Engine exakt die 24
-klassisch gültigen Modi liefert, ob jede erzeugte MC-Frage genau eine richtige
-Antwort hat, ob die Wortdatenbank anagramm-eindeutig bleibt, ob jede
-Zahlenfolgen-Stufe mehrere Regelfamilien mischt und ob sich bei den Figuren
-genau eine der fünf Antwortfiguren aus den Teilstücken legen lässt.
+klassisch gültigen Modi liefert, ob jede MC-Frage genau eine richtige Antwort
+hat, ob die Wortdatenbank anagramm-eindeutig bleibt, ob jede Zahlenfolgen-Stufe
+mehrere Regelfamilien mischt, ob sich bei den Figuren genau eine der fünf
+Antwortfiguren aus den Teilstücken legen lässt – und, seit es einmal
+schiefging, ob die richtige Antwort nach dem Mischen nicht mehr an fester
+Stelle steht.
 
 ## Projektstruktur
 
@@ -138,13 +193,15 @@ src/
     allergens.js       52 Allergene nach Kategorie, Blutgruppen
     nouns.js           1427 Substantive ohne Umlaute/ß, anagramm-eindeutig
     syllogismTerms.js  70 Begriffstripel
-    testConfig.js      Zeitlimits, Aufgabenzahlen, Simulationsablauf
+    testConfig.js      Testteile samt Gewichten, Zeitlimits, Aufgabenzahlen
     bms/               BMS-Inhalte, ein Modul je Thema
       index.js           Fächer, Zeiten, Datenschema, Lazy-Loader
       biologie/          9 Themenmodule
       chemie/            10 Themenmodule
       physik/            5 Themenmodule
       mathematik/        4 Themenmodule
+    sek/               Sozial-emotionale Aufgaben, ein Modul je Untertest
+    tv/                Textverständnis: Sachtexte mit je vier Fragen
   engines/         Aufgabengenerierung, frei von React
     figures.js         Konvexe Grundformen, Zerlegung, widerlegte Distraktoren
     memory.js          Allergieausweise + 13 Fragetypen
@@ -152,8 +209,10 @@ src/
     wordFluency.js     Buchstabensalat mit Shuffle-Garantie
     syllogism.js       Venn-Modellprüfung über alle 128 Modelle
   store/           Zustand-Stores (settings/progress persistiert, navigation nicht)
-  hooks/           useCountdown, useTaskSession, useFeedback, useSwipe, useTheme
-  lib/             geometry, format, backup, timeWarnings
+  hooks/           useCountdown, useTaskSession, useFeedback, useSwipe, useTheme,
+                   useActivity (Strähne und Zeit über beide Testteile)
+  lib/             geometry, format, backup, timeWarnings, spacedRepetition,
+                   examDate, sekScoring, overallScore
   components/      UI-Bausteine, Layout, Diagramme, Ausweiskarte
   screens/         Tabs und Untertests (lazy geladen)
     bms/               Lexikon, Eintragsdetail, Quiz, BMS-Simulation
@@ -168,8 +227,14 @@ src/
   Statistik lesen von dort.
 * **Gespeichert wird nur das Minimum.** Im `localStorage` liegt pro Übung ein
   schlanker Eintrag (`{ testId, score, max, seconds, at, mode }`); Schnitt,
-  Streak, Bestwert und Verlauf werden beim Lesen berechnet und nie doppelt
-  abgelegt.
+  Strähne, Bestwert und Verlauf werden beim Lesen berechnet und nie doppelt
+  abgelegt. Die Strähne gilt für KFF und BMS zusammen und wird deshalb in
+  `hooks/useActivity.js` aus beiden Verläufen gebildet – eine zweite Zählung
+  im Store hätte ihr früher oder später widersprochen.
+* **Die richtige Antwort steht in den Quelldateien zuerst.** So lässt sich eine
+  Frage beim Schreiben in einem Blick prüfen. Gemischt wird ausnahmslos erst
+  beim Ziehen, und der Selbsttest hält beides fest: die Konvention in der Datei
+  und das Mischen beim Ziehen.
 * **Speicherschlüssel sind versioniert** (`medat-kff.settings.v1`,
   `medat-kff.progress.v1`, `medat-bms.progress.v1`) und werden beim Laden
   zusammengeführt, damit neue Felder alte Daten nicht zerstören.

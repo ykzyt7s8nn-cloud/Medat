@@ -1,10 +1,10 @@
-/** Untere Tab-Leiste mit vier Tabs. */
+/** Untere Tab-Leiste mit fünf Tabs. */
 import Tappable from '../ui/Tappable.jsx';
 import Icon from '../ui/Icon.jsx';
 import { useNavigation } from '../../store/useNavigation.js';
 
 const TABS = [
-  { id: 'practice', label: 'KFF', icon: 'play' },
+  { id: 'practice', label: 'Üben', icon: 'play' },
   { id: 'bms', label: 'BMS', icon: 'book' },
   { id: 'stats', label: 'Statistik', icon: 'chart' },
   { id: 'settings', label: 'Einstellungen', icon: 'gear' },

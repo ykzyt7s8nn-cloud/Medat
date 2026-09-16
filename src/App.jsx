@@ -19,6 +19,8 @@ const MemoryTest = lazy(() => import('./screens/tests/MemoryTest.jsx'));
 const NumberSeriesTest = lazy(() => import('./screens/tests/NumberSeriesTest.jsx'));
 const WordFluencyTest = lazy(() => import('./screens/tests/WordFluencyTest.jsx'));
 const ImplicationsTest = lazy(() => import('./screens/tests/ImplicationsTest.jsx'));
+const SekTest = lazy(() => import('./screens/tests/SekTest.jsx'));
+const TextComprehensionTest = lazy(() => import('./screens/tests/TextComprehensionTest.jsx'));
 const SimulationScreen = lazy(() => import('./screens/SimulationScreen.jsx'));
 const TrainingScreen = lazy(() => import('./screens/TrainingScreen.jsx'));
 const BmsScreen = lazy(() => import('./screens/bms/BmsScreen.jsx'));
@@ -26,12 +28,21 @@ const BmsEntryScreen = lazy(() => import('./screens/bms/BmsEntryScreen.jsx'));
 const BmsQuizScreen = lazy(() => import('./screens/bms/BmsQuizScreen.jsx'));
 const BmsSimulationScreen = lazy(() => import('./screens/bms/BmsSimulationScreen.jsx'));
 
+/** Die drei SEK-Untertests teilen sich einen Bildschirm (siehe SekTest.jsx). */
+const sekScreen = (testId) => function SekScreen(props) {
+  return <SekTest testId={testId} {...props} />;
+};
+
 const FULLSCREENS = {
   figures: FiguresTest,
   memory: MemoryTest,
   numberSeries: NumberSeriesTest,
   wordFluency: WordFluencyTest,
   implications: ImplicationsTest,
+  textComprehension: TextComprehensionTest,
+  emotionsRecognise: sekScreen('emotionsRecognise'),
+  emotionsRegulate: sekScreen('emotionsRegulate'),
+  socialDecision: sekScreen('socialDecision'),
   simulation: SimulationScreen,
   training: TrainingScreen,
   bmsEntry: BmsEntryScreen,
