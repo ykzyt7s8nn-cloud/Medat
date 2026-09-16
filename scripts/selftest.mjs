@@ -414,8 +414,28 @@ let figureIssues = 0;
 let figureFailures = 0;
 let smallestGap = 1;
 let noneCount = 0;
+let largestAreaDrift = 0;
 const usedShapes = new Set();
 const FIGURE_SAMPLES = 400;
+
+/**
+ * Wie weit die Summe der Teilflächen von der Zielfläche abweichen darf.
+ *
+ * Exakte Gleichheit ist hier nicht zu haben, und zwar nicht wegen eines
+ * Fehlers, sondern wegen cutPolygon: Ein Eckpunkt, der näher als EPSILON an der
+ * Schnittgeraden liegt, landet unprojiziert in beiden Hälften. Je Eckpunkt sind
+ * das höchstens ~1e-9; bei den Kreisformen, die aus einigen hundert Eckpunkten
+ * bestehen, summiert sich das auf einige 1e-7. Gemessen über 60 000 Aufgaben
+ * lag die größte Abweichung bei 4,1e-7 von der Einheitsfläche.
+ *
+ * Die frühere Schranke von 1e-9 hat das nicht ausgehalten – etwa jeder
+ * vierzigste Durchlauf schlug fehl, obwohl nichts kaputt war. Sie liegt jetzt
+ * bei 1e-5: fünfundzwanzigmal über dem gemessenen Maximum und immer noch
+ * dreitausendmal unter MIN_AREA_GAP, also weit unter allem, was eine Aufgabe
+ * mehrdeutig machen könnte. Eine echte Regression fiele um Größenordnungen
+ * gröber aus und wird weiterhin gefunden.
+ */
+const AREA_TOLERANCE = 1e-5;
 for (let i = 0; i < FIGURE_SAMPLES; i += 1) {
   const task = generateFigureTask({ difficulty: 'medat' });
   if (!task) { figureFailures += 1; continue; }
@@ -432,13 +452,15 @@ for (let i = 0; i < FIGURE_SAMPLES; i += 1) {
 
   // Die Teile ergeben exakt die Zielfigur – die Aufgabe ist per Konstruktion lösbar.
   const pieceSum = task.placements.reduce((sum, piece) => sum + polygonArea(piece), 0);
-  if (Math.abs(pieceSum - polygonArea(task.target)) > 1e-9) figureIssues += 1;
+  const drift = Math.abs(pieceSum - polygonArea(task.target)) / polygonArea(task.target);
+  largestAreaDrift = Math.max(largestAreaDrift, drift);
+  if (drift > AREA_TOLERANCE) figureIssues += 1;
 
   // Der Beweis für jede gezeigte Figur, die nicht die Lösung ist.
   for (const option of figures) {
     const gap = Math.abs(polygonArea(option.points) - pieceSum) / pieceSum;
     if (option.correct) {
-      if (gap > 1e-9) figureIssues += 1;
+      if (gap > AREA_TOLERANCE) figureIssues += 1;
     } else {
       if (gap < MIN_AREA_GAP) figureIssues += 1;
       smallestGap = Math.min(smallestGap, gap);
@@ -455,6 +477,10 @@ for (let i = 0; i < FIGURE_SAMPLES; i += 1) {
 check(`${FIGURE_SAMPLES} Aufgaben: Aufbau a–d Figuren, e Textoption, genau eine richtige Antwort`,
   figureIssues === 0, `${figureIssues} Abweichungen`);
 check('Alle Aufgaben konnten erzeugt werden', figureFailures === 0, `${figureFailures} Fehlversuche`);
+// Die Abweichung wird mitgezählt und nicht nur geduldet: Wächst sie je in die
+// Nähe dessen, was Figuren unterscheidbar macht, ist etwas kaputt.
+check(`Flächenabweichung bleibt weit unter dem Unterscheidungsabstand (${largestAreaDrift.toExponential(1)} gegen ${MIN_AREA_GAP})`,
+  largestAreaDrift < MIN_AREA_GAP / 100);
 check(`Kleinster Flächenabstand der Distraktoren über ${Math.round(MIN_AREA_GAP * 100)} % (${(smallestGap * 100).toFixed(1)} %)`,
   smallestGap >= MIN_AREA_GAP);
 
