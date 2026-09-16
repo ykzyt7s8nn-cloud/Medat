@@ -1,10 +1,17 @@
 /**
  * BMS-Quiz.
  *
- * Drei Einstiege, alle über dieselbe Komponente:
+ * Fünf Einstiege, alle über dieselbe Komponente:
  *   - ganzes Fach (Standardzahl an Fragen)
  *   - ausgewählte Themen (pickTopics)
  *   - eingebettet in die BMS-Simulation (embedded)
+ *   - Fehlerarchiv: alles, was heute zur Wiederholung ansteht
+ *   - Tägliche 10: erst die fälligen Fragen, dann die schwächsten Themen
+ *
+ * Archiv und Tägliche 10 stehen an derselben Stelle wie ein Fach – sie kommen
+ * als subjectId herein (siehe data/bms/index.js, MIXED_SOURCES). Der einzige
+ * Unterschied liegt darin, wie die Fragen zusammengestellt werden; alles
+ * andere – Navigation, Auflösung, Auswertung – bleibt gleich.
  *
  * Im Übungsmodus wird jede Frage sofort aufgelöst: richtig/falsch, die
  * Begründung zur gewählten und zur richtigen Option und ein Weg zum passenden
@@ -20,7 +27,9 @@ import TimerBar from '../../components/ui/TimerBar.jsx';
 import TaskNavigator from '../../components/TaskNavigator.jsx';
 import ResultView from '../../components/ResultView.jsx';
 import QuestionCard, { correctCount, isAnswerCorrect } from '../../components/bms/QuestionCard.jsx';
-import { SUBJECTS, loadSubject } from '../../data/bms/index.js';
+import {
+  SUBJECTS, SUBJECT_ORDER, loadAllSubjects, loadSubject, quizSource, withShuffledOptions,
+} from '../../data/bms/index.js';
 import { shuffle } from '../../lib/random.js';
 import { useCountdown } from '../../hooks/useCountdown.js';
 import { useTaskSession } from '../../hooks/useTaskSession.js';
@@ -79,10 +88,14 @@ export default function BmsQuizScreen({
   const closeScreen = useNavigation((state) => state.closeScreen);
   const openScreen = useNavigation((state) => state.openScreen);
   const addQuizResult = useBmsProgress((state) => state.addQuizResult);
+  const dueQuestions = useBmsProgress((state) => state.dueQuestions);
+  const weakTopics = useBmsProgress((state) => state.weakTopics);
   const examMode = useSettings((state) => state.mode === 'pruefung');
   const feedback = useFeedback();
 
-  const subject = SUBJECTS[subjectId];
+  const subject = quizSource(subjectId);
+  /** Archiv und Tägliche 10 ziehen aus allen vier Fächern. */
+  const mixed = !SUBJECTS[subjectId];
   const questionCount = count ?? subject.questionCount;
 
   const [content, setContent] = useState(null);
@@ -102,20 +115,58 @@ export default function BmsQuizScreen({
   const [results, setResults] = useState([]);
   const startedAt = useRef(Date.now());
 
+  // Jede Frage bekommt beim Laden ihr Fach mit. Im Archiv und in der Täglichen
+  // 10 stehen Fragen aus allen Fächern nebeneinander, und die Auswertung muss
+  // sie wieder dem richtigen Fach zuordnen können.
   useEffect(() => {
     let active = true;
-    loadSubject(subjectId).then((data) => { if (active) setContent(data); });
+    const load = mixed
+      ? loadAllSubjects().then((all) => ({
+        topics: SUBJECT_ORDER.flatMap((id) => all[id].topics),
+        questions: SUBJECT_ORDER.flatMap((id) =>
+          all[id].questions.map((question) => ({ ...question, subjectId: id }))),
+      }))
+      : loadSubject(subjectId).then((data) => ({
+        ...data,
+        questions: data.questions.map((question) => ({ ...question, subjectId })),
+      }));
+    load.then((data) => { if (active) setContent(data); });
     return () => { active = false; };
-  }, [subjectId]);
+  }, [mixed, subjectId]);
 
-  /** Fragen aus den gewählten Themen ziehen. */
+  /** Fragen zusammenstellen – je nach Einstieg aus einer anderen Quelle. */
   const buildQuestions = useCallback((topics) => {
     if (!content) return [];
+
+    if (mixed) {
+      const byId = new Map(content.questions.map((question) => [question.id, question]));
+      const due = dueQuestions()
+        .map((entry) => byId.get(entry.questionId))
+        .filter(Boolean)
+        .slice(0, questionCount);
+      // Das Archiv zeigt nur, was wirklich ansteht – nichts wird aufgefüllt.
+      if (subjectId === 'archiv' || due.length >= questionCount) return due.map(withShuffledOptions);
+
+      // Tägliche 10: Der Rest kommt aus den schwächsten Themen; reichen die
+      // nicht, wird aus dem gesamten Bestand aufgefüllt, damit die Zehn immer
+      // vollzählig sind – auch am ersten Tag, an dem es noch keine Daten gibt.
+      const used = new Set(due.map((question) => question.id));
+      const weak = new Set(weakTopics().map((row) => row.topicId));
+      const rest = content.questions.filter((question) => !used.has(question.id));
+      const ranked = [
+        ...shuffle(rest.filter((question) => weak.has(question.topicId))),
+        ...shuffle(rest.filter((question) => !weak.has(question.topicId))),
+      ];
+      return [...due, ...ranked.slice(0, questionCount - due.length)].map(withShuffledOptions);
+    }
+
     const pool = topics?.length
       ? content.questions.filter((question) => topics.includes(question.topicId))
       : content.questions;
-    return shuffle(pool).slice(0, Math.min(questionCount, pool.length));
-  }, [content, questionCount]);
+    // Antwortreihenfolge erst hier mischen – in den Quelldateien steht die
+    // richtige Antwort immer zuerst (siehe data/bms/index.js).
+    return shuffle(pool).slice(0, Math.min(questionCount, pool.length)).map(withShuffledOptions);
+  }, [content, dueQuestions, mixed, questionCount, subjectId, weakTopics]);
 
   // Sobald die Inhalte da sind, Fragen zusammenstellen
   useEffect(() => {
@@ -136,11 +187,17 @@ export default function BmsQuizScreen({
     if (!embedded) {
       addQuizResult({
         subjectId,
-        mode: presetTopics || selectedTopics.length ? 'themen' : 'fach',
+        mode: mixed
+          ? subjectId
+          : (presetTopics || selectedTopics.length ? 'themen' : 'fach'),
         score,
         max: items.length,
         seconds,
+        // questionId und subjectId je Frage: Daran hängen das Fehlerarchiv und
+        // die Themenstatistik des richtigen Fachs.
         breakdown: items.map((item) => ({
+          questionId: item.id,
+          subjectId: item.subjectId,
           topicId: item.topicId,
           title: topicTitle(item.topicId),
           correct: item.correct,
@@ -151,7 +208,7 @@ export default function BmsQuizScreen({
     setResults(items);
     setPhase('result');
     onFinish?.({ subjectId, score, max: items.length, seconds, results: items });
-  }, [addQuizResult, embedded, feedback, onFinish, presetTopics, selectedTopics.length, subjectId, topicTitle]);
+  }, [addQuizResult, embedded, feedback, mixed, onFinish, presetTopics, selectedTopics.length, subjectId, topicTitle]);
 
   /** Ergebniseintrag aus einer Frage und einer Auswahl. */
   const toItem = useCallback((question, index, chosen, seconds) => {
@@ -165,6 +222,7 @@ export default function BmsQuizScreen({
       : chosen.map((i) => `${letters[i]}) ${question.options[i].text}`).join(' · ');
     return {
       id: question.id,
+      subjectId: question.subjectId,
       number: index + 1,
       correct: isAnswerCorrect(question, chosen),
       prompt: question.prompt,
@@ -262,7 +320,11 @@ export default function BmsQuizScreen({
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => openScreen('bmsEntry', { subjectId, entryId: item.entryId })}
+                onClick={() => openScreen('bmsEntry', {
+                  // Im Archiv stammt jede Frage aus ihrem eigenen Fach.
+                  subjectId: item.subjectId ?? subjectId,
+                  entryId: item.entryId,
+                })}
               >
                 <Icon name="book" className="h-4 w-4" />
                 Im Lexikon nachlesen
@@ -279,7 +341,9 @@ export default function BmsQuizScreen({
     return (
       <Screen title={subject.name} onClose={embedded ? undefined : closeScreen}>
         <p className="py-8 text-center text-[14px] text-black/45 dark:text-white/45">
-          Für dieses Fach sind noch keine Fragen hinterlegt.
+          {subjectId === 'archiv'
+            ? 'Nichts zu wiederholen – im Archiv steht heute keine Frage an.'
+            : 'Für dieses Fach sind noch keine Fragen hinterlegt.'}
         </p>
       </Screen>
     );
@@ -353,7 +417,10 @@ export default function BmsQuizScreen({
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => openScreen('bmsEntry', { subjectId, entryId: question.entryId })}
+              onClick={() => openScreen('bmsEntry', {
+                subjectId: question.subjectId ?? subjectId,
+                entryId: question.entryId,
+              })}
             >
               <Icon name="book" className="h-4 w-4" />
               Im Lexikon nachlesen

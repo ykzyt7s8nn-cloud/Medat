@@ -12,7 +12,7 @@ import ProgressRing from '../../components/ui/ProgressRing.jsx';
 import Segmented from '../../components/ui/Segmented.jsx';
 import Tappable from '../../components/ui/Tappable.jsx';
 import Button from '../../components/ui/Button.jsx';
-import { BMS_TOTAL, SUBJECTS, SUBJECT_ORDER, loadAllSubjects, loadSubject } from '../../data/bms/index.js';
+import { BMS_TOTAL, MIXED_SOURCES, SUBJECTS, SUBJECT_ORDER, loadAllSubjects, loadSubject } from '../../data/bms/index.js';
 import { formatTime } from '../../hooks/useCountdown.js';
 import { useNavigation } from '../../store/useNavigation.js';
 import { useBmsProgress } from '../../store/useBmsProgress.js';
@@ -200,12 +200,63 @@ function LexikonView() {
 
 /* ----------------------------------------------------------------- Quiz */
 
+/** Einstieg, der Fragen quer über alle Fächer zieht (Archiv, Tägliche 10). */
+function MixedCard({ source, subtitle, disabled = false, onOpen }) {
+  return (
+    <Tappable
+      onClick={onOpen}
+      disabled={disabled}
+      className={`ios-card flex w-full items-center gap-4 px-4 py-4 text-left ${disabled ? 'opacity-50' : ''}`}
+    >
+      <span
+        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl"
+        style={{ backgroundColor: `${source.accent}1A`, color: source.accent }}
+      >
+        <Icon name={source.icon} className="h-6 w-6" strokeWidth={2} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[17px] font-semibold">{source.name}</span>
+        <span className="mt-0.5 block text-[13px] text-black/50 dark:text-white/50">{subtitle}</span>
+      </span>
+      {!disabled && <Icon name="chevronRight" className="h-5 w-5 shrink-0 text-black/25 dark:text-white/25" />}
+    </Tappable>
+  );
+}
+
 function QuizView() {
   const openScreen = useNavigation((state) => state.openScreen);
   const subjectAccuracy = useBmsProgress((state) => state.subjectAccuracy);
+  const archive = useBmsProgress((state) => state.archive);
+  const archiveCounts = useBmsProgress((state) => state.archiveCounts);
+  // archive wird mitgelesen, damit die Zahlen nach einem Durchgang neu
+  // berechnet werden – archiveCounts allein ist nur eine Funktion im Store.
+  const counts = archive && archiveCounts();
 
   return (
     <div className="space-y-4">
+      <section className="space-y-3">
+        <h2 className="px-1 text-[13px] font-semibold uppercase tracking-wide text-black/45 dark:text-white/45">
+          Heute dran
+        </h2>
+        <MixedCard
+          source={MIXED_SOURCES.taeglich}
+          subtitle="Zehn Fragen: erst das Fällige, dann deine schwächsten Themen"
+          onOpen={() => openScreen('bmsQuiz', { subjectId: 'taeglich' })}
+        />
+        <MixedCard
+          source={MIXED_SOURCES.archiv}
+          disabled={counts.due === 0}
+          subtitle={
+            counts.total === 0
+              ? 'Noch leer – falsch beantwortete Fragen sammeln sich hier'
+              : counts.due === 0
+                ? `${counts.total} ${counts.total === 1 ? 'Frage wartet' : 'Fragen warten'} – heute ist nichts fällig`
+                : `${counts.due} von ${counts.total} ${counts.total === 1 ? 'Frage' : 'Fragen'} zur Wiederholung fällig`
+          }
+          onOpen={() => openScreen('bmsQuiz', { subjectId: 'archiv' })}
+        />
+      </section>
+
       <Tappable
         onClick={() => openScreen('bmsSimulation')}
         className="flex w-full items-center gap-4 rounded-card bg-gradient-to-br from-ios-green to-ios-teal px-4 py-4 text-left text-white shadow-card"

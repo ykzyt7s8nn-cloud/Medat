@@ -58,7 +58,17 @@ import {
   SUBJECTS,
   SUBJECT_ORDER,
   loadAllSubjects,
+  withShuffledOptions,
 } from '../src/data/bms/index.js';
+import {
+  INTERVALS_DAYS,
+  afterCorrect,
+  afterWrong,
+  daysUntilDue,
+  isDue,
+  startOfDay,
+  streakFrom,
+} from '../src/lib/spacedRepetition.js';
 
 let failures = 0;
 let checks = 0;
@@ -643,6 +653,80 @@ for (const subjectId of SUBJECT_ORDER) {
 }
 check('Jeder Eintrag hat Titel, ausführlichen Text und mindestens 3 Schlüsselfakten',
   thinEntries === 0, `${thinEntries} Abweichungen`);
+
+/* --------------------------------------------- BMS: Antwortreihenfolge */
+section('BMS: Antwortreihenfolge');
+
+// In den Quelldateien steht die richtige Antwort bewusst zuerst – das ist die
+// Schreibkonvention und wird hier festgehalten, damit sie nicht unbemerkt
+// verrutscht.
+let correctNotFirst = 0;
+for (const subjectId of SUBJECT_ORDER) {
+  for (const question of bmsSubjects[subjectId].questions) {
+    const firstWrong = question.options.findIndex((option) => !option.correct);
+    const lastCorrect = question.options.map((option) => option.correct)
+      .lastIndexOf(true);
+    if (firstWrong !== -1 && lastCorrect > firstWrong) correctNotFirst += 1;
+  }
+}
+check('In den Quelldateien stehen die richtigen Antworten zuerst',
+  correctNotFirst === 0, `${correctNotFirst} Fragen abweichend`);
+
+// Genau deshalb muss beim Ziehen gemischt werden: Ungemischt käme man mit
+// „immer a“ auf volle Punktzahl, ohne eine Frage gelesen zu haben.
+const shuffleSample = bmsSubjects.biologie.questions.slice(0, 40);
+let firstIsCorrect = 0;
+let textsPreserved = 0;
+for (const question of shuffleSample) {
+  const mixedQuestion = withShuffledOptions(question);
+  if (mixedQuestion.options[0].correct) firstIsCorrect += 1;
+  const before = [...question.options].map((option) => option.text).sort().join('|');
+  const after = [...mixedQuestion.options].map((option) => option.text).sort().join('|');
+  if (before === after) textsPreserved += 1;
+}
+check(`Gemischt liegt die richtige Antwort nicht mehr immer vorn (${firstIsCorrect} von ${shuffleSample.length})`,
+  firstIsCorrect < shuffleSample.length * 0.6);
+check('Mischen verliert und erfindet keine Antwortmöglichkeit',
+  textsPreserved === shuffleSample.length);
+check('Mischen lässt die Quelldaten unberührt',
+  bmsSubjects.biologie.questions[0].options[0].correct === true);
+
+/* ------------------------------------------------------- Wiedervorlage */
+section('Fehlerarchiv: Wiedervorlage');
+
+const heute = new Date(2026, 0, 15, 14, 30).getTime();
+const tagMs = 24 * 60 * 60 * 1000;
+
+check('Abstände sind 1, 3 und 7 Tage', INTERVALS_DAYS.join() === '1,3,7');
+
+const frisch = afterWrong(heute);
+check('Eine falsche Antwort kommt morgen wieder',
+  frisch.stage === 0 && daysUntilDue(frisch, heute) === 1);
+check('Heute ist sie noch nicht fällig', !isDue(frisch, heute));
+check('Morgen ist sie fällig', isDue(frisch, heute + tagMs));
+
+const stufe1 = afterCorrect(frisch, heute + tagMs);
+check('Richtig beantwortet: nächste Vorlage in 3 Tagen',
+  stufe1.stage === 1 && daysUntilDue(stufe1, heute + tagMs) === 3);
+const stufe2 = afterCorrect(stufe1, heute + 4 * tagMs);
+check('Danach in 7 Tagen',
+  stufe2.stage === 2 && daysUntilDue(stufe2, heute + 4 * tagMs) === 7);
+check('Dreimal richtig heißt gelernt – die Frage verlässt das Archiv',
+  afterCorrect(stufe2, heute + 11 * tagMs) === null);
+check('Ein Fehler setzt auf die erste Stufe zurück',
+  afterWrong(heute + 11 * tagMs).stage === 0);
+check('Überfälliges bleibt fällig',
+  isDue({ ...frisch, due: startOfDay(heute) - 5 * tagMs }, heute));
+
+check('Ohne Aktivität keine Strähne', streakFrom([], heute) === 0);
+check('Heute und gestern geübt ergibt zwei Tage',
+  streakFrom([heute, heute - tagMs], heute) === 2);
+check('Gestern zuletzt geübt zählt noch mit',
+  streakFrom([heute - tagMs, heute - 2 * tagMs], heute) === 2);
+check('Eine Lücke beendet die Strähne',
+  streakFrom([heute, heute - 2 * tagMs, heute - 3 * tagMs], heute) === 1);
+check('Mehrfach am selben Tag zählt einmal',
+  streakFrom([heute, heute - 3600 * 1000, heute - 7200 * 1000], heute) === 1);
 
 /* ---------------------------------------------------------- Zeitwarnung */
 section('Zeitwarnung');

@@ -26,6 +26,8 @@
  *   sieht man nicht nur, dass man falsch lag, sondern woran der Denkfehler lag.
  */
 
+import { shuffle } from '../../lib/random.js';
+
 /** Reihenfolge und Prüfungsvorgaben der vier Fächer. */
 export const SUBJECTS = {
   biologie: {
@@ -68,6 +70,40 @@ export const SUBJECTS = {
 
 export const SUBJECT_ORDER = ['biologie', 'chemie', 'physik', 'mathematik'];
 
+/**
+ * Übungsformen, die Fragen quer über alle Fächer ziehen. Sie treten an
+ * dieselbe Stelle wie ein Fach – das Quiz behandelt sie gleich und muss den
+ * Unterschied nur beim Zusammenstellen der Fragen kennen.
+ *
+ *   archiv   – alles, was heute zur Wiederholung ansteht
+ *   taeglich – zehn Fragen: erst die fälligen, dann die schwächsten Themen
+ */
+export const MIXED_SOURCES = {
+  archiv: {
+    id: 'archiv',
+    name: 'Fehlerarchiv',
+    short: 'Archiv',
+    accent: '#FF3B30',
+    icon: 'refresh',
+    questionCount: 20,
+    seconds: 20 * 60,
+  },
+  taeglich: {
+    id: 'taeglich',
+    name: 'Tägliche 10',
+    short: 'Täglich',
+    accent: '#FF9500',
+    icon: 'flame',
+    questionCount: 10,
+    seconds: 10 * 60,
+  },
+};
+
+/** Fach oder Übungsform – beides kann ein Quiz tragen. */
+export function quizSource(id) {
+  return SUBJECTS[id] ?? MIXED_SOURCES[id] ?? null;
+}
+
 /** Gesamtumfang des BMS: 94 Fragen in 75 Minuten. */
 export const BMS_TOTAL = {
   questionCount: SUBJECT_ORDER.reduce((sum, id) => sum + SUBJECTS[id].questionCount, 0),
@@ -76,6 +112,28 @@ export const BMS_TOTAL = {
 
 /** Standardtext der letzten Antwortmöglichkeit, wenn sie verwendet wird. */
 export const NO_ANSWER_LABEL = 'Keine der angegebenen Antwortmöglichkeiten ist korrekt';
+
+/**
+ * Antwortmöglichkeiten einer Frage mischen.
+ *
+ * In den Quelldateien steht die richtige Antwort bewusst an erster Stelle: So
+ * lässt sich beim Schreiben und beim Nachlesen mit einem Blick prüfen, ob die
+ * Begründungen zueinander passen. Ungemischt wäre das im Quiz allerdings ein
+ * Freifahrtschein – man käme mit „immer a“ auf volle Punktzahl, ohne eine
+ * einzige Frage gelesen zu haben.
+ *
+ * Gemischt wird deshalb bei jedem Ziehen, nicht einmalig beim Laden: Dieselbe
+ * Frage soll beim Wiedersehen anders aussehen, sonst merkt man sich die
+ * Position statt des Inhalts.
+ *
+ * Eine „Keine der angegebenen Antwortmöglichkeiten ist korrekt“-Option bleibt
+ * an letzter Stelle – im MedAT steht sie immer als e).
+ */
+export function withShuffledOptions(question) {
+  const fixed = question.options.filter((option) => option.text === NO_ANSWER_LABEL);
+  const movable = question.options.filter((option) => option.text !== NO_ANSWER_LABEL);
+  return { ...question, options: [...shuffle(movable), ...fixed] };
+}
 
 /**
  * Lädt die Inhalte eines Fachs. Jedes Fach wird höchstens einmal geladen und

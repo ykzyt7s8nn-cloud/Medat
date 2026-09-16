@@ -30,7 +30,14 @@ export default function BmsSimulationScreen() {
       score: result.score,
       max: result.max,
       seconds: result.seconds,
-      breakdown: result.results.map((item) => ({ topicId: item.topicId, correct: item.correct })),
+      // questionId mitgeben: Auch in der Simulation falsch beantwortete Fragen
+      // gehören ins Fehlerarchiv.
+      breakdown: result.results.map((item) => ({
+        questionId: item.id,
+        subjectId: result.subjectId,
+        topicId: item.topicId,
+        correct: item.correct,
+      })),
     });
     setResults((current) => [...current, result]);
     setStep((current) => current + 1);
