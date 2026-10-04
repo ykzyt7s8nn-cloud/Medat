@@ -48,19 +48,29 @@ function withArea(points, area) {
 }
 
 /**
+ * Regelmäßiges Vieleck, das auf einer Kante steht – so, wie man es aus
+ * Testheften kennt. Mit der Spitze nach oben wirken Quadrat (Raute), Sechs- und
+ * Achteck verdreht, obwohl sie es nicht sind.
+ * Die Unterkante liegt symmetrisch um die Senkrechte nach unten (SVG: +y).
+ */
+function standingPolygon(sides) {
+  return regularPolygon(sides, 1, Math.PI / 2 - Math.PI / sides);
+}
+
+/**
  * Katalog der Grundformen. `family` steuert die Auswahl der Distraktoren:
  * Zu einem Halbkreis passen andere Rundformen als zu einem Achteck.
  */
 export const SHAPES = {
-  dreieck: { label: 'Dreieck', family: 'eckig', build: () => regularPolygon(3) },
-  quadrat: { label: 'Quadrat', family: 'eckig', build: () => regularPolygon(4) },
+  dreieck: { label: 'Dreieck', family: 'eckig', build: () => standingPolygon(3) },
+  quadrat: { label: 'Quadrat', family: 'eckig', build: () => standingPolygon(4) },
   rechteck: { label: 'Rechteck', family: 'eckig', build: () => rectangle(1.7, 1) },
-  fuenfeck: { label: 'Fünfeck', family: 'eckig', build: () => regularPolygon(5) },
-  sechseck: { label: 'Sechseck', family: 'eckig', build: () => regularPolygon(6) },
-  siebeneck: { label: 'Siebeneck', family: 'eckig', build: () => regularPolygon(7) },
-  achteck: { label: 'Achteck', family: 'eckig', build: () => regularPolygon(8) },
+  fuenfeck: { label: 'Fünfeck', family: 'eckig', build: () => standingPolygon(5) },
+  sechseck: { label: 'Sechseck', family: 'eckig', build: () => standingPolygon(6) },
+  siebeneck: { label: 'Siebeneck', family: 'eckig', build: () => standingPolygon(7) },
+  achteck: { label: 'Achteck', family: 'eckig', build: () => standingPolygon(8) },
   viertelkreis: { label: 'Viertelkreis', family: 'rund', build: () => circleSector(0.25) },
-  halbkreis: { label: 'Halbkreis', family: 'rund', build: () => circleSector(0.5) },
+  halbkreis: { label: 'Halbkreis', family: 'rund', build: () => circleSector(0.5, 1, 96, Math.PI) },
   dreiviertelkreis: { label: 'Dreiviertelkreis', family: 'rund', build: () => circleSector(0.75) },
   kreis: { label: 'Kreis', family: 'rund', build: () => circleSector(1) },
   drittelkreis: { label: 'Drittelkreis', family: 'rund', build: () => circleSector(1 / 3) },
@@ -120,6 +130,33 @@ function fillRatio(points) {
   return box > 0 ? polygonArea(points) / box : 0;
 }
 
+/**
+ * Kleinste Breite eines konvexen Polygons: über alle Kanten der größte Abstand
+ * eines Eckpunkts zur Kantengeraden, davon das Minimum.
+ *
+ * Anders als `fillRatio` hängt das nicht von der Lage ab. Ein langer, dünner
+ * Streifen, der waagrecht liegt, füllt seine Hüllbox gut aus und rutschte
+ * deshalb durch – gedreht angezeigt war er dann ein kaum sichtbarer Strich.
+ */
+export function minWidth(points) {
+  let best = Infinity;
+  for (let i = 0; i < points.length; i += 1) {
+    const [x1, y1] = points[i];
+    const [x2, y2] = points[(i + 1) % points.length];
+    const length = Math.hypot(x2 - x1, y2 - y1);
+    if (length < 1e-9) continue;
+    let far = 0;
+    for (const [x, y] of points) {
+      far = Math.max(far, Math.abs((x2 - x1) * (y1 - y) - (x1 - x) * (y2 - y1)) / length);
+    }
+    best = Math.min(best, far);
+  }
+  return best;
+}
+
+/** Mindestbreite eines Teilstücks, bezogen auf die Wurzel der Gesamtfläche. */
+export const MIN_PIECE_WIDTH = 0.25;
+
 export function dissect(shape, count, minShare = 0.10, minFill = 0.3) {
   const total = polygonArea(shape);
   let pieces = [shape];
@@ -138,6 +175,7 @@ export function dissect(shape, count, minShare = 0.10, minFill = 0.3) {
     if (parts.length !== 2) continue;
     if (parts.some((part) => polygonArea(part) < total * minShare)) continue;
     if (parts.some((part) => fillRatio(part) < minFill)) continue;
+    if (parts.some((part) => minWidth(part) < MIN_PIECE_WIDTH * Math.sqrt(total))) continue;
     pieces = [...pieces.slice(0, largest), ...parts, ...pieces.slice(largest + 1)];
   }
 
@@ -263,16 +301,20 @@ export function generateFigureTask(options = {}) {
     const distractors = [];
     const usedIds = new Set([targetId]);
     const portion = SECTOR_PORTION[targetId];
+    const usedKinds = new Set();
     let guard = 0;
 
     while (distractors.length < needed && guard < 80) {
       guard += 1;
       // Vier Sorten Distraktor, wie im Test beschrieben: andere Eckenzahl bzw.
       // anderes Kreissegment, abgeschnittene Ecke, andere Proportionen und –
-      // bei runden Lösungen – eine leicht andere Krümmung.
+      // bei Kreissegmenten – ein leicht anderer Öffnungswinkel. Beim Vollkreis
+      // ergäbe das nur einen Kreis mit Kerbe, den es im Test nicht gibt.
       const kinds = ['andereForm', 'andereForm', 'gestutzt', 'proportion'];
-      if (portion) kinds.push('kruemmung');
-      const kind = pick(kinds);
+      if (portion && portion < 1) kinds.push('kruemmung');
+      // Abwandlungen der Lösung höchstens einmal je Aufgabe – zwei gestutzte
+      // oder zwei gestreckte Varianten sähen einander zum Verwechseln ähnlich.
+      const kind = pick(kinds.filter((k) => k === 'andereForm' || !usedKinds.has(k)));
 
       let candidate = null;
       if (kind === 'gestutzt') {
@@ -289,6 +331,7 @@ export function generateFigureTask(options = {}) {
         }
       }
       if (!candidate) continue;
+      usedKinds.add(kind);
 
       // Der Beweis: abweichende Fläche kann nicht lückenlos ausgelegt werden.
       const relativeGap = Math.abs(polygonArea(candidate) - pieceArea) / pieceArea;
@@ -311,15 +354,21 @@ export function generateFigureTask(options = {}) {
     // e) ist immer die Textoption – sie zeigt nie eine Figur.
     answerOptions.push({ letter: 'e', text: NO_ANSWER_LABEL, correct: noneCorrect });
 
+    // Teile und Auflösung teilen sich eine Reihenfolge: Teil i hat in beiden
+    // Grafiken dieselbe Farbe. Getrennt gemischt zeigte die Auflösung die
+    // Farben anderer Teile, und der Lösungsweg war nicht nachzuvollziehen.
+    const order = shuffle(placements.map((_, i) => i));
+    const orderedPlacements = order.map((i) => placements[i]);
+
     return {
       type: 'figures',
       shapeId: targetId,
       shapeLabel: SHAPES[targetId].label,
       pieceCount,
       /** Teile in zufälliger Drehlage und Reihenfolge – so werden sie gezeigt. */
-      pieces: shuffle(placements.map((piece) => rotate(center(piece), Math.random() * 2 * Math.PI))),
-      /** Teile an ihrem Platz in der Zielfigur – für die Auflösungsgrafik. */
-      placements,
+      pieces: orderedPlacements.map((piece) => rotate(center(piece), Math.random() * 2 * Math.PI)),
+      /** Teile an ihrem Platz in der Zielfigur – gleiche Reihenfolge wie `pieces`. */
+      placements: orderedPlacements,
       target,
       pieceArea,
       /** true, wenn die gesuchte Figur bewusst nicht unter a–d steht. */

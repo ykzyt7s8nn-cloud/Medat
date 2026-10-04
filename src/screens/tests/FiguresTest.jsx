@@ -345,7 +345,7 @@ export default function FiguresTest({ embedded = false, onFinish, focusTags = nu
         {revealed && (
           <section className="ios-card animate-slide-up space-y-2 px-4 py-4">
             <h3 className="text-[15px] font-semibold">
-              {results[results.length - 1]?.correct
+              {chosenLetter === task.correctLetter
                 ? 'Richtig'
                 : task.noneCorrect
                   ? 'Richtig wäre e) – die Figur war nicht dabei'

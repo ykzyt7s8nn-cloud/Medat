@@ -48,6 +48,8 @@ import {
   dissect,
   generateFigureSet,
   generateFigureTask,
+  minWidth,
+  MIN_PIECE_WIDTH,
 } from '../src/engines/figures.js';
 import { polygonArea } from '../src/lib/geometry.js';
 import { isAnswered } from '../src/hooks/useTaskSession.js';
@@ -474,6 +476,41 @@ for (let i = 0; i < FIGURE_SAMPLES; i += 1) {
   if (task.placements.some((piece) => polygonArea(piece) < pieceSum * 0.08)) figureIssues += 1;
   if (task.pieces.some((piece) => piece.length < 3)) figureIssues += 1;
 }
+// Teil i in der Aufgabe und Teil i in der Auflösung sind dasselbe Stück –
+// nur gedreht. Sonst tragen sie verschiedene Farben, und die Auflösung zeigt
+// scheinbar andere Teile als die Aufgabe.
+const edgeLengths = (points) => points
+  .map(([x, y], i) => {
+    const [nx, ny] = points[(i + 1) % points.length];
+    return Math.hypot(nx - x, ny - y);
+  })
+  .sort((a, b) => a - b);
+let pieceOrderIssues = 0;
+let thinPieces = 0;
+for (let i = 0; i < 200; i += 1) {
+  const task = generateFigureTask({ difficulty: 'medat' });
+  task.pieces.forEach((piece, k) => {
+    const shown = edgeLengths(piece);
+    const placed = edgeLengths(task.placements[k]);
+    const same = shown.length === placed.length && shown.every((value, j) => Math.abs(value - placed[j]) < 1e-6);
+    if (!same) pieceOrderIssues += 1;
+    if (minWidth(piece) < MIN_PIECE_WIDTH * Math.sqrt(task.pieceArea) - 1e-9) thinPieces += 1;
+  });
+}
+check('Teilstücke und Auflösung haben dieselbe Reihenfolge (gleiche Farben)', pieceOrderIssues === 0,
+  `${pieceOrderIssues} vertauschte Teile`);
+check(`Keine dünnen Splitter: jedes Teil mindestens ${MIN_PIECE_WIDTH} breit, in jeder Lage`, thinPieces === 0,
+  `${thinPieces} zu dünne Teile`);
+
+// Vielecke stehen auf einer waagrechten Unterkante, wie in den Testheften –
+// mit der Spitze nach oben wirken Quadrat, Sechs- und Achteck verdreht.
+const standing = ['dreieck', 'quadrat', 'fuenfeck', 'sechseck', 'siebeneck', 'achteck', 'halbkreis'].every((id) => {
+  const points = SHAPES[id].build();
+  const maxY = Math.max(...points.map((point) => point[1]));
+  return points.filter((point) => Math.abs(point[1] - maxY) < 1e-9).length >= 2;
+});
+check('Vielecke und Halbkreis stehen auf einer waagrechten Kante', standing);
+
 check(`${FIGURE_SAMPLES} Aufgaben: Aufbau a–d Figuren, e Textoption, genau eine richtige Antwort`,
   figureIssues === 0, `${figureIssues} Abweichungen`);
 check('Alle Aufgaben konnten erzeugt werden', figureFailures === 0, `${figureFailures} Fehlversuche`);
