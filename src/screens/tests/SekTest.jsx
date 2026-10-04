@@ -29,8 +29,10 @@ import RegulateTask from '../../components/sek/RegulateTask.jsx';
 import DecisionTask from '../../components/sek/DecisionTask.jsx';
 import { TESTS } from '../../data/testConfig.js';
 import { drawTasks, loadSekTasks } from '../../data/sek/index.js';
+import { formatPoints } from '../../lib/format.js';
 import {
   describeSekAnswer,
+  correctPlaces,
   describeSekSolution,
   isSekComplete,
   pointsPerTask,
@@ -49,7 +51,7 @@ const FACTS = {
     '14 Aufgaben in 21 Minuten',
     'Zu jeder Situation fünf Gefühle, jedes einzeln einzuschätzen',
     'Alles oder nichts: Der Punkt zählt nur bei fünf richtigen Einschätzungen',
-    'Mehrere Gefühle können gleichzeitig zutreffen, auch gegenläufige',
+    'Mehrere Gefühle können gleichzeitig zutreffen, auch gegenläufige – wie viele, ist jedes Mal anders',
   ],
   emotionsRegulate: [
     '12 Aufgaben in 18 Minuten',
@@ -60,7 +62,7 @@ const FACTS = {
   socialDecision: [
     '14 Aufgaben in 21 Minuten',
     'Fünf Überlegungen auf die Plätze a bis e verteilen, a ist die wichtigste',
-    'Teilpunkte: Jede richtig gesetzte Marke zählt einzeln',
+    'Teilpunkte: je näher die Reihung an der erwarteten, desto mehr vom Punkt',
     'Maßstab ist nicht die eigene Meinung, sondern das moralische Gewicht',
   ],
 };
@@ -99,7 +101,8 @@ export default function SekTest({ testId, embedded = false, onFinish }) {
   );
 
   const finish = useCallback((items) => {
-    const score = items.reduce((sum, item) => sum + item.points, 0);
+    // Auf eine Nachkommastelle, weil Soziales Entscheiden Teilpunkte vergibt.
+    const score = Math.round(items.reduce((sum, item) => sum + item.points, 0) * 10) / 10;
     const max = items.reduce((sum, item) => sum + item.maxPoints, 0);
     const seconds = Math.round((Date.now() - startedAt.current) / 1000);
     if (!embedded) {
@@ -132,6 +135,7 @@ export default function SekTest({ testId, embedded = false, onFinish }) {
         explanation: task.explanation ?? '',
         seconds: timings[i] ?? 0,
         task,
+        value,
       };
     });
     finish(items);
@@ -228,7 +232,7 @@ export default function SekTest({ testId, embedded = false, onFinish }) {
   }
 
   if (phase === 'result') {
-    const score = results.reduce((sum, item) => sum + item.points, 0);
+    const score = Math.round(results.reduce((sum, item) => sum + item.points, 0) * 10) / 10;
     const max = results.reduce((sum, item) => sum + item.maxPoints, 0);
     return (
       <Screen title={`${TEST.short} – Ergebnis`} onClose={closeScreen}>
@@ -241,9 +245,10 @@ export default function SekTest({ testId, embedded = false, onFinish }) {
           limitSeconds={TEST.testSeconds}
           renderReview={(item) => (
             <div className="space-y-2">
-              {item.maxPoints > 1 && (
+              {testId === 'socialDecision' && (
                 <p className="text-[13px] font-semibold" style={{ color: TEST.accent }}>
-                  {item.points} von {item.maxPoints} Marken richtig gesetzt
+                  {formatPoints(item.points)} von 1 Punkt · {correctPlaces(item.task, item.value)} von 5 Plätzen
+                  wie erwartet
                 </p>
               )}
               {item.explanation && (

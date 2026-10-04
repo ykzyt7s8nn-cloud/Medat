@@ -16,6 +16,7 @@ import ProgressRing from '../components/ui/ProgressRing.jsx';
 import Tappable from '../components/ui/Tappable.jsx';
 import { SECTIONS, TESTS, TEST_ORDER, testsInSection } from '../data/testConfig.js';
 import { daysUntilExam } from '../lib/examDate.js';
+import { formatPoints } from '../lib/format.js';
 import { useActivity } from '../hooks/useActivity.js';
 import { useNavigation } from '../store/useNavigation.js';
 import { useProgress } from '../store/useProgress.js';
@@ -48,7 +49,7 @@ function TestCard({ test, onOpen }) {
         <span className="mt-1 block text-[12px] text-black/40 dark:text-white/40">
           {items.length === 0
             ? 'Noch nicht geübt'
-            : `${items.length} ${items.length === 1 ? 'Übung' : 'Übungen'} · zuletzt ${last.score}/${last.max}`}
+            : `${items.length} ${items.length === 1 ? 'Übung' : 'Übungen'} · zuletzt ${formatPoints(last.score)}/${last.max}`}
         </span>
       </span>
 

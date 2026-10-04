@@ -52,6 +52,7 @@ import {
   MIN_PIECE_WIDTH,
 } from '../src/engines/figures.js';
 import { polygonArea } from '../src/lib/geometry.js';
+import { formatPoints } from '../src/lib/format.js';
 import { isAnswered } from '../src/hooks/useTaskSession.js';
 import { crossedMarks, marksFor } from '../src/lib/timeWarnings.js';
 import {
@@ -66,6 +67,7 @@ import { SECTIONS, SECTION_ORDER, SEK_ORDER, TV_ORDER } from '../src/data/testCo
 import { drawRegulate, drawTasks, loadSekTasks } from '../src/data/sek/index.js';
 import { QUESTIONS_PER_TEXT, drawTextTasks, loadTexts } from '../src/data/tv/index.js';
 import {
+  correctPlaces,
   describeSekSolution,
   isSekComplete,
   pointsPerTask,
@@ -817,8 +819,10 @@ const sekTasks = Object.fromEntries(
 for (const testId of SEK_ORDER) {
   const tasks = sekTasks[testId];
   const test = TESTS[testId];
-  check(`${test.short}: mehr Aufgaben vorhanden als ein Durchgang braucht (${tasks.length} > ${test.questionCount})`,
-    tasks.length > test.questionCount);
+  // Zwei volle Durchgänge ohne Wiederholung – sonst kennt man beim zweiten Mal
+  // die halbe Lösung schon.
+  check(`${test.short}: genug Aufgaben für zwei Durchgänge (${tasks.length} ≥ ${2 * test.questionCount})`,
+    tasks.length >= 2 * test.questionCount);
   check(`${test.short}: alle Aufgaben-IDs eindeutig`,
     new Set(tasks.map((task) => task.id)).size === tasks.length);
   check(`${test.short}: jede Aufgabe hat eine ausführliche Situation`,
@@ -838,6 +842,13 @@ check('Emotionen erkennen: keine Aufgabe ist durchgehend gleich zu beantworten',
     const likely = task.emotions.filter((emotion) => emotion.likely).length;
     return likely > 0 && likely < task.emotions.length;
   }));
+// Stünden immer drei von fünf auf „wahrscheinlich“, lernte man die Zahl statt
+// der Gefühle: Die beiden letzten Einschätzungen ergäben sich von selbst.
+const likelyCounts = recognise.map((task) => task.emotions.filter((emotion) => emotion.likely).length);
+const countShare = Math.max(...[1, 2, 3, 4].map((n) => likelyCounts.filter((c) => c === n).length))
+  / recognise.length;
+check(`Emotionen erkennen: die Zahl wahrscheinlicher Gefühle wechselt (1–4 alle vertreten, keine über 55 %, häufigste ${Math.round(countShare * 100)} %)`,
+  [1, 2, 3, 4].every((n) => likelyCounts.includes(n)) && countShare <= 0.55);
 check('Emotionen erkennen: Gefühlsnamen wiederholen sich nicht innerhalb einer Aufgabe',
   recognise.every((task) => new Set(task.emotions.map((e) => e.emotion)).size === task.emotions.length));
 
@@ -880,16 +891,37 @@ const perfect = exampleDecision.statements
   .map((statement, displayIndex) => ({ displayIndex, rank: statement.rank }))
   .sort((a, b) => a.rank - b.rank)
   .map((entry) => entry.displayIndex);
-check('Soziales Entscheiden: die richtige Reihung bringt volle Punktzahl',
-  scoreSekTask('socialDecision', exampleDecision, perfect) === 5);
-check('Soziales Entscheiden: zwei vertauschte Plätze kosten genau zwei Punkte',
-  scoreSekTask('socialDecision', exampleDecision,
-    [perfect[1], perfect[0], perfect[2], perfect[3], perfect[4]]) === 3);
+const reorder = (...order) => order.map((i) => perfect[i]);
+check('Soziales Entscheiden: die richtige Reihung bringt den vollen Punkt',
+  scoreSekTask('socialDecision', exampleDecision, perfect) === 1);
+// Gewertet wird die Übereinstimmung der ganzen Reihung (Spearman), nicht die
+// Zahl richtiger Marken: a und b vertauscht sind zwei falsche Marken, aber
+// nur eine kleine Abweichung.
+check('Soziales Entscheiden: zwei benachbarte Plätze vertauscht geben 0,9',
+  scoreSekTask('socialDecision', exampleDecision, reorder(1, 0, 2, 3, 4)) === 0.9
+  && correctPlaces(exampleDecision, reorder(1, 0, 2, 3, 4)) === 3);
+check('Soziales Entscheiden: drei Plätze im Kreis verschoben geben 0,7',
+  scoreSekTask('socialDecision', exampleDecision, reorder(1, 2, 0, 3, 4)) === 0.7);
+check('Soziales Entscheiden: a↔b und d↔e vertauscht – nur eine Marke richtig, aber 0,8',
+  scoreSekTask('socialDecision', exampleDecision, reorder(1, 0, 2, 4, 3)) === 0.8
+  && correctPlaces(exampleDecision, reorder(1, 0, 2, 4, 3)) === 1);
+check('Soziales Entscheiden: die umgekehrte Reihung zählt null, nicht negativ',
+  scoreSekTask('socialDecision', exampleDecision, reorder(4, 3, 2, 1, 0)) === 0);
+check('Soziales Entscheiden: jede mögliche Reihung liegt zwischen 0 und 1 in Zehnteln',
+  (function permutations(rest, prefix = []) {
+    if (rest.length === 0) {
+      const points = scoreSekTask('socialDecision', exampleDecision, prefix.map((i) => perfect[i]));
+      return points >= 0 && points <= 1 && Number.isInteger(Math.round(points * 1000) / 100);
+    }
+    return rest.every((item) => permutations(rest.filter((x) => x !== item), [...prefix, item]));
+  })([0, 1, 2, 3, 4]));
 check('Soziales Entscheiden: unvollständig heißt offen',
   !isSekComplete('socialDecision', exampleDecision, perfect.slice(0, 4))
   && isSekComplete('socialDecision', exampleDecision, perfect));
-check('Soziales Entscheiden: fünf Punkte je Aufgabe',
-  pointsPerTask('socialDecision', exampleDecision) === 5);
+check('Soziales Entscheiden: ein Punkt je Aufgabe, wie in den anderen beiden',
+  pointsPerTask('socialDecision', exampleDecision) === 1);
+check('Punkte mit Komma: 9,8 statt 9.799999999999999',
+  formatPoints(0.9 + 0.9 + 8) === '9,8' && formatPoints(14) === '14');
 
 const exampleRecognise = recognise[0];
 const allRight = exampleRecognise.emotions.map((emotion) => emotion.likely);

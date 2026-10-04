@@ -13,9 +13,10 @@
  *
  * Ein Wort zur Verlässlichkeit: Die Aufgaben sind selbst geschrieben, nicht
  * den Originalen entnommen. Format, Aufgabenzahl und Zeit folgen den
- * offiziellen Vorgaben. Bei den Lösungen gilt: „Emotionen regulieren“ und
- * „Soziales Entscheiden“ folgen jeweils einem offengelegten Prinzip (Zielbezug
- * bzw. die Rangleiter nach Kohlberg), das in den Datendateien beschrieben ist.
+ * offiziellen Vorgaben. Alle drei Lösungsschlüssel folgen einem offengelegten
+ * Muster, das in den Datendateien samt Quellen beschrieben ist: Bezugspunkt
+ * und Personenbeschreibung beim Erkennen, Zielbezug nach dem Prozessmodell
+ * von Gross beim Regulieren, die Rangleiter nach Kohlberg beim Entscheiden.
  * Wer das Prinzip lernt, lernt das Nützliche – die einzelne Aufgabe ist nur
  * das Übungsmaterial dafür.
  */
