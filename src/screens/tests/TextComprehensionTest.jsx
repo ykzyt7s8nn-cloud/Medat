@@ -2,8 +2,12 @@
  * Untertest „Textverständnis“.
  *
  * MedAT-Vorgabe: 12 Aufgaben in 35 Minuten, Single Choice a bis e, verteilt
- * auf mehrere Sachtexte. Hier trägt jeder Text vier Fragen; ein Durchgang zieht
- * drei Texte.
+ * auf mehrere Sachtexte. Hier trägt ein Text zwei bis vier Fragen; ein
+ * Durchgang zieht meist vier oder fünf Texte, bevorzugt solche, die man noch
+ * nicht gesehen hat (siehe data/tv/index.js).
+ *
+ * Bei Aussagenkombinationen stehen die Aussagen I bis IV über den Antworten,
+ * die nur noch die Ziffern nennen – so wie im Test.
  *
  * Zur Anzeige: Text und Frage stehen untereinander, nicht auf zwei Seiten.
  * Auf einem Telefon ist das Hin- und Herwechseln zwischen zwei Ansichten
@@ -32,6 +36,21 @@ import { useSettings } from '../../store/useSettings.js';
 
 const TEST = TESTS.textComprehension;
 const LETTERS = ['a', 'b', 'c', 'd', 'e'];
+const NUMERALS = ['I', 'II', 'III', 'IV'];
+
+/** Aussagen I bis IV einer Kombinationsfrage. */
+function Statements({ statements, className = '' }) {
+  return (
+    <ol className={`space-y-1.5 ${className}`}>
+      {statements.map((statement, i) => (
+        <li key={NUMERALS[i]} className="flex gap-2.5 text-[15px] leading-snug">
+          <span className="w-7 shrink-0 font-semibold tabular" style={{ color: TEST.accent }}>{NUMERALS[i]}.</span>
+          <span>{statement.text}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
 
 function TextPanel({ task, position, total, open, onToggle }) {
   return (
@@ -70,6 +89,9 @@ export default function TextComprehensionTest({ embedded = false, onFinish }) {
   const addResult = useProgress((state) => state.addResult);
   const timerSetting = useSettings((state) => state.timers.textComprehension);
   const examMode = useSettings((state) => state.mode === 'pruefung');
+  // Je Text die Zahl der schon beantworteten Fragen – daraus zieht der
+  // Durchgang bevorzugt ungesehene Texte.
+  const practised = useProgress((state) => state.tagStats[TEST.id]);
   const feedback = useFeedback();
 
   const useTimer = embedded ? true : timerSetting;
@@ -127,6 +149,7 @@ export default function TextComprehensionTest({ embedded = false, onFinish }) {
           ? `${LETTERS[given]}) ${task.options[given].text}`
           : 'keine Antwort',
         explanation: task.explanation,
+        statements: task.statements,
         textId: task.textId,
         title: task.title,
         seconds: timings[i] ?? 0,
@@ -144,19 +167,23 @@ export default function TextComprehensionTest({ embedded = false, onFinish }) {
   const start = useCallback(() => {
     if (!texts) return;
     startedAt.current = Date.now();
-    setTasks(drawTextTasks(texts, TEST.questionCount));
+    setTasks(drawTextTasks(texts, TEST.questionCount, practised));
     setResults([]);
     setTextOpen(true);
     session.reset();
     setPhase('running');
     countdown.reset(TEST.testSeconds);
-  }, [countdown, session, texts]);
+  }, [countdown, practised, session, texts]);
 
   useEffect(() => {
     if (!texts || tasks.length > 0) return;
     if (!embedded && phase !== 'running') return;
     startedAt.current = Date.now();
-    setTasks(drawTextTasks(texts, TEST.questionCount));
+    setTasks(drawTextTasks(texts, TEST.questionCount, practised));
+    // practised bewusst nicht als Abhängigkeit: Der Durchgang steht, sobald
+    // er gezogen ist, und soll sich nicht neu mischen, wenn das Ergebnis
+    // gespeichert wird.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [embedded, phase, tasks.length, texts]);
 
   const { index } = session;
@@ -187,7 +214,8 @@ export default function TextComprehensionTest({ embedded = false, onFinish }) {
           timerEnabled={timerSetting}
           facts={[
             '12 Aufgaben in 35 Minuten',
-            'Drei Sachtexte mit je vier Fragen, Single Choice a bis e',
+            'Meist vier oder fünf Sachtexte mit je zwei bis vier Fragen, Single Choice a bis e',
+            'Gefragt wird, was sich ableiten lässt – auch als Kombination der Aussagen I bis IV',
             'Alles ist allein aus dem Text zu beantworten – Vorwissen hilft nicht',
             'Der Text bleibt beim Beantworten sichtbar und lässt sich einklappen',
           ]}
@@ -217,6 +245,9 @@ export default function TextComprehensionTest({ embedded = false, onFinish }) {
               <p className="text-[12px] font-semibold uppercase tracking-wide" style={{ color: TEST.accent }}>
                 {item.title}
               </p>
+              {item.statements && (
+                <Statements statements={item.statements} className="text-black/70 dark:text-white/70" />
+              )}
               <p className="text-[14px] leading-relaxed text-black/65 dark:text-white/65">{item.explanation}</p>
             </div>
           )}
@@ -290,6 +321,12 @@ export default function TextComprehensionTest({ embedded = false, onFinish }) {
         />
 
         <h2 className="px-1 text-[15px] font-semibold leading-snug">{task.prompt}</h2>
+
+        {task.statements && (
+          <section className="ios-card px-4 py-3.5">
+            <Statements statements={task.statements} />
+          </section>
+        )}
 
         <div className="space-y-2">
           {task.options.map((option, i) => {

@@ -3,27 +3,15 @@
 Was noch aussteht, mit dem Stand, auf dem es liegen geblieben ist. Erledigtes
 wird hier gelöscht, nicht abgehakt – die Geschichte steht im Git-Log.
 
-## 1. SEK und TV an echten Altfragen ausrichten
+## 1. SEK: offene Fragen nach dem Abgleich
 
-**Das Problem.** Die selbst geschriebenen Aufgaben zu Textverständnis und zu
-den drei SEK-Untertests erfüllen bisher die *formalen* Vorgaben: Aufgabenzahl,
-Zeitlimit, Antwortformat, Wertung. Ob sie den echten Aufgaben der letzten Jahre
-auch *inhaltlich* ähneln, ist ungeprüft.
-
-Bei SEK wiegt das schwer. In Erfahrungsberichten heißt es immer wieder, dass es
-bei „Emotionen erkennen“ und „Soziales Entscheiden“ ein erwartetes Muster gibt –
-eine Auswahl an Emotionen bzw. eine Rangfolge, die die Testerstellenden hören
-wollen, unabhängig davon, was im Einzelfall individuell plausibel wäre. Eine
-Lern-App muss genau dieses Muster nachbilden. Tut sie es nicht, trainiert sie am
-Test vorbei, und zwar besonders heimtückisch: Die Aufgaben sehen richtig aus,
-und die Rückmeldung ist trotzdem systematisch falsch.
-
-**Zu tun.**
-
-1. Für Textverständnis prüfen, ob Textlänge, Themenwahl und Fragetypen den
-   echten Aufgaben nahekommen.
-2. Inhalte nachziehen – und das jeweils zugrunde liegende Prinzip im Kopf der
-   Datendatei mit aktualisieren, sonst driften Inhalt und Erklärung auseinander.
+Die drei SEK-Untertests sind an dem Muster ausgerichtet, das offizielle
+Hinweise und Erfahrungsberichte beschreiben – bei „Emotionen erkennen“ und
+„Soziales Entscheiden“ zählt die Auswahl bzw. Rangfolge, die die
+Testerstellenden erwarten, nicht das im Einzelfall individuell Plausible.
+Trainiert die App an diesem Muster vorbei, sehen die Aufgaben richtig aus, und
+die Rückmeldung ist trotzdem systematisch falsch. Deshalb bleibt festgehalten,
+was am Muster noch unbestätigt ist.
 
 **Stand SEK.** Recherchiert, abgeglichen und nachgezogen; das Muster samt
 Quellen steht jetzt im Kopf jeder der drei Datendateien unter `src/data/sek/`.
@@ -55,7 +43,20 @@ Originalaufgaben und keine Originaltexte übernehmen. Was übernommen wird, blei
 offengelegt: In den Datendateien steht, welchem Prinzip der Lösungsschlüssel
 folgt, und die App sagt an drei Stellen selbst, dass es eigene Aufgaben sind.
 
-## 2. Haptik am Gerät bestätigen
+## 2. Textverständnis an Originalunterlagen gegenprüfen
+
+Format, Fragetypen und Umfang folgen inzwischen dem, was Vorbereitungsanbieter
+und Erfahrungsberichte zum MedAT 2023–2025 übereinstimmend beschreiben (siehe
+Kopf von `src/data/tv/texts.js`). Die offiziellen Seiten selbst
+(medizinstudieren.at, Verordnung der MedUni Wien, ÖH-Probetest) waren bei der
+Recherche nicht abrufbar. **Offen ist der Abgleich mit dem offiziellen
+Probetest:** ob die Texte dort deutlich länger sind als die hier geschriebenen
+200–340 Wörter und wie oft eine Aussagenkombination „Alle“ oder „Keine“ als
+Lösung hat – Letzteres kommt hier bislang nicht vor. Falls ja, Texte verlängern
+bzw. solche Lösungen ergänzen; der Selbsttest prüft Länge und Kombinationen
+bereits und muss nur in seinen Grenzen nachgezogen werden.
+
+## 3. Haptik am Gerät bestätigen
 
 Auf iOS gibt es Haptik nur über den systemeigenen Schalter, und die ist – am
 Gerät nachgeprüft – ausschließlich unter dem Finger zu spüren; ein

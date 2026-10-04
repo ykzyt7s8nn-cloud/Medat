@@ -36,10 +36,11 @@ const DETAILS = {
     'Entscheidend ist ausschließlich die formale Logik, nicht das Weltwissen.',
   ],
   textComprehension: [
-    '12 Aufgaben in 35 Minuten im Single-Choice-Verfahren, verteilt auf mehrere Sachtexte.',
-    'Alles ist allein aus dem Text zu beantworten – Vorwissen zum Thema bringt keinen Vorteil.',
+    '12 Aufgaben in 35 Minuten im Single-Choice-Verfahren, verteilt auf mehrere Sachtexte – zuletzt meist vier bis fünf populärwissenschaftliche Texte aus Medizin und Naturwissenschaft.',
+    'Gefragt wird, welche Aussage sich aus dem Text ableiten lässt, welche sich NICHT ableiten lässt oder welche Kombination der Aussagen I bis IV zutrifft („Nur I und III“).',
+    'Alles ist allein aus dem Text zu beantworten – Vorwissen zum Thema bringt keinen Vorteil. Was zutrifft, aber nicht dasteht, gilt als nicht ableitbar.',
     'Die falschen Antworten sind typisch falsch: Sie verallgemeinern, was der Text einschränkt, kehren eine Richtung um oder stehen zwar im Text, beantworten aber die Frage nicht.',
-    'In dieser App trägt jeder Text vier Fragen; ein Durchgang zieht drei Texte.',
+    'In dieser App trägt ein Text zwei bis vier Fragen; ein Durchgang zieht bevorzugt Texte, die man noch nicht gesehen hat.',
   ],
   emotionsRecognise: [
     '14 Aufgaben in 21 Minuten. Zu jeder Situation stehen fünf Gefühle, jedes ist als eher wahrscheinlich oder eher unwahrscheinlich einzuordnen.',
