@@ -64,7 +64,7 @@ import {
 } from '../src/data/bms/index.js';
 import { SECTIONS, SECTION_ORDER, SEK_ORDER, TV_ORDER } from '../src/data/testConfig.js';
 import { drawRegulate, drawTasks, loadSekTasks } from '../src/data/sek/index.js';
-import { QUESTIONS_PER_TEXT, drawTextTasks, loadTexts } from '../src/data/tv/index.js';
+import { QUESTIONS_PER_TEXT, TEXTS_PER_RUN, drawTextTasks, loadTexts } from '../src/data/tv/index.js';
 import {
   describeSekSolution,
   isSekComplete,
@@ -919,39 +919,126 @@ section('Textverständnis');
 
 const tvTexts = await loadTexts();
 const tvTest = TESTS[TV_ORDER[0]];
-check(`Genug Texte für Abwechslung (${tvTexts.length})`, tvTexts.length >= 6);
-check(`Jeder Text hat ${QUESTIONS_PER_TEXT} Fragen`,
-  tvTexts.every((text) => text.questions.length === QUESTIONS_PER_TEXT));
-check('Jeder Text hat mindestens drei Absätze und genug Substanz',
-  tvTexts.every((text) => text.paragraphs.length >= 3
-    && text.paragraphs.join(' ').length >= 900));
+const tvQuestions = tvTexts.flatMap((text) => text.questions);
+const tvWords = (text) => text.paragraphs.join(' ').split(/\s+/).length;
+// Fünf vollständige Durchgänge sollen ohne Wiederholung möglich sein.
+const TV_RUNS = 5;
+check(`Genug Fragen für ${TV_RUNS} Durchgänge ohne Wiederholung (${tvQuestions.length} in ${tvTexts.length} Texten)`,
+  tvQuestions.length >= TV_RUNS * tvTest.questionCount);
+check(`Jeder Text hat ${QUESTIONS_PER_TEXT.min} bis ${QUESTIONS_PER_TEXT.max} Fragen`,
+  tvTexts.every((text) => text.questions.length >= QUESTIONS_PER_TEXT.min
+    && text.questions.length <= QUESTIONS_PER_TEXT.max));
+check('Die Fragenzahl je Text schwankt wie im Test',
+  new Set(tvTexts.map((text) => text.questions.length)).size >= 3);
+const tvLengths = tvTexts.map(tvWords);
+check(`Textlänge 200–550 Wörter (${Math.min(...tvLengths)}–${Math.max(...tvLengths)})`,
+  tvLengths.every((words) => words >= 200 && words <= 550));
+check('Längere Texte tragen mehr Fragen: im Schnitt mindestens 70 Wörter je Frage',
+  tvTexts.every((text) => tvWords(text) / text.questions.length >= 70));
+check('Jeder Text hat mindestens drei Absätze',
+  tvTexts.every((text) => text.paragraphs.length >= 3));
 check(`Jede Frage hat ${tvTest.optionCount} Antwortmöglichkeiten, genau eine richtig, in der Quelle zuerst`,
-  tvTexts.every((text) => text.questions.every((question) =>
+  tvQuestions.every((question) =>
     question.options.length === tvTest.optionCount
     && question.options.filter((option) => option.correct).length === 1
-    && question.options[0].correct === true)));
+    && question.options[0].correct === true));
 check('Antwortmöglichkeiten wiederholen sich innerhalb einer Frage nicht',
-  tvTexts.every((text) => text.questions.every((question) =>
-    new Set(question.options.map((option) => option.text)).size === question.options.length)));
+  tvQuestions.every((question) =>
+    new Set(question.options.map((option) => option.text)).size === question.options.length));
 check('Jede Frage ist erklärt',
-  tvTexts.every((text) => text.questions.every((question) => question.explanation?.length > 40)));
+  tvQuestions.every((question) => question.explanation?.length > 40));
 check('Text- und Frage-IDs sind eindeutig',
   new Set(tvTexts.map((text) => text.id)).size === tvTexts.length
-  && new Set(tvTexts.flatMap((text) => text.questions.map((q) => q.id))).size
-    === tvTexts.length * QUESTIONS_PER_TEXT);
+  && new Set(tvQuestions.map((q) => q.id)).size === tvQuestions.length);
+
+// Aussagenkombinationen: Aus dem Antworttext („Nur I und III“, „Alle vier
+// Aussagen“, „Keine der Aussagen“) wird die gemeinte Menge gelesen. Genau die
+// richtige Antwort muss die Menge der zutreffenden Aussagen treffen, und keine
+// zwei Antworten dürfen dieselbe Menge meinen.
+const TV_NUMERALS = ['I', 'II', 'III', 'IV'];
+const tvCombination = (text, count) => {
+  if (/^Alle\b/.test(text)) return TV_NUMERALS.slice(0, count).join(',');
+  if (/^Keine\b/.test(text)) return '';
+  const found = text.match(/\b(?:IV|III|II|I)\b/g) ?? [];
+  return [...new Set(found)].sort((a, b) => TV_NUMERALS.indexOf(a) - TV_NUMERALS.indexOf(b)).join(',');
+};
+const tvStatementQuestions = tvQuestions.filter((question) => question.statements);
+check(`Kombinationsfragen haben drei oder vier Aussagen (${tvStatementQuestions.length} Fragen)`,
+  tvStatementQuestions.length > 0
+  && tvStatementQuestions.every((q) => q.statements.length >= 3 && q.statements.length <= 4
+    && q.statements.every((statement) => typeof statement.holds === 'boolean' && statement.text.length > 20)));
+check('Kombinationsfragen: Die richtige Antwort trifft genau die zutreffenden Aussagen',
+  tvStatementQuestions.every((q) => {
+    const expected = q.statements
+      .map((statement, i) => (statement.holds ? TV_NUMERALS[i] : null))
+      .filter(Boolean).join(',');
+    const sets = q.options.map((option) => tvCombination(option.text, q.statements.length));
+    const valid = q.options.every((option) => /^(Nur|Alle|Keine)\b/.test(option.text));
+    const inRange = sets.every((set) => set === '' || set.split(',')
+      .every((numeral) => TV_NUMERALS.indexOf(numeral) < q.statements.length));
+    return valid && inRange && new Set(sets).size === sets.length
+      && q.options.every((option, i) => option.correct === (sets[i] === expected));
+  }));
+check('Kombinationsfragen: Die Erklärung geht auf jede Aussage ein',
+  tvStatementQuestions.every((q) => q.statements.every((_, i) =>
+    new RegExp(`\\b${TV_NUMERALS[i]}\\b`).test(q.explanation))));
+check('Kombinationsfragen: weder immer alle noch immer keine Aussage zutreffend',
+  tvStatementQuestions.every((q) => q.statements.some((s) => s.holds))
+  && tvStatementQuestions.filter((q) => q.statements.every((s) => s.holds)).length
+    < tvStatementQuestions.length / 4);
+// Ohne ein Mindestmaß jedes Typs übt die App an einem Teil des Tests vorbei.
+const tvNegated = tvQuestions.filter((q) => !q.statements && /\bNICHT\b/.test(q.prompt));
+check(`Fragetypen gemischt: ${tvStatementQuestions.length} Kombinationen, ${tvNegated.length} verneinte, ${tvQuestions.length - tvStatementQuestions.length - tvNegated.length} einfache`,
+  tvStatementQuestions.length >= tvQuestions.length * 0.25
+  && tvNegated.length >= tvQuestions.length * 0.1
+  && tvQuestions.length - tvStatementQuestions.length - tvNegated.length >= tvQuestions.length * 0.3);
 
 const tvDraw = drawTextTasks(tvTexts, tvTest.questionCount);
+const tvDrawTexts = new Set(tvDraw.map((task) => task.textId)).size;
 check(`Ein Durchgang hat ${tvTest.questionCount} Aufgaben`, tvDraw.length === tvTest.questionCount);
-check(`Sie verteilen sich auf ${tvTest.questionCount / QUESTIONS_PER_TEXT} Texte`,
-  new Set(tvDraw.map((task) => task.textId)).size === tvTest.questionCount / QUESTIONS_PER_TEXT);
+check(`Sie verteilen sich auf ${TEXTS_PER_RUN.min} bis ${TEXTS_PER_RUN.max} Texte (${tvDrawTexts})`,
+  tvDrawTexts >= TEXTS_PER_RUN.min && tvDrawTexts <= TEXTS_PER_RUN.max);
 // Die Fragen eines Textes müssen beieinander bleiben – man liest einen Text
 // und beantwortet dann dessen Fragen, nicht kreuz und quer.
-check('Die Fragen eines Textes stehen zusammen',
+check('Die Fragen eines Textes stehen zusammen und vollständig',
   tvDraw.every((task, i) => i === 0
     || task.textId === tvDraw[i - 1].textId
-    || !tvDraw.slice(0, i - 1).some((earlier) => earlier.textId === task.textId)));
+    || !tvDraw.slice(0, i - 1).some((earlier) => earlier.textId === task.textId))
+  && [...new Set(tvDraw.map((task) => task.textId))].every((id) =>
+    tvDraw.filter((task) => task.textId === id).length
+      === tvTexts.find((text) => text.id === id).questions.length));
 check('Jede Aufgabe bringt ihren Text mit',
   tvDraw.every((task) => task.paragraphs?.length >= 3 && task.title?.length > 0));
+check('Kombinationsfragen bringen ihre Aussagen in den Durchgang mit',
+  drawTextTasks(tvTexts, tvTest.questionCount).every((task) =>
+    !tvQuestions.find((q) => q.id === task.id).statements || task.statements?.length >= 3));
+
+// Mehrere Durchgänge hintereinander, die Statistik wird wie im Store
+// fortgeschrieben (je Text die Zahl der beantworteten Fragen).
+let tvRepeatFree = 0;
+let tvRealistic = 0;
+let tvDraws = 0;
+for (let trial = 0; trial < 200; trial += 1) {
+  const practised = {};
+  const seen = new Set();
+  let clean = true;
+  for (let run = 0; run < TV_RUNS; run += 1) {
+    const tasks = drawTextTasks(tvTexts, tvTest.questionCount, practised);
+    const ids = [...new Set(tasks.map((task) => task.textId))];
+    if (tasks.length !== tvTest.questionCount || ids.some((id) => seen.has(id))) clean = false;
+    tvDraws += 1;
+    if (ids.length >= TEXTS_PER_RUN.min && ids.length <= TEXTS_PER_RUN.max) tvRealistic += 1;
+    for (const task of tasks) {
+      seen.add(task.textId);
+      practised[task.textId] = { attempts: (practised[task.textId]?.attempts ?? 0) + 1 };
+    }
+  }
+  if (clean) tvRepeatFree += 1;
+}
+check(`${TV_RUNS} Durchgänge hintereinander ohne wiederholten Text (${tvRepeatFree} von 200 Versuchen)`,
+  tvRepeatFree === 200);
+check(`Fast alle Durchgänge mit ${TEXTS_PER_RUN.min}–${TEXTS_PER_RUN.max} Texten (${tvRealistic} von ${tvDraws})`,
+  tvRealistic >= tvDraws * 0.9);
 
 const tvMixedFirst = tvDraw.filter((task) => task.options[0].correct).length;
 check(`Gemischt liegt die richtige Antwort nicht mehr immer vorn (${tvMixedFirst} von ${tvDraw.length})`,

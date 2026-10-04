@@ -34,7 +34,7 @@ Textverständnis und sozial-emotionale Kompetenzen:
 
 | Untertest | Aufgaben | Zeit | Besonderheit |
 |---|---|---|---|
-| Textverständnis | 12 | 35 min | 3 Sachtexte mit je 4 Fragen; der Text bleibt beim Antworten sichtbar |
+| Textverständnis | 12 | 35 min | 4–5 Sachtexte mit 2–4 Fragen, auch Aussagenkombinationen I–IV; 20 Texte reichen für 5 Durchgänge ohne Wiederholung |
 | Emotionen erkennen | 14 | 21 min | 5 Gefühle je Situation, alles oder nichts |
 | Emotionen regulieren | 12 | 18 min | 4 Vorsätze, genau einer führt zum genannten Ziel |
 | Soziales Entscheiden | 14 | 21 min | 5 Überlegungen auf a–e reihen, Teilpunkte je Marke |
@@ -168,7 +168,7 @@ npm install
 npm run dev        # Entwicklungsserver
 npm run build      # Icons + Produktionsbuild nach dist/ + Precache-Liste
 npm run preview    # Produktionsbuild lokal ansehen
-npm run selftest   # Daten- und Engine-Prüfungen (199 Checks)
+npm run selftest   # Daten- und Engine-Prüfungen (214 Checks)
 npm run icons      # PWA-Icons neu generieren
 ```
 
@@ -201,7 +201,7 @@ src/
       physik/            5 Themenmodule
       mathematik/        4 Themenmodule
     sek/               Sozial-emotionale Aufgaben, ein Modul je Untertest
-    tv/                Textverständnis: Sachtexte mit je vier Fragen
+    tv/                Textverständnis: 20 Sachtexte mit je 2–4 Fragen
   engines/         Aufgabengenerierung, frei von React
     figures.js         Konvexe Grundformen, Zerlegung, widerlegte Distraktoren
     memory.js          Allergieausweise + 13 Fragetypen
