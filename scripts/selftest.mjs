@@ -9,6 +9,7 @@
  * Eindeutigkeit der Wortlösungen und die Gültigkeit aller MC-Fragen.
  */
 import { DIFFICULTY_RANGES, NOUNS } from '../src/data/nouns.js';
+import * as nounsModule from '../src/data/nouns.js';
 import { ALLERGENS, BLOOD_TYPES } from '../src/data/allergens.js';
 import { FOREIGN_OR_TECHNICAL } from '../src/data/nouns.js';
 import { FEMALE_FIRST_NAMES, LAST_NAMES, MALE_FIRST_NAMES } from '../src/data/names.js';
@@ -289,11 +290,76 @@ for (const level of [3, 4, 5, 6, 7]) {
 }
 check('Ab Level 3 entstehen keine verkappt trivialen Folgen', trivialCount === 0, `${trivialCount} Fälle`);
 
+// Mehrdeutigkeit: Passt auf die sieben sichtbaren Zahlen eine einfachere Regel
+// mit anderer Fortsetzung, bekommt die richtige Überlegung „falsch“.
+// 5, 7, 11, 13, 17, 19, 23 sind Primzahlen – aber auch +2, +4 im Wechsel (→ 25, 29).
+// Teilfolge 1, 2, 3 an den geraden Stellen sieht nach +1 aus, nicht nach Fibonacci.
+function simplerContinuation(visible) {
+  const diffs = visible.slice(1).map((value, i) => value - visible[i]);
+  const found = [];
+  for (const period of [1, 2, 3]) {
+    if (!diffs.every((d, i) => i < period || d === diffs[i - period])) continue;
+    const next = visible[6] + diffs[6 - period];
+    found.push([next, next + diffs[period === 1 ? 5 : 7 - period]]);
+  }
+  const even = [visible[1], visible[3], visible[5]];
+  const odd = [visible[0], visible[2], visible[4], visible[6]];
+  const step = (part) => {
+    const steps = part.slice(1).map((value, i) => value - part[i]);
+    return steps.every((d) => d === steps[0]) ? steps[0] : null;
+  };
+  if (step(even) !== null && step(odd) !== null) found.push([visible[5] + step(even), visible[6] + step(odd)]);
+  return found;
+}
+let ambiguousSeries = 0;
+let ambiguousExample = '';
+for (const level of [1, 2, 3, 4, 5, 6, 7]) {
+  for (let i = 0; i < 3000; i += 1) {
+    const task = generateNumberSeriesTask({ level });
+    const clash = simplerContinuation(task.visible)
+      .find(([a, b]) => a !== task.solution[0] || b !== task.solution[1]);
+    if (clash) {
+      ambiguousSeries += 1;
+      ambiguousExample ||= `${task.visible.join(', ')} → ${task.solution.join(', ')} oder ${clash.join(', ')} (${task.generatorId})`;
+    }
+  }
+}
+check('Keine Folge lässt eine einfachere Regel mit anderer Fortsetzung zu', ambiguousSeries === 0,
+  `${ambiguousSeries} Fälle, z. B. ${ambiguousExample}`);
+
+// Die Erklärung muss zur Rechnung passen: Bei „× f plus …“ bekommt die Zahl an
+// Position 2 ein +1, nicht ihre Position.
+let positionText = 0;
+let positionTasks = 0;
+for (let i = 0; i < 2000 && positionTasks < 50; i += 1) {
+  const task = generateNumberSeriesTask({ level: 7 });
+  if (task.generatorId !== 'positionsSchritt') continue;
+  positionTasks += 1;
+  const factor = Number(task.rule.match(/× (\d+)/)[1]);
+  const follows = task.full.every((value, j) => j === 0 || value === task.full[j - 1] * factor + j);
+  if (!follows || /ihre Position/.test(task.rule)) positionText += 1;
+}
+check('Regeltext „× f plus 1, 2, 3, …“ beschreibt die Folge richtig', positionTasks > 0 && positionText === 0,
+  `${positionText} von ${positionTasks}`);
+
 /* --------------------------------------------------------- Wortflüssigkeit */
 section('Wortflüssigkeit');
 
 check('Alle Substantive sind eindeutig lösbar', SOLVABLE_NOUNS.length === NOUNS.length,
   `${SOLVABLE_NOUNS.length} von ${NOUNS.length}`);
+
+// Auch ein Wort außerhalb der Datenbank ist eine gültige Lösung: Aus ARBEIT
+// lässt sich BEIRAT legen, aus GEHIRN HERING. Beginnt es anders, hätte man mit
+// dessen Anfangsbuchstaben ebenfalls recht.
+const sortedKey = (word) => word.toLowerCase().split('').sort().join('');
+const knownOutside = ['Beirat', 'Hering', 'Bande', 'Essen', 'Armut', 'Otter', 'Genre', 'Mathe', 'Falte', 'Stroh',
+  ...(nounsModule.ANAGRAM_PARTNERS ?? [])];
+const outsideKeys = new Map(knownOutside.map((word) => [sortedKey(word), word]));
+const secondSolutions = SOLVABLE_NOUNS
+  .filter((word) => outsideKeys.has(sortedKey(word)) && outsideKeys.get(sortedKey(word))[0] !== word[0])
+  .map((word) => `${word}/${outsideKeys.get(sortedKey(word))}`);
+check('Kein Salat ergibt ein zweites Substantiv mit anderem Anfangsbuchstaben', secondSolutions.length === 0,
+  secondSolutions.join(', '));
 
 let wordIssues = 0;
 let wordNone = 0;
@@ -398,6 +464,25 @@ for (let i = 0; i < MEMORY_SESSIONS; i += 1) {
 check(`${MEMORY_SESSIONS} Durchgänge mit je 8 Ausweisen und 25 eindeutigen Fragen`, memoryIssues === 0, `${memoryIssues} Abweichungen`);
 const memoryNoneRate = (memoryNone / memoryQuestions) * 100;
 check(`Anteil "Keine Antwort ist richtig" liegt bei ~15 % (${memoryNoneRate.toFixed(1)} %)`, memoryNoneRate >= 10 && memoryNoneRate <= 20);
+
+// „Gegen welches dieser Allergene ist X allergisch?“ – X hat bis zu vier
+// Allergien. Steht eine zweite davon unter a–d, gibt es zwei richtige Antworten;
+// ist e) als richtig markiert, wäre e) sogar falsch.
+let allergenClashes = 0;
+let allergenQuestions = 0;
+for (let i = 0; i < 300; i += 1) {
+  const { cards, questions } = generateMemorySession(TESTS.memory.cardCount, TESTS.memory.questionCount);
+  for (const question of questions.filter((q) => q.typeId === 'personWithAllergenCategory')) {
+    allergenQuestions += 1;
+    const card = cards.find((c) => c.id === question.cardIds[0]);
+    const trueLetters = question.options.slice(0, 4)
+      .filter((option) => card.allergies.includes(option.text)).map((option) => option.letter);
+    const expected = question.correctLetter === 'e' ? [] : [question.correctLetter];
+    if (trueLetters.join() !== expected.join()) allergenClashes += 1;
+  }
+}
+check('Allergen-Frage hat genau die markierte richtige Antwort', allergenQuestions > 0 && allergenClashes === 0,
+  `${allergenClashes} von ${allergenQuestions}`);
 
 /* -------------------------------------------------- Figuren zusammensetzen */
 section('Figuren zusammensetzen');

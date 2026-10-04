@@ -391,8 +391,12 @@ const QUESTION_TYPES = [
       const card = owners[0];
       const category = ALLERGEN_CATEGORY[allergen];
       // Ähnliche Allergene derselben Kategorie als Distraktoren
+      // Die übrigen Allergene der Person scheiden aus: Sonst stünde eine zweite
+      // richtige Antwort zur Wahl – oder bei e) wäre e) gar nicht richtig.
+      const ownAllergies = new Set(card.allergies);
       const similar = ALLERGENS.filter((a) => ALLERGEN_CATEGORY[a] === category && a !== allergen);
-      const options = buildOptions(allergen, [...similar, ...ALLERGENS], noneCorrect);
+      const pool = [...similar, ...ALLERGENS].filter((a) => !ownAllergies.has(a));
+      const options = buildOptions(allergen, pool, noneCorrect);
       if (!options) return null;
       return {
         prompt: `Gegen welches dieser Allergene ist ${card.fullName} allergisch?`,

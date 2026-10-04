@@ -14,7 +14,7 @@
  *     plausibel
  */
 import { chance, pick, sample, shuffle } from '../lib/random.js';
-import { DIFFICULTY_RANGES, FOREIGN_OR_TECHNICAL, NOUNS } from '../data/nouns.js';
+import { ANAGRAM_PARTNERS, DIFFICULTY_RANGES, FOREIGN_OR_TECHNICAL, NOUNS } from '../data/nouns.js';
 
 const MIN_SHUFFLE_DIFFERENCES = 3;
 export const NO_ANSWER_LABEL = 'Keine Antwort ist richtig';
@@ -31,19 +31,24 @@ const MEDAT_LENGTH = [8, 9];
 const MIN_DECIPHER = 2;
 
 /**
- * Sicherheitsnetz: Wörter, die mit einem anderen Eintrag ein Anagramm bilden,
+ * Sicherheitsnetz: Wörter, die mit einem anderen Eintrag oder einem bekannten
+ * Substantiv außerhalb der Datenbank (ANAGRAM_PARTNERS) ein Anagramm bilden,
  * werden ausgeschlossen – sonst gäbe es mehr als eine Lösung.
  * (Die Datenbank ist bereits bereinigt; diese Prüfung hält sie es auch nach
  * künftigen Ergänzungen.)
  */
 export const SOLVABLE_NOUNS = (() => {
+  const keyOf = (word) => word.toLowerCase().split('').sort().join('');
+  const partnerKeys = new Set(ANAGRAM_PARTNERS.map(keyOf));
   const buckets = new Map();
   for (const word of NOUNS) {
-    const key = word.toLowerCase().split('').sort().join('');
+    const key = keyOf(word);
     if (!buckets.has(key)) buckets.set(key, []);
     buckets.get(key).push(word);
   }
-  return [...buckets.values()].filter((group) => group.length === 1).map((group) => group[0]);
+  return [...buckets.entries()]
+    .filter(([key, group]) => group.length === 1 && !partnerKeys.has(key))
+    .map(([, group]) => group[0]);
 })();
 
 /**
