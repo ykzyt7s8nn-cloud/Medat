@@ -6,7 +6,9 @@
  *   - kein Plural, kein Verb, kein Adjektiv, kein Diminutiv
  *   - keine Umlaute und kein ß (MedAT-Vorgabe) – auch keine ae/oe/ue-Ersatzschreibung
  *   - Länge 5–14 Buchstaben
- *   - anagramm-eindeutig innerhalb der Datenbank, damit es genau eine Lösung gibt
+ *   - anagramm-eindeutig innerhalb der Datenbank, damit es genau eine Lösung gibt –
+ *     und auch gegenüber den Substantiven in ANAGRAM_PARTNERS, die nicht in der
+ *     Datenbank stehen, aber genauso gültige Lösungen wären
  *
  * Die Schwierigkeitsstufen werden nicht doppelt gepflegt, sondern über die
  * Wortlänge abgeleitet (siehe DIFFICULTY_RANGES).
@@ -39,17 +41,33 @@ export const FOREIGN_OR_TECHNICAL = new Set([
   'Literatur', 'Lokomotive', 'Magnesium', 'Mathematik', 'Mechanismus', 'Mikroskop', 'Orchester',
   'Organismus', 'Pergament', 'Philosophie', 'Physik', 'Physiker', 'Planetarium', 'Politik', 'Politiker',
   'Porzellan', 'Praktikum', 'Professor', 'Prospekt', 'Prozessor', 'Psychopath', 'Pullover', 'Pyramide',
-  'Quadrant', 'Rezeption', 'Skalpell', 'Skelett', 'Skulptur', 'Testament', 'Thermometer', 'Universum',
+  'Quadrant', 'Rezeption', 'Skalpell', 'Skelett', 'Skulptur', 'Thermometer', 'Universum',
   'Ventilator', 'Zylinder',
 ]);
+
+/**
+ * Substantive außerhalb der Datenbank, die Anagramme früherer Einträge sind
+ * (Nominativ Singular, laut Wörterbuch). Aus ARBEIT lässt sich auch BEIRAT
+ * legen, aus HERING auch GEHIRN – wer das zweite Wort findet, hätte mit B bzw. H
+ * recht, bekäme aber „falsch“. Die betroffenen Einträge sind deshalb entfernt;
+ * die Liste hält fest, warum, und dient der Engine als Sperre bei Ergänzungen.
+ */
+export const ANAGRAM_PARTNERS = [
+  'Angel', 'Argon', 'Armut', 'Arrest', 'Arsen', 'Aufschub', 'Bande', 'Beirat', 'Belag', 'Betrug',
+  'Bohle', 'Chinese', 'Chose', 'Christ', 'Dirne', 'Eifer', 'Erbin', 'Essen', 'Falte', 'Flachs',
+  'Garant', 'Geiser', 'Genre', 'Granat', 'Hering', 'Inder', 'Kernel', 'Kocher', 'Koran', 'Lader',
+  'Lende', 'Mahner', 'Makel', 'Mathe', 'Meier', 'Mensa', 'Merkmal', 'Neider', 'Otter', 'Perser',
+  'Ramsch', 'Rating', 'Schauer', 'Schub', 'Schute', 'Seidel', 'Selfie', 'Senior', 'Serbe', 'Sesam',
+  'Statement', 'Steig', 'Stopfen', 'Stroh', 'Stunk', 'Teiler', 'Tonika', 'Tripel', 'Unart', 'Unrat', 'Zaster',
+];
 
 /** Flache, alphabetisch gepflegte Wortliste (anagramm-eindeutig). */
 export const NOUNS = [
   // A
-  'Abend', 'Abendessen', 'Abendrot', 'Abenteuer', 'Aberwitz', 'Abteilung', 'Achterbahn', 'Acker', 'Adler', 'Akrobat',
-  'Aktenordner', 'Aktentasche', 'Aktion', 'Alarm', 'Album', 'Allerlei', 'Almanach', 'Alpaka', 'Ambulanz', 'Ameise',
-  'Amsel', 'Anatomie', 'Anker', 'Antenne', 'Antrag', 'Apfel', 'Apfelbaum', 'Apfelsine', 'Apotheke', 'Aprikose',
-  'Aquarell', 'Aquarium', 'Arbeit', 'Arbeitsplatz', 'Archipel', 'Architekt', 'Archiv', 'Armaturenbrett', 'Armband', 'Armee',
+  'Abendessen', 'Abendrot', 'Abenteuer', 'Aberwitz', 'Abteilung', 'Achterbahn', 'Acker', 'Akrobat',
+  'Aktenordner', 'Aktentasche', 'Alarm', 'Album', 'Allerlei', 'Almanach', 'Alpaka', 'Ambulanz', 'Ameise',
+  'Amsel', 'Anatomie', 'Anker', 'Antenne', 'Apfel', 'Apfelbaum', 'Apfelsine', 'Apotheke', 'Aprikose',
+  'Aquarell', 'Aquarium', 'Arbeitsplatz', 'Archipel', 'Architekt', 'Archiv', 'Armaturenbrett', 'Armband', 'Armee',
   'Aroma', 'Arsenal', 'Artikel', 'Aschenbecher', 'Aspekt', 'Astronaut', 'Astronomie', 'Atelier', 'Athlet', 'Atomkraft',
   'Attest', 'Auerhahn', 'Aufenthalt', 'Aufsatz', 'Auftrag', 'Augenbraue', 'Ausbildung', 'Ausflug', 'Auslieferung', 'Ausweis',
   'Autobahn', 'Automechaniker',
@@ -58,62 +76,62 @@ export const NOUNS = [
   'Bandwurm', 'Bankett', 'Bankkonto', 'Barometer', 'Bauchweh', 'Bauer', 'Bauernhof', 'Becher', 'Beere', 'Beinhaus',
   'Beobachter', 'Bergkamm', 'Bergsteiger', 'Bergwerk', 'Besen', 'Besenstiel', 'Besuch', 'Beton', 'Bettdecke', 'Bettzeug',
   'Beute', 'Bibel', 'Bibliothek', 'Biene', 'Bierdeckel', 'Bilanz', 'Bildhauer', 'Bildschirm', 'Binde', 'Biologie',
-  'Birke', 'Birne', 'Bison', 'Blasmusik', 'Blatt', 'Blattgold', 'Blech', 'Blechdose', 'Bleistift', 'Blitz',
+  'Birke', 'Bison', 'Blasmusik', 'Blatt', 'Blattgold', 'Blech', 'Blechdose', 'Bleistift', 'Blitz',
   'Block', 'Blume', 'Blumentopf', 'Bluse', 'Blutdruck', 'Blutegel', 'Blutgruppe', 'Boden', 'Bodensatz', 'Bogen',
   'Bohne', 'Bohrmaschine', 'Bombe', 'Bonus', 'Borke', 'Botanik', 'Brachland', 'Brandmal', 'Brandstifter', 'Braten',
   'Brett', 'Brief', 'Briefkasten', 'Brieftasche', 'Brille', 'Bronze', 'Brotkorb', 'Brotlaib', 'Bruder', 'Brunnen',
-  'Buchhaltung', 'Buchhandlung', 'Buchstabe', 'Bucht', 'Bundesland', 'Bunker', 'Burgruine', 'Busch',
+  'Buchhaltung', 'Buchhandlung', 'Buchstabe', 'Bucht', 'Bundesland', 'Bunker', 'Burgruine',
   // C
   'Chance', 'Chaos', 'Chemikalie', 'Chirurg', 'Chirurgie', 'Chronik', 'Clown', 'Comic', 'Container',
   // D
   'Dachboden', 'Dachrinne', 'Dachs', 'Dachstuhl', 'Dampf', 'Dampflok', 'Datenbank', 'Datum', 'Daumen', 'Decke',
-  'Degen', 'Delfin', 'Denkmal', 'Denkmalschutz', 'Diagramm', 'Diamant', 'Dickicht', 'Diener', 'Diesel', 'Diktat',
+  'Degen', 'Delfin', 'Denkmal', 'Denkmalschutz', 'Diagramm', 'Diamant', 'Dickicht', 'Diktat',
   'Dinkel', 'Diplom', 'Distel', 'Docht', 'Dokument', 'Dolch', 'Domino', 'Dorfplatz', 'Dornbusch', 'Draht',
   'Drahtseil', 'Drama', 'Drehbuch', 'Dreieck', 'Dreiklang', 'Droge', 'Druck', 'Druckerei', 'Duell', 'Dunst',
   'Durst', 'Dusche',
   // E
-  'Ebene', 'Edelstein', 'Efeuranke', 'Ehrenwort', 'Eiche', 'Eichhorn', 'Eierschale', 'Eimer', 'Eingang', 'Einkaufszettel',
-  'Eisen', 'Eisenbahn', 'Eisscholle', 'Eisvogel', 'Eiter', 'Elefant', 'Elektriker', 'Elend', 'Elfenbein', 'Elite',
-  'Entdeckung', 'Entfernung', 'Epoche', 'Erbse', 'Erdbeben', 'Erdbeere', 'Erdkugel', 'Erdkunde', 'Erdrutsch', 'Erfindung',
-  'Ergebnis', 'Erinnerung', 'Erker', 'Erlebnis', 'Erlenholz', 'Ersatz', 'Erzieher', 'Essig', 'Etage', 'Etikett',
+  'Ebene', 'Edelstein', 'Efeuranke', 'Ehrenwort', 'Eiche', 'Eichhorn', 'Eierschale', 'Eingang', 'Einkaufszettel',
+  'Eisen', 'Eisenbahn', 'Eisscholle', 'Eisvogel', 'Eiter', 'Elefant', 'Elektriker', 'Elfenbein', 'Elite',
+  'Entdeckung', 'Entfernung', 'Epoche', 'Erdbeben', 'Erdbeere', 'Erdkugel', 'Erdkunde', 'Erdrutsch', 'Erfindung',
+  'Ergebnis', 'Erinnerung', 'Erker', 'Erlebnis', 'Erlenholz', 'Erzieher', 'Essig', 'Etage', 'Etikett',
   'Experiment', 'Explosion',
   // F
   'Fabel', 'Fabrik', 'Fackelzug', 'Faden', 'Fahrer', 'Fahrkarte', 'Fahrplan', 'Fahrrad', 'Fahrrinne', 'Fahrstuhl',
-  'Falke', 'Falle', 'Fallschirm', 'Familie', 'Farbe', 'Fasan', 'Faser', 'Feder', 'Federkiel', 'Feier',
+  'Falke', 'Falle', 'Fallschirm', 'Familie', 'Farbe', 'Fasan', 'Faser', 'Feder', 'Federkiel',
   'Feiertag', 'Feige', 'Feile', 'Feldstecher', 'Feldstein', 'Felge', 'Fenster', 'Fensterbank', 'Fernrohr', 'Ferse',
   'Feuer', 'Feuermal', 'Feuerwehr', 'Figur', 'Filmkamera', 'Filter', 'Filzstift', 'Fingerhut', 'Finsternis', 'Firma',
   'Fisch', 'Fischotter', 'Flachland', 'Flamme', 'Flanke', 'Flasche', 'Flaschenhals', 'Fledermaus', 'Flieder', 'Fliegenpilz',
-  'Fliese', 'Flinte', 'Flohmarkt', 'Flosse', 'Flucht', 'Flugbegleiter', 'Flughafen', 'Flugsand', 'Flugzeug', 'Fluss',
+  'Flinte', 'Flohmarkt', 'Flosse', 'Flucht', 'Flugbegleiter', 'Flughafen', 'Flugsand', 'Flugzeug', 'Fluss',
   'Flusspferd', 'Folie', 'Forelle', 'Formel', 'Forscher', 'Forschung', 'Forstamt', 'Fossil', 'Fotoapparat', 'Fotograf',
-  'Frachtgut', 'Frachtschiff', 'Frage', 'Freiheit', 'Fremdsprache', 'Frist', 'Frucht', 'Fruchtsaft', 'Fuchs', 'Fuchsbau',
+  'Frachtgut', 'Frachtschiff', 'Frage', 'Freiheit', 'Fremdsprache', 'Frist', 'Frucht', 'Fruchtsaft', 'Fuchs',
   'Funke', 'Furche',
   // G
-  'Gabel', 'Galerie', 'Galgen', 'Garten', 'Gartenzaun', 'Gasse', 'Gasthaus', 'Gaumen', 'Gaunerei', 'Gebet',
-  'Gebiet', 'Gebirge', 'Geburt', 'Geduld', 'Gefahr', 'Geflecht', 'Gehalt', 'Geheimnis', 'Gehirn', 'Geist',
+  'Galerie', 'Galgen', 'Garten', 'Gartenzaun', 'Gasse', 'Gasthaus', 'Gaumen', 'Gaunerei', 'Gebet',
+  'Gebiet', 'Gebirge', 'Geduld', 'Gefahr', 'Geflecht', 'Gehalt', 'Geheimnis',
   'Geizhals', 'Geldbeutel', 'Gelenk', 'Gemeinde', 'Gemetzel', 'Generator', 'Genie', 'Geografie', 'Geologe', 'Geplauder',
   'Geraschel', 'Gerste', 'Geruch', 'Geschenk', 'Gesellschaft', 'Gesetz', 'Gesicht', 'Gesindel', 'Getrampel', 'Getreide',
   'Gewehr', 'Gewicht', 'Gewimmel', 'Gewissen', 'Gewitter', 'Gipfel', 'Gitarre', 'Gitter', 'Glanz', 'Glasperle',
   'Glasscherbe', 'Glaube', 'Gleis', 'Gleisbett', 'Globus', 'Glocke', 'Glockenturm', 'Glutnest', 'Gnade', 'Goldmedaille',
-  'Gondel', 'Grabstein', 'Grafik', 'Grammatik', 'Granit', 'Grasnarbe', 'Grauzone', 'Grenzstein', 'Grenzwall', 'Grippe',
+  'Gondel', 'Grabstein', 'Grafik', 'Grammatik', 'Grasnarbe', 'Grauzone', 'Grenzstein', 'Grenzwall', 'Grippe',
   'Grotte', 'Grundriss', 'Gruppe', 'Gulasch', 'Gurke',
   // H
   'Hafenkran', 'Hagebutte', 'Haken', 'Halbmond', 'Halle', 'Halskette', 'Hammer', 'Hamster', 'Handel', 'Handgelenk',
   'Handschrift', 'Handschuh', 'Handtasche', 'Handtuch', 'Handwerk', 'Hantel', 'Harke', 'Hartholz', 'Haselmaus', 'Haufen',
   'Hauptstadt', 'Hausarzt', 'Hausflur', 'Hebel', 'Hecke', 'Heide', 'Heimat', 'Henkel', 'Herbst', 'Herbstlaub',
-  'Herde', 'Herdfeuer', 'Herzog', 'Heuboden', 'Hindernis', 'Hirsch', 'Hirse', 'Hobel', 'Hobelbank', 'Hochhaus',
-  'Hochmoor', 'Hochzeit', 'Hocker', 'Hoffnung', 'Holzklotz', 'Holzwurm', 'Honig', 'Hopfen', 'Horde', 'Horizont',
-  'Hornisse', 'Horst', 'Hosentasche', 'Hotel', 'Hubschrauber', 'Hufeisen', 'Humor', 'Hunger', 'Hutschnur', 'Hymne',
+  'Herde', 'Herdfeuer', 'Herzog', 'Heuboden', 'Hindernis', 'Hirsch', 'Hirse', 'Hobelbank', 'Hochhaus',
+  'Hochmoor', 'Hochzeit', 'Hoffnung', 'Holzklotz', 'Holzwurm', 'Honig', 'Hopfen', 'Horde', 'Horizont',
+  'Hornisse', 'Hosentasche', 'Hotel', 'Hubschrauber', 'Hufeisen', 'Humor', 'Hunger', 'Hutschnur', 'Hymne',
   // I
   'Illusion', 'Imkerei', 'Impfstoff', 'Impuls', 'Index', 'Indiz', 'Industrie', 'Infekt', 'Inhalt', 'Innenhof',
   'Inschrift', 'Insekt', 'Instrument', 'Interview', 'Intrige', 'Ironie', 'Irrgarten', 'Irrglaube', 'Irrtum',
   // J
   'Jagdhorn', 'Jahrmarkt', 'Jargon', 'Jasmin', 'Journal', 'Jubel', 'Jugend', 'Junge', 'Jurist', 'Juwel',
   // K
-  'Kabel', 'Kabine', 'Kabinett', 'Kaffee', 'Kajak', 'Kakao', 'Kaktus', 'Kalender', 'Kalkstein', 'Kamel',
+  'Kabel', 'Kabine', 'Kabinett', 'Kaffee', 'Kajak', 'Kakao', 'Kaktus', 'Kalender', 'Kalkstein',
   'Kamera', 'Kamin', 'Kaminfeger', 'Kammer', 'Kampf', 'Kanal', 'Kanne', 'Kante', 'Kapsel', 'Karotte',
   'Kartoffel', 'Karton', 'Kastanie', 'Kasten', 'Katze', 'Kaufmann', 'Kegel', 'Kehle', 'Keller', 'Kellner',
   'Kenner', 'Kerbe', 'Kerbholz', 'Kerze', 'Kerzenlicht', 'Kessel', 'Kette', 'Keule', 'Kienspan', 'Kiesel',
-  'Kiesgrube', 'Kimono', 'Kinderwagen', 'Kirche', 'Kirchhof', 'Kirchturm', 'Kissen', 'Kiste', 'Klage', 'Klammer',
+  'Kiesgrube', 'Kimono', 'Kinderwagen', 'Kirche', 'Kirchhof', 'Kirchturm', 'Kissen', 'Kiste', 'Klage',
   'Klang', 'Klarinette', 'Klasse', 'Klaue', 'Klavier', 'Kleeblatt', 'Kleid', 'Klemme', 'Klima', 'Klinge',
   'Klingelknopf', 'Klinik', 'Klippe', 'Kloster', 'Knabe', 'Knebel', 'Knoblauch', 'Knochen', 'Knopf', 'Knopfloch',
   'Knoten', 'Kobalt', 'Kochtopf', 'Koffer', 'Kohle', 'Kolben', 'Kolonie', 'Komet', 'Kommode', 'Kompass',
@@ -121,36 +139,36 @@ export const NOUNS = [
   'Kordel', 'Korken', 'Korkenzieher', 'Kornfeld', 'Korsett', 'Krabbe', 'Kraft', 'Kraftwerk', 'Kragen', 'Krampf',
   'Kranich', 'Krankenhaus', 'Krankenwagen', 'Kranz', 'Krater', 'Kredit', 'Kreide', 'Kreis', 'Kresse', 'Kreuz',
   'Krieg', 'Kristall', 'Kritik', 'Krokus', 'Krone', 'Kronleuchter', 'Kruste', 'Kubus', 'Kuchen', 'Kugel',
-  'Kunde', 'Kunst', 'Kunstwerk', 'Kupfer', 'Kurbel', 'Kurier', 'Kurve', 'Kutsche',
+  'Kunde', 'Kunstwerk', 'Kupfer', 'Kurbel', 'Kurier', 'Kurve', 'Kutsche',
   // L
   'Laboratorium', 'Labyrinth', 'Landkarte', 'Landschaft', 'Lanze', 'Laser', 'Lastwagen', 'Latte', 'Laube', 'Lauch',
   'Laune', 'Lautsprecher', 'Lawine', 'Lawinengefahr', 'Lebensmittel', 'Leder', 'Legende', 'Lehmboden', 'Lehne', 'Lehrbuch',
-  'Lehrer', 'Leine', 'Leinsamen', 'Leinwand', 'Leiter', 'Lektor', 'Lenker', 'Leopard', 'Lerche', 'Leuchtturm',
+  'Lehrer', 'Leine', 'Leinsamen', 'Leinwand', 'Lektor', 'Leopard', 'Lerche', 'Leuchtturm',
   'Libelle', 'Licht', 'Lichtschalter', 'Liebe', 'Liebesbrief', 'Lieferant', 'Limonade', 'Linde', 'Lineal', 'Linie',
   'Lippe', 'Literatur', 'Lobby', 'Locke', 'Logik', 'Lokal', 'Lokomotive', 'Lorbeer', 'Lotse', 'Lotto',
   'Luftballon', 'Lunge', 'Luxus',
   // M
   'Machtwort', 'Magen', 'Magier', 'Magnesium', 'Magnet', 'Maisfeld', 'Makler', 'Maler', 'Mandel', 'Mangel',
-  'Mannschaft', 'Mantel', 'Marke', 'Markt', 'Marktplatz', 'Marmelade', 'Marmor', 'Marsch', 'Maschine', 'Maske',
-  'Masse', 'Mathematik', 'Matte', 'Mauer', 'Mauerwerk', 'Maurer', 'Mechanismus', 'Medaille', 'Medizin', 'Meile',
+  'Mannschaft', 'Mantel', 'Marke', 'Markt', 'Marktplatz', 'Marmelade', 'Marmor', 'Maschine', 'Maske',
+  'Mathematik', 'Matte', 'Mauer', 'Mauerwerk', 'Maurer', 'Mechanismus', 'Medaille', 'Medizin', 'Meile',
   'Meise', 'Melodie', 'Melone', 'Menge', 'Mensch', 'Menschheit', 'Messer', 'Metall', 'Meteor', 'Meter',
   'Miene', 'Mikroskop', 'Milbe', 'Milch', 'Milchglas', 'Mineral', 'Minze', 'Mispel', 'Mistgabel', 'Mitte',
   'Mitternacht', 'Mixer', 'Moment', 'Monat', 'Mondschein', 'Monitor', 'Moorhuhn', 'Moped', 'Morgentau', 'Mosaik',
   'Motiv', 'Motor', 'Motorboot', 'Motorhaube', 'Motte', 'Mulde', 'Mumie', 'Museum', 'Muskel', 'Muster',
   'Mutter',
   // N
-  'Nabel', 'Nachbarin', 'Nachricht', 'Nachthemd', 'Nachtisch', 'Nadelbaum', 'Nadelwald', 'Nagel', 'Nagelbett', 'Nahrung',
-  'Narbe', 'Nationalpark', 'Natur', 'Naturschutz', 'Nebelbank', 'Neffe', 'Nessel', 'Nichte', 'Nickel', 'Niere',
+  'Nabel', 'Nachbarin', 'Nachricht', 'Nachthemd', 'Nachtisch', 'Nadelbaum', 'Nadelwald', 'Nagelbett', 'Nahrung',
+  'Narbe', 'Nationalpark', 'Naturschutz', 'Nebelbank', 'Neffe', 'Nessel', 'Nichte', 'Nickel', 'Niere',
   'Nomade', 'Notausgang', 'Notiz', 'Notizblock', 'Nougat', 'Novelle', 'Nudel', 'Nummer', 'Nutzen',
   // O
-  'Oberarzt', 'Objekt', 'Ochse', 'Ofenrohr', 'Oktave', 'Olive', 'Onkel', 'Operation', 'Opfer', 'Orange',
-  'Orangensaft', 'Orbit', 'Orchester', 'Orden', 'Ordnung', 'Organ', 'Organismus', 'Orgel', 'Orkan', 'Ornament',
+  'Oberarzt', 'Objekt', 'Ofenrohr', 'Oktave', 'Olive', 'Onkel', 'Operation', 'Opfer', 'Orange',
+  'Orangensaft', 'Orbit', 'Orchester', 'Orden', 'Ordnung', 'Organismus', 'Orgel', 'Ornament',
   'Ozean',
   // P
   'Palast', 'Palette', 'Panda', 'Panik', 'Panzer', 'Papier', 'Papierkorb', 'Pappel', 'Parade', 'Parfum',
   'Parkplatz', 'Partie', 'Passagier', 'Paste', 'Pastor', 'Patent', 'Patient', 'Pauke', 'Pause', 'Pechvogel',
   'Pension', 'Pergament', 'Perle', 'Person', 'Pfahlbau', 'Pfanne', 'Pfannkuchen', 'Pfefferminze', 'Pfeife', 'Pfeil',
-  'Pfeiler', 'Pferd', 'Pfirsich', 'Pflanze', 'Pflaster', 'Pflasterstein', 'Pflug', 'Pforte', 'Pfosten', 'Pfote',
+  'Pfeiler', 'Pferd', 'Pfirsich', 'Pflanze', 'Pflaster', 'Pflasterstein', 'Pflug', 'Pforte', 'Pfote',
   'Pfund', 'Phase', 'Philosophie', 'Physik', 'Physiker', 'Piano', 'Pilger', 'Pilot', 'Pilzsammler', 'Pinguin',
   'Pinsel', 'Pirat', 'Piste', 'Pizza', 'Plakat', 'Planet', 'Planetarium', 'Plastik', 'Platte', 'Platz',
   'Plombe', 'Pokal', 'Politik', 'Politiker', 'Pollen', 'Portal', 'Porzellan', 'Poster', 'Postkarte', 'Praktikum',
@@ -159,49 +177,49 @@ export const NOUNS = [
   // Q
   'Quader', 'Quadrant', 'Qualle', 'Quarz', 'Quelle', 'Quirl', 'Quote',
   // R
-  'Rabatt', 'Rachen', 'Radiergummi', 'Radio', 'Radkranz', 'Rahmen', 'Rakete', 'Rampe', 'Rasen', 'Raster',
+  'Rabatt', 'Rachen', 'Radiergummi', 'Radio', 'Radkranz', 'Rakete', 'Rampe',
   'Rathaus', 'Ratte', 'Raubtier', 'Rauchfang', 'Raufbold', 'Raupe', 'Rebell', 'Rebstock', 'Rechen', 'Rechnung',
-  'Reflex', 'Regen', 'Regenbogen', 'Regenmantel', 'Regenschirm', 'Regenwolke', 'Reifen', 'Reihe', 'Reisekoffer', 'Rekord',
-  'Relief', 'Reptil', 'Rettich', 'Rettungsboot', 'Revier', 'Rezeption', 'Richter', 'Richtung', 'Riedgras', 'Riegel',
-  'Riemen', 'Riesenrad', 'Rinde', 'Ringelnatter', 'Rippe', 'Ritter', 'Ritual', 'Robbe', 'Roboter', 'Rodeo',
-  'Roggen', 'Rohstoff', 'Rolle', 'Roman', 'Rosine', 'Rostfleck', 'Rotor', 'Rotwein', 'Rubin', 'Rucksack',
+  'Reflex', 'Regenbogen', 'Regenmantel', 'Regenschirm', 'Regenwolke', 'Reifen', 'Reihe', 'Reisekoffer', 'Rekord',
+  'Relief', 'Rettich', 'Rettungsboot', 'Revier', 'Rezeption', 'Richter', 'Richtung', 'Riedgras', 'Riegel',
+  'Riemen', 'Riesenrad', 'Ringelnatter', 'Rippe', 'Ritter', 'Ritual', 'Robbe', 'Roboter', 'Rodeo',
+  'Roggen', 'Rohstoff', 'Rolle', 'Roman', 'Rostfleck', 'Rotor', 'Rotwein', 'Rubin', 'Rucksack',
   'Ruder', 'Ruderboot', 'Ruine', 'Rumpf', 'Runde', 'Rutsche',
   // S
-  'Sackgasse', 'Safari', 'Saite', 'Salon', 'Salto', 'Salut', 'Salzkorn', 'Samen', 'Sammler', 'Sandkorn',
+  'Sackgasse', 'Safari', 'Saite', 'Salon', 'Salto', 'Salut', 'Salzkorn', 'Sammler', 'Sandkorn',
   'Sandstrand', 'Sattel', 'Sauerstoff', 'Sauerteig', 'Sauna', 'Schachbrett', 'Schacht', 'Schaden', 'Schallplatte', 'Schalter',
   'Scharnier', 'Schatten', 'Schatz', 'Schatzkiste', 'Schaufel', 'Schaufenster', 'Schaukel', 'Scheibe', 'Scheinwerfer', 'Schenkel',
-  'Schere', 'Scherz', 'Scheune', 'Schicht', 'Schiedsrichter', 'Schiene', 'Schiff', 'Schild', 'Schilf', 'Schimmel',
-  'Schirm', 'Schlaf', 'Schlafsack', 'Schlagzeug', 'Schlange', 'Schlauch', 'Schleife', 'Schleuse', 'Schlitten', 'Schlittschuh',
+  'Schere', 'Scherz', 'Scheune', 'Schicht', 'Schiedsrichter', 'Schiff', 'Schild', 'Schilf', 'Schimmel',
+  'Schirm', 'Schlafsack', 'Schlagzeug', 'Schlange', 'Schlauch', 'Schleife', 'Schleuse', 'Schlitten', 'Schlittschuh',
   'Schloss', 'Schlucht', 'Schmerz', 'Schmetterling', 'Schmied', 'Schnabel', 'Schnecke', 'Schnee', 'Schneeflocke', 'Schnellzug',
   'Schnepfe', 'Schnitt', 'Schnitzel', 'Schnur', 'Schokolade', 'Scholle', 'Schornstein', 'Schotter', 'Schrank', 'Schraube',
   'Schreck', 'Schreibtisch', 'Schrift', 'Schritt', 'Schrott', 'Schuhwerk', 'Schulhof', 'Schuppe', 'Schuppen', 'Schuster',
   'Schutz', 'Schwalbe', 'Schwamm', 'Schwarm', 'Schwelle', 'Schwert', 'Schwester', 'Schwimmbad', 'Segel', 'Segelboot',
-  'Segler', 'Seide', 'Seife', 'Seite', 'Sekte', 'Sektglas', 'Semmel', 'Senator', 'Sender', 'Sense',
-  'Sessel', 'Seufzer', 'Sichel', 'Sieger', 'Signal', 'Silbe', 'Silber', 'Sinnbild', 'Sirene', 'Sirup',
+  'Segler', 'Seide', 'Seife', 'Seite', 'Sekte', 'Sektglas', 'Semmel', 'Senator', 'Sender',
+  'Sessel', 'Seufzer', 'Sichel', 'Signal', 'Silbe', 'Silber', 'Sinnbild', 'Sirene', 'Sirup',
   'Sitte', 'Sitzbank', 'Skala', 'Skalpell', 'Skelett', 'Skilift', 'Skizze', 'Sklave', 'Skulptur', 'Slalom',
   'Socke', 'Sockel', 'Sohle', 'Soldat', 'Sommer', 'Sonne', 'Sonnenblume', 'Sonnenlicht', 'Sonnenuhr', 'Sorge',
   'Sorte', 'Spagat', 'Spange', 'Spanne', 'Spargel', 'Spaten', 'Spatz', 'Specht', 'Speck', 'Spende',
-  'Sperre', 'Sperrholz', 'Spiegel', 'Spiel', 'Spielmann', 'Spielplatz', 'Spinne', 'Spinnennetz', 'Spirale', 'Spitze',
+  'Sperrholz', 'Spiegel', 'Spiel', 'Spielmann', 'Spielplatz', 'Spinne', 'Spinnennetz', 'Spirale', 'Spitze',
   'Splitter', 'Sporn', 'Sportplatz', 'Sprache', 'Sprachkurs', 'Sprung', 'Spule', 'Staat', 'Stachelbeere', 'Stadion',
   'Stadt', 'Stadtplan', 'Stall', 'Stamm', 'Stand', 'Standbild', 'Standuhr', 'Stange', 'Start', 'Statue',
   'Staub', 'Steilhang', 'Stein', 'Steinbock', 'Steinbruch', 'Stelle', 'Stempel', 'Steppe', 'Stern', 'Sternbild',
   'Steuer', 'Stichprobe', 'Stiefel', 'Stiefkind', 'Stier', 'Stift', 'Stimme', 'Stimmgabel', 'Stirn', 'Stockwerk',
-  'Stoff', 'Stollen', 'Stolz', 'Storch', 'Strand', 'Strandkorb', 'Strauch', 'Streifen', 'Streit', 'Strich',
+  'Stoff', 'Stollen', 'Stolz', 'Storch', 'Strand', 'Strandkorb', 'Strauch', 'Streifen', 'Streit',
   'Strohhalm', 'Strom', 'Stromkabel', 'Strudel', 'Strumpf', 'Stube', 'Studentin', 'Stufe', 'Stuhl', 'Stunde',
   'Sturm', 'Sturmflut', 'Sturz', 'Suppe', 'Suppentopf', 'Symbol', 'System', 'Szene',
   // T
-  'Tablett', 'Tafel', 'Tagedieb', 'Talent', 'Talsperre', 'Tango', 'Tanne', 'Tannenbaum', 'Tante', 'Tapete',
+  'Tablett', 'Tagedieb', 'Talent', 'Talsperre', 'Tango', 'Tanne', 'Tannenbaum', 'Tante', 'Tapete',
   'Tasche', 'Taschenlampe', 'Taschentuch', 'Tasse', 'Tastatur', 'Taste', 'Taube', 'Taucher', 'Tauwetter', 'Teekanne',
   'Teekessel', 'Teich', 'Teichrose', 'Telefonbuch', 'Teleskop', 'Teller', 'Tempel', 'Tempo', 'Tennis', 'Teppich',
-  'Teppichboden', 'Termin', 'Terrasse', 'Testament', 'Theater', 'Thema', 'Theorie', 'Thermometer', 'Thron', 'Tiefgarage',
+  'Teppichboden', 'Termin', 'Terrasse', 'Theater', 'Theorie', 'Thermometer', 'Thron', 'Tiefgarage',
   'Tiefsinn', 'Tierarzt', 'Tiger', 'Tinte', 'Tintenfisch', 'Tischdecke', 'Titel', 'Toast', 'Toilette', 'Tomate',
-  'Tomatensaft', 'Tonne', 'Topas', 'Torfmoor', 'Torte', 'Tourist', 'Trabant', 'Tracht', 'Trainer', 'Traktor',
-  'Trauer', 'Trauerweide', 'Traum', 'Treffer', 'Treibhaus', 'Treibholz', 'Trend', 'Treppe', 'Tresor', 'Tribut',
+  'Tomatensaft', 'Tonne', 'Topas', 'Torfmoor', 'Tourist', 'Trabant', 'Tracht', 'Trainer', 'Traktor',
+  'Trauer', 'Trauerweide', 'Treffer', 'Treibhaus', 'Treibholz', 'Trend', 'Treppe', 'Tresor', 'Tribut',
   'Trichter', 'Trikot', 'Trinkwasser', 'Trommel', 'Trompete', 'Tropfen', 'Trugbild', 'Truhe', 'Trupp', 'Tulpe',
-  'Tumor', 'Tunnel', 'Turban', 'Turbine', 'Turmfalke', 'Turnhalle', 'Turnier', 'Tusche', 'Tutor', 'Typus',
+  'Tumor', 'Tunnel', 'Turban', 'Turbine', 'Turmfalke', 'Turnhalle', 'Turnier', 'Tutor', 'Typus',
   // U
   'Uhrmacher', 'Ulmenholz', 'Umleitung', 'Umzug', 'Unfall', 'Uniform', 'Union', 'Universum', 'Unruhe', 'Unterholz',
-  'Unterricht', 'Unterschrift', 'Urgestein', 'Urkunde', 'Urlaub', 'Ursache', 'Urteil',
+  'Unterricht', 'Unterschrift', 'Urgestein', 'Urkunde', 'Urlaub', 'Urteil',
   // V
   'Vanille', 'Vater', 'Ventil', 'Ventilator', 'Verband', 'Verbrecher', 'Verein', 'Vergangenheit', 'Verkehr', 'Versammlung',
   'Verschlag', 'Verstand', 'Vertrag', 'Vertrauen', 'Viehweide', 'Viertel', 'Villa', 'Violine', 'Virus', 'Vision',

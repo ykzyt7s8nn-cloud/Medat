@@ -191,7 +191,7 @@ src/
   data/            reine Datenlisten, keine Logik
     names.js           100 Vornamen + 100 Nachnamen, Avatar-Farben
     allergens.js       52 Allergene nach Kategorie, Blutgruppen
-    nouns.js           1427 Substantive ohne Umlaute/ß, anagramm-eindeutig
+    nouns.js           1369 Substantive ohne Umlaute/ß, anagramm-eindeutig
     syllogismTerms.js  70 Begriffstripel
     testConfig.js      Testteile samt Gewichten, Zeitlimits, Aufgabenzahlen
     bms/               BMS-Inhalte, ein Modul je Thema

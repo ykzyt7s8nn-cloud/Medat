@@ -465,7 +465,7 @@ const GENERATORS = [
       const factor = pick([2, 3]);
       return {
         values: build(randInt(1, 9), (previous, i) => previous * factor + i),
-        rule: `Jede Zahl ist die vorherige × ${factor} plus ihre Position (+1, +2, +3, …).`,
+        rule: `Jede Zahl ist die vorherige × ${factor} plus 1, 2, 3, … – der Summand wächst bei jedem Schritt um 1.`,
       };
     },
   },
@@ -549,7 +549,48 @@ function isUsable(values, level) {
   // Ab Stufe 3 darf die Folge nicht auf eine konstante Differenz oder einen
   // konstanten Faktor hinauslaufen – das wären Stufe-1-/Stufe-2-Aufgaben.
   if (level >= 3 && isTrivial(values)) return false;
+  if (simplerRuleDisagrees(values)) return false;
   return true;
+}
+
+/**
+ * Passt auf die sieben sichtbaren Zahlen auch eine einfachere Regel, die zu
+ * anderen Lösungen führt? Dann ist die Aufgabe mehrdeutig, und wer die
+ * einfachere Regel findet, bekäme „falsch“.
+ *
+ * Geprüft werden die Muster, die man beim Hinschauen zuerst probiert:
+ *   - Differenzen, die sich mit Periode 1, 2 oder 3 wiederholen
+ *     (5, 7, 11, 13, 17, 19, 23 sieht nach +2, +4 aus, nicht nach Primzahlen)
+ *   - zwei verschachtelte Folgen mit je konstanter Differenz
+ *     (die Teilfolge 1, 2, 3 sieht nach +1 aus, nicht nach Fibonacci)
+ */
+export function simplerRuleDisagrees(values) {
+  const visible = values.slice(0, VISIBLE_LENGTH);
+  const solution = values.slice(VISIBLE_LENGTH);
+  const diffs = visible.slice(1).map((value, i) => value - visible[i]);
+
+  for (const period of [1, 2, 3]) {
+    if (!diffs.every((d, i) => i < period || d === diffs[i - period])) continue;
+    const next = visible[visible.length - 1] + diffs[diffs.length - period];
+    const after = next + diffs[diffs.length - period + (period > 1 ? 1 : 0)];
+    if (next !== solution[0] || after !== solution[1]) return true;
+  }
+
+  // Verschachtelt: Position 8 setzt die geraden Stellen (2, 4, 6) fort,
+  // Position 9 die ungeraden (1, 3, 5, 7).
+  const even = visible.filter((_, i) => i % 2 === 1);
+  const odd = visible.filter((_, i) => i % 2 === 0);
+  const constantStep = (part) => {
+    const steps = part.slice(1).map((value, i) => value - part[i]);
+    return steps.every((step) => step === steps[0]) ? steps[0] : null;
+  };
+  const evenStep = constantStep(even);
+  const oddStep = constantStep(odd);
+  if (evenStep !== null && oddStep !== null) {
+    if (even[even.length - 1] + evenStep !== solution[0]
+      || odd[odd.length - 1] + oddStep !== solution[1]) return true;
+  }
+  return false;
 }
 
 const generatorsForLevel = (level) => GENERATORS.filter((generator) => generator.level === level);
