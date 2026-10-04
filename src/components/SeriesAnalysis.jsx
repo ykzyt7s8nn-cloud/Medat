@@ -50,6 +50,18 @@ function constantRatio(values) {
   return values.every((value, i) => i === 0 || value / values[i - 1] === ratio) ? ratio : null;
 }
 
+/**
+ * Quotient als Rechenschritt. Ein Bruch wie 1/3 wird als "÷3" gezeigt, nicht
+ * als gerundetes "×0.33" – damit kann man nicht exakt weiterrechnen.
+ */
+function formatRatio(ratio) {
+  if (ratio === null) return '–';
+  if (Number.isInteger(ratio)) return `×${ratio}`;
+  const inverse = 1 / ratio;
+  if (Math.abs(inverse - Math.round(inverse)) < 1e-9) return `÷${Math.round(inverse)}`;
+  return `×${ratio.toFixed(2).replace('.', ',')}`;
+}
+
 const ratioCell = (ratio, key) => (
   <span key={key} className={`${CELL} bg-ios-orange/10 font-medium text-ios-orange dark:bg-ios-orange/20`}>
     ×{ratio}
@@ -97,7 +109,7 @@ export function SeriesAnalysis({ values, family, solutionCount = 2 }) {
         <Row label="Quotienten">
           {ratios.map((ratio, i) => (
             <span key={i} className={`${CELL} bg-ios-orange/10 font-medium text-ios-orange dark:bg-ios-orange/20`}>
-              {ratio === null ? '–' : `×${Number.isInteger(ratio) ? ratio : ratio.toFixed(2)}`}
+              {formatRatio(ratio)}
             </span>
           ))}
         </Row>
