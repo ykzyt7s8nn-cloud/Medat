@@ -5,27 +5,41 @@
  * Situation stehen fünf Überlegungen, die von sehr eigennützig bis sehr
  * uneigennützig reichen. Sie sind nach ihrer Bedeutung für eine moralisch
  * richtige Entscheidung auf die Plätze a bis e zu verteilen – a ist die
- * wichtigste, e die unwichtigste. Jeder Platz wird genau einmal vergeben.
- * Gewertet wird mit Teilpunkten: Jede richtig gesetzte Marke zählt.
+ * wichtigste, e die unwichtigste. Jeder Platz wird genau einmal vergeben; ein
+ * doppelt oder gar nicht vergebener Platz macht die Aufgabe ungültig.
  *
- * Der Schlüssel folgt durchgängig derselben Leiter, angelehnt an Kohlbergs
- * Stufen der Moralentwicklung. Sie ist wichtiger als jede Einzelaufgabe, denn
- * wer sie kennt, kann jede Aufgabe dieses Typs sortieren:
+ * Gewertet wird mit Teilpunkten, aber nicht je richtig gesetzter Marke: Laut
+ * den offiziellen Hinweisen zählt die Übereinstimmung der ganzen Reihung mit
+ * der aus der Theorie abgeleiteten, bestimmt über ein Zusammenhangsmaß. Wie
+ * das hier umgesetzt ist, steht in lib/sekScoring.js.
  *
- *   1. Das Wohl und die Würde der betroffenen Person selbst
- *      – was der Sache nach zählt, unabhängig von Regeln und Publikum
- *   2. Verantwortung, Pflicht und die Folgen für die Allgemeinheit
- *      – was jemand in dieser Rolle schuldet
- *   3. Erwartungen des Umfelds, Beziehungen, das eigene Ansehen
- *      – was andere von mir denken
- *   4. Der eigene Vorteil, Aufwand und Nutzen
- *      – was es mir bringt
- *   5. Die Vermeidung eigener Nachteile oder Unannehmlichkeiten
- *      – was mir erspart bleibt
+ * Die Theorie dahinter ist Kohlbergs Stufenmodell der Moralentwicklung; darin
+ * sind sich die Vorbereitungsanbieter einig. Die Plätze entsprechen den
+ * Stufen von oben nach unten, und wer diese Leiter kennt, kann jede Aufgabe
+ * dieses Typs sortieren:
  *
- * Gefragt ist ausdrücklich nicht die persönliche Meinung, sondern diese
- * Rangfolge. Die eigene erste Eingebung ist oft Stufe 3 – man denkt daran,
- * wie es aussieht. Genau dort liegt der häufigste Fehler.
+ *   a  Das Wohl, die Rechte und die Würde der Betroffenen
+ *      – Achtung des Menschen, universelle Prinzipien (Stufe 5/6)
+ *   b  Verantwortung, Pflicht, Regeln und die Folgen für die Allgemeinheit
+ *      – Gesetz, Ordnung, Sozialvertrag (Stufe 4/5)
+ *   c  Erwartungen des Umfelds, Beziehungen, das eigene Ansehen
+ *      – was andere von mir denken (Stufe 3)
+ *   d  Der eigene Vorteil, Aufwand und Nutzen, das Gegengeschäft
+ *      – „wie du mir, so ich dir“ (Stufe 2)
+ *   e  Die Vermeidung von Strafe, Ärger und eigenen Nachteilen
+ *      – Orientierung an Strafe und Gehorsam (Stufe 1)
+ *
+ * Die Faustregel der Anbieter fasst das zusammen: Uneigennütziges vor
+ * Eigennützigem. Gefragt ist ausdrücklich nicht die persönliche Meinung,
+ * sondern diese Rangfolge. Die eigene erste Eingebung ist oft Stufe 3 – man
+ * denkt daran, wie es aussieht. Genau dort liegt der häufigste Fehler. Der
+ * zweithäufigste liegt unten: Die Angst vor Strafe wirkt dringlich, gehört
+ * aber auf den letzten Platz, noch hinter den eigenen Nutzen.
+ *
+ * Quellen für das Muster: die offizielle Beschreibung und die „Tipps und
+ * Tricks“ auf medizinstudieren.at sowie die Darstellungen der Vorbereitungs-
+ * anbieter (u. a. Mission MedAT, MedGurus, medat-vorbereitung.at, die
+ * ÖH-Skripten). Übernommen ist nur das Muster.
  *
  * `statements` steht in der richtigen Reihenfolge, Platz a zuerst; gemischt
  * wird erst beim Ziehen (siehe data/sek/index.js).
@@ -321,6 +335,126 @@ export const TASKS = [
       'Ob mir das Kopieren zu viel Aufwand ist.',
     ],
     explanation: 'Ihre unverschuldete Lage zuerst, dann die naheliegende Hilfe, die niemandem schadet – das lässt sich fast immer so lösen, dass beide die Unterlagen haben. Ansehen im Jahrgang, eigener Nachteil und Aufwand folgen.',
+  },
+  {
+    id: 'sd-25',
+    situation: 'Du jobbst in einem Fitnessstudio an der Rezeption. Ein Stammkunde, der dir öfter Trinkgeld gibt, bittet dich, seinen Freund heute ausnahmsweise ohne Mitgliedschaft und ohne Einweisung an die Geräte zu lassen. Der Freund hatte vor kurzem einen Bandscheibenvorfall.',
+    statements: [
+      'Ob sich der Freund ohne Einweisung an den Geräten ernsthaft verletzen kann.',
+      'Dass die Hausordnung Einweisung und Mitgliedschaft aus gutem Grund vorschreibt und ich sie für alle gleich anwenden muss.',
+      'Wie der Stammkunde reagiert, wenn ich ihm die Bitte abschlage.',
+      'Ob mir künftig sein Trinkgeld entgeht.',
+      'Ob ich Ärger mit der Studioleitung bekomme, falls es herauskommt.',
+    ],
+    explanation: 'Zuerst die Gesundheit des Freundes, um die es konkret geht. Dann die Regel, die für alle gilt. Die Beziehung zum Stammkunden, das Trinkgeld und die Sorge vor Ärger mit der Leitung folgen in dieser Reihenfolge.',
+  },
+  {
+    id: 'sd-26',
+    situation: 'Bei einer Wanderung mit Freunden verletzt sich eine Mitwanderin am Knöchel. Der Weg zurück ist lang; ihr Tempo würde die Gruppe so verlangsamen, dass ihr alle die Gipfeltour absagen müsstet, auf die ihr euch seit Wochen gefreut habt.',
+    statements: [
+      'Ob die Verletzte ohne Begleitung sicher ins Tal kommt.',
+      'Dass man in einer Gruppe füreinander verantwortlich ist, die man gemeinsam aufgebrochen ist.',
+      'Was die anderen von mir halten, wenn ich vorschlage, trotzdem weiterzugehen.',
+      'Wie sehr ich mich auf den Gipfel gefreut habe.',
+      'Ob mir der lange, langsame Rückweg erspart bleiben kann.',
+    ],
+    explanation: 'Die Sicherheit der Verletzten steht vor allem anderen; die Verantwortung der Gruppe füreinander folgt. Erst dahinter: das Urteil der anderen, die eigene Vorfreude und der vermiedene Aufwand.',
+  },
+  {
+    id: 'sd-27',
+    situation: 'Du arbeitest als Studentin in einer Arztpraxis am Empfang. Ein Bekannter ruft an und will wissen, ob seine Ex-Partnerin, die Patientin der Praxis ist, in letzter Zeit häufiger da war. Er klingt besorgt und sagt, er wolle ihr nur helfen.',
+    statements: [
+      'Dass die Patientin ein Recht darauf hat, dass niemand ohne ihr Einverständnis etwas über ihre Behandlung erfährt.',
+      'Dass ich als Mitarbeiterin der Praxis an die Schweigepflicht gebunden bin.',
+      'Wie der Bekannte reagiert, wenn ich ihm nichts sage.',
+      'Ob ich durch eine Auskunft bei ihm einen Gefallen guthabe.',
+      'Ob ich meinen Job verliere, wenn es herauskommt.',
+    ],
+    explanation: 'An erster Stelle steht das Recht der Patientin selbst, an zweiter die Pflicht, die aus der Rolle folgt. Die Reaktion des Bekannten, ein möglicher Gefallen und die Angst um den Job – also die Strafe – stehen dahinter.',
+  },
+  {
+    id: 'sd-28',
+    situation: 'In deiner WG wohnt eine Mitbewohnerin, die seit Wochen kaum noch das Zimmer verlässt, nicht mehr zur Uni geht und kaum isst. Die anderen Mitbewohner finden, das sei ihre Privatsache.',
+    statements: [
+      'Ob es ihr ernsthaft schlecht geht und sie Hilfe braucht.',
+      'Dass man in einer Wohngemeinschaft eine gewisse Verantwortung füreinander trägt.',
+      'Was die anderen Mitbewohner denken, wenn ich mich einmische.',
+      'Ob mich ein Gespräch mit ihr Zeit und Nerven kostet.',
+      'Ob ich mir eine unangenehme Situation ersparen kann, wenn ich nichts sage.',
+    ],
+    explanation: 'Zuerst das Befinden der Mitbewohnerin, dann die Verantwortung, die das Zusammenleben mit sich bringt. Das Urteil der anderen, der eigene Aufwand und die ersparte Unannehmlichkeit kommen danach.',
+  },
+  {
+    id: 'sd-29',
+    situation: 'Du bist Klassensprecherin. Ein Lehrer bittet dich, ihm die Namen derer zu nennen, die beim Wandertag heimlich Alkohol getrunken haben. Du weißt es, weil du dabei warst; getrunken hast du selbst nicht. Eine Mitschülerin musste danach erbrechen und wurde nach Hause gebracht.',
+    statements: [
+      'Ob die Betroffenen gesundheitlich gefährdet waren und es wieder sein könnten.',
+      'Dass die Schule für die Sicherheit bei Ausflügen verantwortlich ist und dafür wissen muss, was passiert ist.',
+      'Wie die Klasse mich behandelt, wenn ich Namen nenne.',
+      'Ob mir die Rolle als Klassensprecherin beim Lehrer Vorteile bringt.',
+      'Ob ich selbst Ärger bekomme, weil ich dabei war.',
+    ],
+    explanation: 'Die Gesundheit der Mitschülerinnen und Mitschüler zählt zuerst; die Verantwortung der Schule als Einrichtung folgt. Dahinter stehen der Ruf in der Klasse, der eigene Vorteil und die Furcht vor eigenen Folgen.',
+  },
+  {
+    id: 'sd-30',
+    situation: 'Du hast im Internet ein gebrauchtes Fahrrad verkauft. Nach der Übergabe fällt dir ein, dass die Bremse hinten manchmal hakt – du hast das in der Anzeige nicht erwähnt. Der Käufer hat dir seine Telefonnummer gegeben.',
+    statements: [
+      'Ob der Käufer durch die Bremse in einen Unfall geraten kann.',
+      'Dass ich als Verkäufer verpflichtet bin, bekannte Mängel offenzulegen.',
+      'Was der Käufer von mir denkt, wenn ich mich jetzt melde.',
+      'Ob ich ihm einen Teil des Kaufpreises zurückgeben muss.',
+      'Ob er mich wegen des Mangels belangen könnte.',
+    ],
+    explanation: 'Zuerst die Unfallgefahr für den Käufer, dann die Pflicht, die ein Verkauf mit sich bringt. Wie ich dastehe, was es mich kostet und ob mir rechtliche Folgen drohen, kommt danach.',
+  },
+  {
+    id: 'sd-31',
+    situation: 'Ein Freund bittet dich, für ihn bei der Anwesenheitsliste einer Pflichtvorlesung zu unterschreiben. Er sagt, er müsse zu einem Vorstellungsgespräch. Du weißt, dass in dieser Lehrveranstaltung schon zwei Studierende wegen gefälschter Unterschriften gesperrt wurden.',
+    statements: [
+      'Dass eine gefälschte Unterschrift alle täuscht, die sich auf die Liste verlassen.',
+      'Dass die Studienordnung die persönliche Anwesenheit verlangt und ich sie nicht umgehen helfe.',
+      'Wie unsere Freundschaft aussieht, wenn ich ablehne.',
+      'Ob er mir dafür einmal einen Gefallen schuldet.',
+      'Ob ich selbst gesperrt werde, wenn es auffällt.',
+    ],
+    explanation: 'Der Kern ist die Täuschung selbst, dann die Regel der Studienordnung. Freundschaft, der Gefallen im Gegenzug und die Furcht vor einer Sperre folgen in dieser Reihenfolge.',
+  },
+  {
+    id: 'sd-32',
+    situation: 'Im Nachtdienst als Pflegehelferin bemerkst du, dass ein Patient ein Medikament bekommen hat, gegen das in seiner Akte eine Allergie vermerkt ist. Er schläft ruhig. Die zuständige Ärztin ist im Haus, aber gerade in einem anderen Notfall.',
+    statements: [
+      'Ob der Patient eine allergische Reaktion entwickeln könnte, die ihn gefährdet.',
+      'Dass ich verpflichtet bin, einen solchen Fehler sofort zu melden.',
+      'Wie die Kollegin, die das Medikament gegeben hat, mich danach sieht.',
+      'Ob mich das Melden heute Nacht zusätzliche Arbeit kostet.',
+      'Ob man mich mitverantwortlich macht, wenn ich nichts sage und etwas passiert.',
+    ],
+    explanation: 'Die Gefahr für den Patienten geht vor; die Meldepflicht folgt unmittelbar. Das Verhältnis zur Kollegin, die zusätzliche Arbeit und die Sorge, mitverantwortlich gemacht zu werden, stehen dahinter.',
+  },
+  {
+    id: 'sd-33',
+    situation: 'Du bist bei einer Bekannten eingeladen. Ihr Partner erzählt am Tisch einen abfälligen Witz über Menschen mit Behinderung. Am Tisch sitzt auch die Schwester der Gastgeberin, die einen Sohn mit Down-Syndrom hat. Sie lächelt gequält.',
+    statements: [
+      'Dass Menschen mit Behinderung herabgesetzt werden – und die Schwester das gerade unmittelbar erlebt.',
+      'Dass es an einem gemeinsamen Tisch eine Verantwortung gibt, solche Äußerungen nicht stehen zu lassen.',
+      'Wie es auf die Gastgeberin wirkt, wenn ich ihren Partner vor allen kritisiere.',
+      'Ob ich nochmals eingeladen werde.',
+      'Ob mir ein unangenehmer Streit erspart bleibt, wenn ich schweige.',
+    ],
+    explanation: 'Die Würde der Betroffenen steht vorn, die gemeinsame Verantwortung am Tisch folgt. Wie es auf die Gastgeberin wirkt, ob man wieder eingeladen wird und ob man sich den Streit spart, ist nachrangig.',
+  },
+  {
+    id: 'sd-34',
+    situation: 'Du entdeckst, dass ein Bekannter seit Monaten das Behindertenparkticket seiner verstorbenen Mutter benutzt, um in der Innenstadt kostenlos zu parken. Er meint, es schade ja niemandem.',
+    statements: [
+      'Dass Menschen mit Behinderung dadurch ein Parkplatz fehlt, auf den sie angewiesen sind.',
+      'Dass die Nutzung eines fremden Ausweises gegen klare Regeln verstößt, die für alle gelten.',
+      'Wie er reagiert, wenn ich ihn darauf anspreche.',
+      'Ob er mich künftig auch einmal mitnimmt, wenn ich in die Stadt muss.',
+      'Ob ich in etwas hineingezogen werde, wenn es auffliegt.',
+    ],
+    explanation: 'Zuerst die Menschen, denen der Parkplatz zusteht; dann die Regel, die für alle gilt. Die Reaktion des Bekannten, der eigene Vorteil und die Sorge, hineingezogen zu werden, kommen danach.',
   },
 ];
 

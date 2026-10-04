@@ -11,7 +11,7 @@ import Icon from './ui/Icon.jsx';
 import ProgressRing from './ui/ProgressRing.jsx';
 import Tappable from './ui/Tappable.jsx';
 import { formatTime } from '../hooks/useCountdown.js';
-import { formatDuration } from '../lib/format.js';
+import { formatDuration, formatPoints } from '../lib/format.js';
 
 function scoreColor(percent) {
   if (percent >= 80) return '#34C759';
@@ -94,7 +94,7 @@ export function ResultView({
         <ProgressRing value={percent / 100} size={132} strokeWidth={11} color={scoreColor(percent)}>
           <div>
             <p className="tabular text-[30px] font-bold leading-none">
-              {score}
+              {formatPoints(score)}
               <span className="text-[18px] font-semibold text-black/40 dark:text-white/40">/{max}</span>
             </p>
             <p className="tabular text-[15px] font-semibold" style={{ color: scoreColor(percent) }}>

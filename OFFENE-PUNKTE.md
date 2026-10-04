@@ -20,19 +20,35 @@ und die Rückmeldung ist trotzdem systematisch falsch.
 
 **Zu tun.**
 
-1. Recherchieren, welche Muster in Erfahrungsberichten, Vorbereitungsbüchern und
-   Altfragensammlungen zu den SEK-Untertests beschrieben werden: typische
-   Emotionskombinationen, bevorzugte Rangordnungen, wiederkehrende
-   Situationstypen.
-2. Prüfen, ob die Kohlberg-Rangleiter in `src/data/sek/socialDecision.js` dem
-   entspricht oder ob das erwartete Muster davon abweicht.
-3. Dasselbe für die Verteilung von `likely`/`unlikely` in
-   `emotionsRecognise.js` und für die vier Fehlermuster (vermeiden,
-   unterdrücken, grübeln, Ziel aufgeben) in `emotionsRegulate.js`.
-4. Für Textverständnis prüfen, ob Textlänge, Themenwahl und Fragetypen den
+1. Für Textverständnis prüfen, ob Textlänge, Themenwahl und Fragetypen den
    echten Aufgaben nahekommen.
-5. Inhalte nachziehen – und das jeweils zugrunde liegende Prinzip im Kopf der
+2. Inhalte nachziehen – und das jeweils zugrunde liegende Prinzip im Kopf der
    Datendatei mit aktualisieren, sonst driften Inhalt und Erklärung auseinander.
+
+**Stand SEK.** Recherchiert, abgeglichen und nachgezogen; das Muster samt
+Quellen steht jetzt im Kopf jeder der drei Datendateien unter `src/data/sek/`.
+Offen sind nur noch Punkte, die sich ohne bessere Quellen nicht klären lassen:
+
+* **Das Zusammenhangsmaß beim Sozialen Entscheiden.** Offiziell heißt es nur,
+  die Übereinstimmung der Rangreihen werde über ein Zusammenhangsmaß bestimmt.
+  Umgesetzt ist die Spearman-Korrelation (negativ als null), weil sie genau
+  die in Erfahrungsberichten genannten Teilpunkte 0,9 und 0,7 erzeugt. Ob der
+  Test wirklich Spearman nimmt oder z. B. Kendall, und ob negative Werte auf
+  null gesetzt werden, ist nicht bestätigt. Prüfen, sobald die
+  Informationsbroschüre des Testjahrs zur Hand ist – die Seiten von
+  medizinstudieren.at und den Anbietern waren aus der Arbeitsumgebung nicht
+  abrufbar, ausgewertet wurden nur Suchergebnisse.
+* **Gibt es bei „Emotionen erkennen“ Aufgaben mit null oder fünf
+  wahrscheinlichen Gefühlen?** Der Bestand mischt jetzt eins bis vier; ob die
+  Ränder im echten Test vorkommen, sagt keine der gefundenen Quellen. Der
+  Selbsttest verbietet sie derzeit – fällt die Antwort „ja“ aus, dort
+  lockern und ein paar Aufgaben ergänzen.
+* **Altfragensammlungen und Übungsbücher** (MedGurus, SEK-TV-Breaker, ÖH-
+  Skripten) sind nicht eingesehen. Sie könnten zeigen, ob die Rangleiter in
+  Grenzfällen anders sortiert – etwa wenn eine Regel und das Wohl eines
+  Einzelnen gegeneinander stehen – und wie oft beim Regulieren die richtige
+  Antwort Neubewertung statt Handeln ist (hier etwa jede vierte
+  Aufgabe).
 
 **Wo die Grenze liegt.** Nachgebildet wird das Muster, nicht die Aufgabe. Keine
 Originalaufgaben und keine Originaltexte übernehmen. Was übernommen wird, bleibt

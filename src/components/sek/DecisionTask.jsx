@@ -9,10 +9,14 @@
  * Aussage nimmt sie wieder heraus und rückt die dahinter liegenden nach.
  *
  * Nach dem Auflösen steht neben jeder Aussage der richtige Platz, damit man
- * die Abweichung sieht, statt sie sich zusammensuchen zu müssen.
+ * die Abweichung sieht, statt sie sich zusammensuchen zu müssen – und darunter
+ * der Teilpunkt, den die Reihung als Ganzes bringt. Beides ist nicht dasselbe:
+ * a und b vertauscht sind zwei rote Plätze, aber immer noch 0,9 Punkte.
  */
 import Icon from '../ui/Icon.jsx';
 import Tappable from '../ui/Tappable.jsx';
+import { formatPoints } from '../../lib/format.js';
+import { scoreSekTask } from '../../lib/sekScoring.js';
 
 const LETTERS = ['a', 'b', 'c', 'd', 'e'];
 
@@ -78,9 +82,14 @@ export default function DecisionTask({ task, value = [], revealed, onToggle, acc
         );
       })}
 
-      {!revealed && (
+      {revealed ? (
+        <p className="px-1 pt-0.5 text-[13px] font-semibold text-black/60 dark:text-white/60">
+          Übereinstimmung mit der erwarteten Reihung: {formatPoints(scoreSekTask('socialDecision', task, value))} von 1 Punkt
+        </p>
+      ) : (
         <p className="px-1 pt-0.5 text-[12px] text-black/45 dark:text-white/45">
-          Hier zählt jede richtig gesetzte Marke einzeln – auch eine teilweise richtige Reihung bringt Punkte.
+          Gewertet wird die Reihung als Ganzes: Je näher sie an der erwarteten liegt, desto mehr vom Punkt –
+          zwei benachbarte Plätze vertauscht bringen noch 0,9.
         </p>
       )}
     </section>

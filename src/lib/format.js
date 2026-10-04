@@ -17,3 +17,13 @@ export function formatDuration(seconds) {
   const minutes = Math.floor(value / 60);
   return `${minutes}:${String(Math.round(value % 60)).padStart(2, '0')} min`;
 }
+
+/**
+ * Punkte für die Anzeige: ganze Zahlen wie sie sind, sonst auf eine
+ * Nachkommastelle mit Komma. Nötig, seit „Soziales Entscheiden“ Teilpunkte wie
+ * 0,9 vergibt – eine Summe daraus hieße sonst „9.799999999999999“.
+ */
+export function formatPoints(points) {
+  const rounded = Math.round(points * 10) / 10;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1).replace('.', ',');
+}

@@ -6,12 +6,25 @@
  *   Emotionen erkennen   Alles oder nichts. Ein Punkt nur, wenn alle fünf
  *                        Einschätzungen einer Aufgabe stimmen.
  *   Emotionen regulieren Ein Kreuz, ein Punkt.
- *   Soziales Entscheiden Teilpunkte: Jede richtig gesetzte Marke zählt,
- *                        also bis zu fünf Punkte je Aufgabe.
+ *   Soziales Entscheiden Teilpunkte nach Übereinstimmung: bis zu ein Punkt
+ *                        je Aufgabe, abgestuft danach, wie nah die gesetzte
+ *                        Reihung an der erwarteten liegt.
  *
- * Deshalb steht hier `pointsPerTask` neben der Punktefunktion: Die
- * Ergebnisanzeige rechnet `max` daraus, und ohne diese Zahl sähe ein
- * Durchgang „Soziales Entscheiden“ nach 14 statt nach 70 Punkten aus.
+ * Zum Sozialen Entscheiden: Die offiziellen Hinweise (medizinstudieren.at,
+ * „Tipps und Tricks“) sagen, dass die Leistung aus der Übereinstimmung der
+ * eigenen mit der aus der Theorie abgeleiteten Rangreihe folgt und über ein
+ * Zusammenhangsmaß bestimmt wird – gezählt werden also nicht richtig gesetzte
+ * Kreuze. Welches Maß, wird nicht gesagt. Hier steht die Rangkorrelation
+ * nach Spearman: Bei fünf Plätzen ergibt sie genau die Teilpunkte, die in
+ * Erfahrungsberichten genannt werden (zwei benachbarte Plätze vertauscht
+ * 0,9, drei im Kreis verschoben 0,7). Eine gegenläufige Reihung zählt null,
+ * nicht negativ.
+ *
+ * Der Unterschied zum bloßen Markenzählen ist erheblich: Wer a und b
+ * vertauscht, hätte dort nur drei von fünf Marken, verfehlt die erwartete
+ * Reihung aber kaum (0,9). Wer zusätzlich d und e vertauscht, hätte nur noch
+ * eine Marke, aber immer noch 0,8. Umgekehrt kostet ein grober Fehler – die
+ * wichtigste Überlegung ganz nach unten – viel mehr als zwei Marken.
  *
  * Reine Funktionen ohne Speicher- oder React-Zugriff, damit der Selbsttest sie
  * prüfen kann.
@@ -46,19 +59,37 @@ export function scoreSekTask(testId, task, value) {
     return task.options[value]?.correct ? 1 : 0;
   }
 
-  // Soziales Entscheiden: `value` ist die Reihenfolge der Anzeigepositionen –
-  // value[0] ist die Aussage, die auf Platz a gesetzt wurde. Richtig ist sie
-  // dort, wenn ihr hinterlegter Rang dem Platz entspricht.
-  if (!Array.isArray(value)) return 0;
-  return value.reduce(
-    (sum, displayIndex, place) => sum + (task.statements[displayIndex]?.rank === place ? 1 : 0),
-    0,
-  );
+  // Soziales Entscheiden: Unvollständig ist ungültig, wie im Test ein doppelt
+  // oder gar nicht vergebener Platz.
+  if (!isSekComplete(testId, task, value)) return 0;
+  return rankAgreement(task, value);
 }
 
-/** Höchstpunktzahl je Aufgabe – Grundlage für `max` im Ergebnis. */
-export function pointsPerTask(testId, task) {
-  if (testId === 'socialDecision') return task?.statements.length ?? 5;
+/**
+ * Übereinstimmung einer vollständigen Reihung mit der erwarteten, als
+ * Spearman-Korrelation auf eine Nachkommastelle, negative Werte als null.
+ *
+ * `value` ist die Reihenfolge der Anzeigepositionen – value[0] ist die
+ * Aussage, die auf Platz a gesetzt wurde; `rank` ist ihr erwarteter Platz.
+ */
+export function rankAgreement(task, value) {
+  const n = task.statements.length;
+  const squared = value.reduce((sum, displayIndex, place) => {
+    const d = place - task.statements[displayIndex].rank;
+    return sum + d * d;
+  }, 0);
+  const rho = 1 - (6 * squared) / (n * (n * n - 1));
+  return Math.max(0, Math.round(rho * 10) / 10);
+}
+
+/** Wie viele Aussagen auf ihrem erwarteten Platz stehen – nur zur Anzeige. */
+export function correctPlaces(task, value) {
+  if (!Array.isArray(value)) return 0;
+  return value.filter((displayIndex, place) => task.statements[displayIndex]?.rank === place).length;
+}
+
+/** Höchstpunktzahl je Aufgabe – in allen drei Untertests ein Punkt. */
+export function pointsPerTask() {
   return 1;
 }
 

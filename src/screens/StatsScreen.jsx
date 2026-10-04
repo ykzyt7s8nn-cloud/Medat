@@ -16,7 +16,7 @@ import { useNavigation } from '../store/useNavigation.js';
 import { useProgress } from '../store/useProgress.js';
 import { useBmsProgress } from '../store/useBmsProgress.js';
 import { formatTime } from '../hooks/useCountdown.js';
-import { formatDuration } from '../lib/format.js';
+import { formatDuration, formatPoints } from '../lib/format.js';
 
 function StatCard({ icon, label, value, tint }) {
   return (
@@ -168,7 +168,7 @@ export default function StatsScreen() {
               <div>
                 <dt className="text-[11px] text-black/45 dark:text-white/45">Zuletzt</dt>
                 <dd className="tabular text-[15px] font-semibold">
-                  {items.length === 0 ? '–' : `${items[items.length - 1].score}/${items[items.length - 1].max}`}
+                  {items.length === 0 ? '–' : `${formatPoints(items[items.length - 1].score)}/${items[items.length - 1].max}`}
                 </dd>
               </div>
             </dl>

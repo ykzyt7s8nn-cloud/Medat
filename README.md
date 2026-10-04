@@ -37,7 +37,7 @@ Textverständnis und sozial-emotionale Kompetenzen:
 | Textverständnis | 12 | 35 min | 3 Sachtexte mit je 4 Fragen; der Text bleibt beim Antworten sichtbar |
 | Emotionen erkennen | 14 | 21 min | 5 Gefühle je Situation, alles oder nichts |
 | Emotionen regulieren | 12 | 18 min | 4 Vorsätze, genau einer führt zum genannten Ziel |
-| Soziales Entscheiden | 14 | 21 min | 5 Überlegungen auf a–e reihen, Teilpunkte je Marke |
+| Soziales Entscheiden | 14 | 21 min | 5 Überlegungen auf a–e reihen, Teilpunkte nach Rangübereinstimmung |
 
 Dazu ein **Simulationsmodus** je Testteil: die fünf KFF-Untertests in der echten
 Reihenfolge mit Originalzeiten (mit geschätztem KFF-Prozentrang am Ende) und
@@ -51,12 +51,18 @@ enthält keine Originalaufgaben und keine Originaltexte.
 
 Bei den sozial-emotionalen Untertests gibt es keinen objektiven Lösungsschlüssel,
 sondern nur den, den der Test erwartet. Deshalb folgt hier jede Aufgabe einem
-offengelegten Prinzip, das in den Datendateien beschrieben steht: bei „Emotionen
-regulieren“ der Bezug auf das genannte Ziel, bei „Soziales Entscheiden“ eine
-Rangleiter nach Kohlberg (Wohl der Betroffenen → Pflicht und Allgemeinheit →
-Erwartungen des Umfelds → eigener Vorteil → vermiedene Nachteile). Wer das
-Prinzip lernt, hat das Übertragbare gelernt; die einzelne Aufgabe ist nur das
-Material dafür.
+offengelegten Muster, das samt Quellen (offizielle Testbeschreibung,
+Vorbereitungsanbieter) in den Datendateien beschrieben steht: bei „Emotionen
+erkennen“ der Bezugspunkt jedes Gefühls und die Beschreibung der Person, bei
+„Emotionen regulieren“ der Bezug auf das genannte Ziel nach dem Prozessmodell
+von Gross (änderbare Lage → konkreter Schritt, unveränderliche → Neubewertung
+oder Annehmen), bei „Soziales Entscheiden“ eine Rangleiter nach Kohlberg (Wohl
+der Betroffenen → Pflicht und Allgemeinheit → Erwartungen des Umfelds →
+eigener Vorteil → vermiedene Strafe und Nachteile). Gewertet wird dort wie im
+Test die Übereinstimmung der ganzen Reihung, hier als Rangkorrelation nach
+Spearman – zwei benachbarte Plätze vertauscht geben 0,9 von einem Punkt. Wer
+das Muster lernt, hat das Übertragbare gelernt; die einzelne Aufgabe ist nur
+das Material dafür.
 
 ## BMS – Basiskenntnistest
 
@@ -168,7 +174,7 @@ npm install
 npm run dev        # Entwicklungsserver
 npm run build      # Icons + Produktionsbuild nach dist/ + Precache-Liste
 npm run preview    # Produktionsbuild lokal ansehen
-npm run selftest   # Daten- und Engine-Prüfungen (199 Checks)
+npm run selftest   # Daten- und Engine-Prüfungen (209 Checks)
 npm run icons      # PWA-Icons neu generieren
 ```
 
