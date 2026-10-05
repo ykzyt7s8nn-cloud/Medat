@@ -135,7 +135,7 @@ export default function SettingsScreen() {
               <p className="mb-2 text-[15px]">{TESTS[id].short}</p>
               <Segmented
                 ariaLabel={`Schwierigkeit ${TESTS[id].name}`}
-                options={DIFFICULTIES.map((d) => ({ value: d.id, label: d.label }))}
+                options={DIFFICULTIES.map((d) => ({ value: d.id, label: d.label, short: d.short }))}
                 value={settings.difficulty[id]}
                 onChange={(value) => settings.setDifficulty(id, value)}
               />

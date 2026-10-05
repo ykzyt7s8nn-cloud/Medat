@@ -24,7 +24,7 @@ export default function OverallScoreCard({ percents }) {
         <h2 className="text-[15px] font-semibold">Gewichteter Gesamtwert</h2>
         <p className="mt-1 text-[13px] text-black/50 dark:text-white/50">
           Sobald du in einem Testteil etwas geübt hast, steht hier, wie sich deine Ergebnisse
-          nach den offiziellen Gewichten zusammensetzen: BMS 40 %, KFF 40 %, TV 10 %, SEK 10 %.
+          nach den offiziellen Gewichten zusammensetzen: BMS 40&nbsp;%, KFF 40&nbsp;%, TV 10&nbsp;%, SEK 10&nbsp;%.
         </p>
       </section>
     );

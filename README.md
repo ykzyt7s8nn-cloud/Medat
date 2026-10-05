@@ -199,7 +199,15 @@ npm run build      # Icons + Produktionsbuild nach dist/ + Precache-Liste
 npm run preview    # Produktionsbuild lokal ansehen
 npm run selftest   # Daten- und Engine-Prüfungen (285 Checks)
 npm run icons      # PWA-Icons neu generieren
+node scripts/smoketest.mjs   # Klicktest der ganzen App im Browser (Playwright)
 ```
+
+Der Klicktest startet selbst einen Entwicklungsserver, tippt sich auf 390 × 844
+und 320 × 568, hell und dunkel, durch die ganze App und meldet Laufzeitfehler,
+Inhalte über dem Bildschirmrand, Überlappungen, unlesbaren Kontrast und
+verlorene Ergebnisse nach dem Neuladen – Playwright ist dafür keine
+Projektabhängigkeit, der Pfad kommt aus `PLAYWRIGHT_MODULE` (sonst
+`/opt/node-tools/node_modules/playwright`).
 
 `npm run selftest` prüft unter anderem, ob die Syllogismus-Engine exakt die 24
 klassisch gültigen Modi liefert, ob jede MC-Frage genau eine richtige Antwort

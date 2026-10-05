@@ -179,7 +179,7 @@ export const DIFFICULTIES = [
   { id: 'leicht', label: 'Leicht' },
   { id: 'mittel', label: 'Mittel' },
   { id: 'schwer', label: 'Schwer' },
-  { id: 'medat', label: 'MedAT-Niveau' },
+  { id: 'medat', label: 'MedAT-Niveau', short: 'MedAT' }, // short: unter 360 px Breite
   { id: 'gemischt', label: 'Gemischt' },
 ];
 

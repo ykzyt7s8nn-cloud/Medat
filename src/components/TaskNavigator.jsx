@@ -28,6 +28,9 @@ function cellClass({ active, answered, resolved, correct }) {
   return 'bg-black/[0.06] text-black/45 dark:bg-white/10 dark:text-white/45';
 }
 
+/** Die breite Taste rechts; schmaler gepolstert, wo der Platz knapp ist. */
+const WIDE = 'min-w-0 flex-1 max-[359px]:px-3';
+
 export function TaskNavigator({
   count,
   index,
@@ -116,29 +119,31 @@ export function TaskNavigator({
           }`}
         >
           <Icon name="target" className="h-4 w-4" />
-          {flags[index] ? 'Markiert' : 'Merken'}
+          {/* Unter 360 px (iPhone SE 1. Generation) passt die Zeile sonst nicht:
+              „Überspringen“ ragte über den Rand. Dort reicht das Symbol. */}
+          <span className="max-[359px]:sr-only">{flags[index] ? 'Markiert' : 'Merken'}</span>
         </Tappable>
 
         {/* Unbeantwortet: überspringen und später zurückkommen. Auf der letzten
             Aufgabe führt „Weiter“ ins Leere, deshalb geht es dort zu den noch
             offenen Aufgaben bzw. zur Abgabe. */}
         {!currentDone ? (
-          <Button variant="neutral" size="md" className="flex-1" onClick={onSkip}>
+          <Button variant="neutral" size="md" className={WIDE} onClick={onSkip}>
             Überspringen
             <Icon name="chevronRight" className="h-5 w-5" />
           </Button>
         ) : !isLast ? (
-          <Button size="md" className="flex-1" onClick={onNext}>
+          <Button size="md" className={WIDE} onClick={onNext}>
             Weiter
             <Icon name="chevronRight" className="h-5 w-5" />
           </Button>
         ) : openCount > 0 && firstOpenIndex !== null ? (
-          <Button size="md" className="flex-1" onClick={() => onGoTo(firstOpenIndex)}>
+          <Button size="md" className={WIDE} onClick={() => onGoTo(firstOpenIndex)}>
             Zu den offenen
             <Icon name="chevronRight" className="h-5 w-5" />
           </Button>
         ) : (
-          <Button size="md" className="flex-1" onClick={onSubmit}>
+          <Button size="md" className={WIDE} onClick={onSubmit}>
             {submitLabel}
           </Button>
         )}
