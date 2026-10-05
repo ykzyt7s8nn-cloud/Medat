@@ -1112,6 +1112,144 @@ section('BMS Physik und Mathematik');
     shares.every((s) => s > 0.15 && s < 0.25));
 }
 
+
+/* ------------------------------------------------------- BMS Biologie */
+section('BMS Biologie');
+
+{
+  const { topics: bioTopics, questions: bioQuestions } = bmsSubjects.biologie;
+  const bioNeed = SUBJECTS.biologie.questionCount;
+
+  // Fünf vollständige Simulationen ohne eine einzige Wiederholung.
+  check(`Biologie reicht für 5 Simulationen ohne Wiederholung (${bioQuestions.length} ≥ ${5 * bioNeed})`,
+    bioQuestions.length >= 5 * bioNeed);
+
+  // Kein Thema darf so dünn sein, dass es in fünf Durchgängen kaum vorkommt;
+  // der Körper ist im Stoffkatalog der größte Block und soll es bleiben.
+  const bioCounts = Object.fromEntries(bioTopics.map((t) => [t.id,
+    bioQuestions.filter((q) => q.topicId === t.id).length]));
+  const bioThin = bioTopics.filter((t) => bioCounts[t.id] < 15).map((t) => `${t.title} (${bioCounts[t.id]})`);
+  check('Jedes Biologie-Thema hat mindestens 15 Fragen', bioThin.length === 0, bioThin.join(', '));
+  check('„Der menschliche Körper“ ist das fragenreichste Biologie-Thema',
+    Math.max(...Object.values(bioCounts)) === bioCounts['bio-koerper']);
+
+  // Dieselbe Frage zweimal (unter anderer ID) wäre eine versteckte Wiederholung.
+  const bioPrompts = new Map();
+  const bioDuplicatePrompts = [];
+  for (const q of bioQuestions) {
+    const key = q.prompt.trim().toLowerCase();
+    if (bioPrompts.has(key)) bioDuplicatePrompts.push(`${bioPrompts.get(key)} = ${q.id}`);
+    bioPrompts.set(key, q.id);
+  }
+  check('Biologie: keine Frage steht zweimal im Bestand', bioDuplicatePrompts.length === 0,
+    bioDuplicatePrompts.join(', '));
+
+  // Lexikonverweis muss zum eigenen Thema gehören, und jedes Stichwort wird abgefragt.
+  const bioEntryTopic = new Map(bioTopics.flatMap((t) => t.entries.map((e) => [e.id, t.id])));
+  const bioWrongTopic = bioQuestions.filter((q) => bioEntryTopic.get(q.entryId) !== q.topicId).map((q) => q.id);
+  check('Biologie: jede Frage verweist auf ein Stichwort ihres eigenen Themas',
+    bioWrongTopic.length === 0, bioWrongTopic.join(', '));
+  const bioAsked = new Set(bioQuestions.map((q) => q.entryId));
+  const bioUnasked = [...bioEntryTopic.keys()].filter((id) => !bioAsked.has(id));
+  check('Biologie: zu jedem Lexikoneintrag gibt es mindestens eine Frage',
+    bioUnasked.length === 0, bioUnasked.join(', '));
+
+  // Querverweise: kein Selbstverweis, keine Dubletten.
+  const bioBadRelated = bioTopics.flatMap((t) => t.entries)
+    .filter((e) => (e.related ?? []).includes(e.id) || new Set(e.related ?? []).size !== (e.related ?? []).length)
+    .map((e) => e.id);
+  check('Biologie: Querverweise ohne Selbstverweis und ohne Dubletten',
+    bioBadRelated.length === 0, bioBadRelated.join(', '));
+
+  // Optionstexte innerhalb einer Frage verschieden – sonst wären zwei Kreuze gleichwertig.
+  const bioSameOptions = bioQuestions
+    .filter((q) => new Set(q.options.map((o) => o.text.trim())).size !== q.options.length).map((q) => q.id);
+  check('Biologie: Antwortmöglichkeiten einer Frage sind verschieden',
+    bioSameOptions.length === 0, bioSameOptions.join(', '));
+
+  // x aus 5: Die Zahl in der Frage muss genau die Zahl der richtigen Optionen sein.
+  const numberWords = { zwei: 2, drei: 3, vier: 4 };
+  const bioMultiMismatch = [];
+  for (const q of bioQuestions.filter((x) => x.kind === 'multi')) {
+    const digits = q.prompt.match(/\((\d) aus 5\)/);
+    const word = q.prompt.toLowerCase().match(/\b(zwei|drei|vier)\b/);
+    const stated = digits ? Number(digits[1]) : word ? numberWords[word[1]] : null;
+    const correct = q.options.filter((o) => o.correct).length;
+    if (stated !== correct) bioMultiMismatch.push(`${q.id} (${stated ?? '?'} genannt, ${correct} richtig)`);
+  }
+  check('Biologie: bei x aus 5 nennt die Frage genau die Zahl der richtigen Antworten',
+    bioMultiMismatch.length === 0, bioMultiMismatch.join(', '));
+
+  // Aussagenkombinationen („Nur I und III“): jede genannte Aussage steht in der Frage.
+  const bioCombinationIssues = [];
+  for (const q of bioQuestions.filter((x) => x.prompt.includes('(I)'))) {
+    const stated = new Set([...q.prompt.matchAll(/\((I{1,3}|IV|V)\)/g)].map((m) => m[1]));
+    for (const option of q.options) {
+      if (option.text === BMS_NO_ANSWER_LABEL) continue;
+      const used = option.text.startsWith('Alle') ? [] : option.text.match(/\b(IV|V|I{1,3})\b/g) ?? [];
+      if (!option.text.startsWith('Alle') && used.length === 0) bioCombinationIssues.push(q.id);
+      if (used.some((numeral) => !stated.has(numeral))) bioCombinationIssues.push(q.id);
+    }
+  }
+  check('Biologie: Aussagenkombinationen verweisen nur auf Aussagen der Frage',
+    bioCombinationIssues.length === 0, [...new Set(bioCombinationIssues)].join(', '));
+
+  // `holds` (zutreffende Aussagen, 1-basiert) muss zur als richtig markierten Kombination passen.
+  const romanValue = { I: 1, II: 2, III: 3, IV: 4, V: 5 };
+  const bioHoldsIssues = [];
+  for (const q of bioQuestions.filter((x) => x.prompt.includes('(I) '))) {
+    const statements = [...q.prompt.matchAll(/\((I{1,3}|IV|V)\) /g)].length;
+    const right = q.options.find((o) => o.correct)?.text ?? '';
+    const expected = right.startsWith('Alle')
+      ? Array.from({ length: statements }, (_, i) => i + 1)
+      : (right.match(/\b(IV|V|I{1,3})\b/g) ?? []).map((r) => romanValue[r]).sort((a, b) => a - b);
+    if (q.kind !== 'single' || JSON.stringify(q.holds) !== JSON.stringify(expected)) bioHoldsIssues.push(q.id);
+  }
+  check('Biologie: Aussagenkombinationen tragen passende `holds`',
+    bioHoldsIssues.length === 0, bioHoldsIssues.join(', '));
+
+  // „Keine der angegebenen …“ nur bei 1 aus 5; als Distraktor steht sie in der
+  // Quelle zuletzt, als Lösung (Konvention: Richtiges zuerst) vorn.
+  const bioNoneIssues = [];
+  for (const q of bioQuestions) {
+    const index = q.options.findIndex((o) => o.text === BMS_NO_ANSWER_LABEL);
+    if (index === -1) continue;
+    if (q.kind !== 'single') bioNoneIssues.push(q.id);
+    else if (!q.options[index].correct && index !== q.options.length - 1) bioNoneIssues.push(q.id);
+  }
+  check('Biologie: „Keine der angegebenen …“ nur bei 1 aus 5 und an der richtigen Stelle',
+    bioNoneIssues.length === 0, bioNoneIssues.join(', '));
+
+  // Erwartete Lage der richtigen Antwort nach dem Mischen (a–e), exakt berechnet:
+  // Gemischt wird alles außer „Keine …“, das immer auf e) bleibt. Keine Position
+  // soll auffällig oft oder selten die Lösung sein.
+  const bioPosition = [0, 0, 0, 0, 0];
+  const bioSingles = bioQuestions.filter((q) => q.kind === 'single');
+  for (const q of bioSingles) {
+    const none = q.options.find((o) => o.text === BMS_NO_ANSWER_LABEL);
+    if (!none) for (let i = 0; i < 5; i += 1) bioPosition[i] += 1 / 5;
+    else if (none.correct) bioPosition[4] += 1;
+    else for (let i = 0; i < 4; i += 1) bioPosition[i] += 1 / 4;
+  }
+  const bioShares = bioPosition.map((n) => (100 * n) / bioSingles.length);
+  check(`Biologie: richtige Antwort verteilt sich gleichmäßig auf a–e (${bioShares.map((p) => p.toFixed(0)).join('/')} %)`,
+    bioShares.every((p) => p >= 15 && p <= 25));
+  const bioNoneCount = bioSingles.filter((q) => q.options.some((o) => o.text === BMS_NO_ANSWER_LABEL)).length;
+  check(`Biologie: „Keine der angegebenen …“ kommt vor, ist aber nicht die Regel (${bioNoneCount})`,
+    bioNoneCount >= 5 && bioNoneCount <= bioSingles.length / 4);
+
+  // Fünf zufällige Simulationen hintereinander ziehen ohne Wiederholung.
+  const bioDrawn = new Set();
+  const { shuffle: bioShuffle } = await import('../src/lib/random.js');
+  let bioPool = bioShuffle([...bioQuestions]);
+  for (let run = 0; run < 5; run += 1) {
+    for (const q of bioPool.slice(0, bioNeed)) bioDrawn.add(q.id);
+    bioPool = bioPool.slice(bioNeed);
+  }
+  check('Biologie: fünf Simulationen à 40 Fragen ziehen 200 verschiedene Fragen',
+    bioDrawn.size === 5 * bioNeed);
+}
+
 /* ------------------------------------------------------- Wiedervorlage */
 section('Fehlerarchiv: Wiedervorlage');
 

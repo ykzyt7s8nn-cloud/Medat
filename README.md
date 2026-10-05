@@ -71,7 +71,7 @@ das Material dafür.
 
 Der BMS macht 40 % der MedAT-Gesamtwertung aus. Der Bereich hat zwei Ansichten:
 
-**Lexikon** – 140 Stichwörter auf Maturaniveau, nach Fach und Thema geordnet und
+**Lexikon** – 187 Stichwörter auf Maturaniveau, nach Fach und Thema geordnet und
 über alle Fächer hinweg durchsuchbar. Jeder Eintrag hat eine Erklärung in
 mehreren Sätzen, Schlüsselfakten als Stichpunkte, bei Bedarf Formeln und eine
 Merkhilfe sowie Querverweise auf verwandte Stichwörter. Gelesene Einträge werden
@@ -84,11 +84,11 @@ falsch ist, und verlinkt den passenden Lexikoneintrag.
 
 | Fach | Themen | Einträge | Fragen | Simulation |
 |---|---|---|---|---|
-| Biologie | 9 | 65 | 110 | 40 Fragen / 30 min |
+| Biologie | 9 | 76 | 261 | 40 Fragen / 30 min |
 | Chemie | 10 | 53 | 200 | 24 Fragen / 18 min |
 | Physik | 6 | 35 | 133 | 18 Fragen / 16 min |
 | Mathematik | 6 | 23 | 97 | 12 Fragen / 11 min |
-| **Gesamt** | **28** | **140** | **338** | **94 Fragen / 75 min** |
+| **Gesamt** | **31** | **187** | **691** | **94 Fragen / 75 min** |
 
 Trainieren lässt sich ein einzelnes Fach, ein einzelnes Thema oder die komplette
 BMS-Simulation mit allen vier Fächern nacheinander.
@@ -177,7 +177,7 @@ npm install
 npm run dev        # Entwicklungsserver
 npm run build      # Icons + Produktionsbuild nach dist/ + Precache-Liste
 npm run preview    # Produktionsbuild lokal ansehen
-npm run selftest   # Daten- und Engine-Prüfungen (224 Checks)
+npm run selftest   # Daten- und Engine-Prüfungen (273 Checks)
 npm run icons      # PWA-Icons neu generieren
 ```
 
