@@ -901,9 +901,29 @@ section('BMS Chemie');
   });
   check('Chemie: "(x aus 5)" im Fragetext stimmt mit den richtigen Optionen überein',
     cheMultiMismatch.length === 0, cheMultiMismatch.map((q) => q.id).join(', '));
-  const cheMultiShare = cheQuestions.filter((q) => q.kind === 'multi').length / cheQuestions.length;
-  check(`Chemie: Mehrfachauswahl ist gelegentlich, nicht die Regel (${Math.round(cheMultiShare * 100)} %)`,
-    cheMultiShare >= 0.05 && cheMultiShare <= 0.15);
+  // Im MedAT gibt es kein „x aus 5“ – mehrere zutreffende Aussagen werden als
+  // Aussagenkombination („Nur I und III“) mit genau einem Kreuz gefragt.
+  const cheMulti = cheQuestions.filter((q) => q.kind === 'multi');
+  check('Chemie: keine Mehrfachauswahl, nur 1 aus 5',
+    cheMulti.length === 0, cheMulti.map((q) => q.id).join(', '));
+
+  // Aussagenkombinationen: Die Aussagen (I)–(IV) stehen im Fragetext, `holds`
+  // nennt die zutreffenden. Genau die richtige Option muss diese Menge treffen.
+  const roman = { I: 1, II: 2, III: 3, IV: 4 };
+  const numerals = (text) => (/^Alle vier$/.test(text) ? [1, 2, 3, 4]
+    : (text.match(/\b(IV|I{1,3})\b/g) ?? []).map((r) => roman[r]));
+  const sameSet = (a, b) => a.length === b.length && [...a].sort().join() === [...b].sort().join();
+  const cheCombos = cheQuestions.filter((q) => q.holds || /\(I\) /.test(q.prompt));
+  const cheComboIssues = cheCombos.filter((q) => {
+    if (!Array.isArray(q.holds) || q.holds.length === 0) return true;
+    if (!['(I) ', '(II) ', '(III) ', '(IV) '].every((tag) => q.prompt.split(tag).length === 2)) return true;
+    const sets = q.options.map((o) => numerals(o.text));
+    if (sets.some((set) => set.length === 0)) return true;
+    if (new Set(sets.map((set) => [...set].sort().join())).size !== sets.length) return true;
+    return q.options.some((o, i) => sameSet(sets[i], q.holds) !== o.correct);
+  });
+  check(`Chemie: ${cheCombos.length} Aussagenkombinationen – Lösung trifft genau die zutreffenden Aussagen`,
+    cheCombos.length >= 15 && cheComboIssues.length === 0, cheComboIssues.map((q) => q.id).join(', '));
 
   // "Keine der angegebenen …": exakter Wortlaut (nur dann bleibt sie beim Mischen
   // als e) stehen), nur bei 1 aus 5, und sie kommt als Lösung wie als Falle vor.
@@ -936,6 +956,7 @@ section('BMS Chemie');
     'che-atb-q1': num(37 - 17),
     'che-atb-q15': num(2 * 3 ** 2),
     'che-atb-q16': num(56 - 26),
+    'che-atb-q21': num(2 * 2 + 1),
     'che-sto-q2': `${num(36 / 18)} mol`,
     'che-sto-q3': `${num(12 + 2 * 16)} g/mol`,
     'che-sto-q6': `${num(0.5 / 0.25)} mol/L`,
@@ -949,6 +970,7 @@ section('BMS Chemie');
     'che-sto-q17': `${num(Math.min((4 / 2) * 2, (1 / 1) * 2))} mol`,
     'che-sto-q18': `${num((20 / (20 + 180)) * 100)} %`,
     'che-rea-q14': num(0.8 / 0.2),
+    'che-rea-q19': `EA = ${num(120 - 50)} kJ/mol, ΔH = ${oxz(20 - 50)} kJ/mol`,
     'che-sae-q7': `${num(((2 * 0.05) / 1) * 1000)} mL`,
     'che-sae-q13': `pH ${num(-Math.log10(0.001))}`,
     'che-sae-q14': `pH ${num(14 - -Math.log10(0.01))}`,

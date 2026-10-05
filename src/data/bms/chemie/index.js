@@ -4,6 +4,12 @@
  * Ein Modul je Thema, zusammengesetzt erst hier. Niveau österreichische Matura:
  * Die Einträge decken das Stichwort vollständig ab, ohne ins Universitäre zu
  * gehen; die Schlüsselfakten zielen auf die typischen Prüfungsfallen.
+ *
+ * Mehrfachauswahl („x aus 5“) gibt es im MedAT nicht. Treffen mehrere Aussagen
+ * zu, wird das als Aussagenkombination gefragt: Die Aussagen (I)–(IV) stehen im
+ * Fragetext, die Optionen nennen Kombinationen („Nur I und III“), angekreuzt
+ * wird genau eine. Das Feld `holds` listet die zutreffenden Aussagen; der
+ * Selbsttest prüft, dass genau die richtige Option diese Menge trifft.
  */
 import { TOPIC as atombau, QUESTIONS as atombauQuestions } from './atombau.js';
 import { TOPIC as bindung, QUESTIONS as bindungQuestions } from './bindung.js';
