@@ -1,0 +1,198 @@
+/** Mathematik – Thema "Differential- und Integralrechnung". */
+
+export const TOPIC = {
+  id: 'mat-analysis',
+  title: 'Differential- und Integralrechnung',
+  summary: 'Ableitung, Extremstellen, Stammfunktion, bestimmtes Integral',
+  entries: [
+    {
+      id: 'mat-analysis-ableitung',
+      title: 'Ableitung und Ableitungsregeln',
+      text: 'Die Ableitung einer Funktion gibt an jeder Stelle die Steigung der Tangente an, also die momentane Änderungsrate. Sie ergibt sich als Grenzwert des Differenzenquotienten, wenn die beiden Punkte immer näher zusammenrücken. Für Polynome genügen wenige Regeln: Nach der Potenzregel wird der Exponent zum Vorfaktor und um eins verringert, aus x hoch n wird also n mal x hoch n minus eins. Konstante Faktoren bleiben erhalten, Summen werden gliedweise abgeleitet, und eine additive Konstante fällt weg, weil sie die Steigung nicht beeinflusst. Die Ableitung einer linearen Funktion ist ihre Steigung, die einer Konstanten null. Weitere wichtige Ableitungen sind die der e-Funktion, die sich selbst ergibt, und die von Sinus und Kosinus. In der Physik ist die Geschwindigkeit die Ableitung des Weges nach der Zeit und die Beschleunigung die Ableitung der Geschwindigkeit.',
+      facts: [
+        'f′(x) = Steigung der Tangente an der Stelle x',
+        'Potenzregel: (xⁿ)′ = n · xⁿ⁻¹',
+        'Konstante Summanden fallen weg, konstante Faktoren bleiben',
+        '(eˣ)′ = eˣ; (sin x)′ = cos x; (cos x)′ = −sin x',
+        'v(t) = s′(t), a(t) = v′(t)',
+      ],
+      formulas: ['(xⁿ)′ = n · xⁿ⁻¹', '(c · f)′ = c · f′', '(f + g)′ = f′ + g′'],
+      related: ['mat-analysis-kurven', 'mat-funktion-linear', 'phy-mechanik-kinematik'],
+    },
+    {
+      id: 'mat-analysis-kurven',
+      title: 'Extremstellen und Kurvenverlauf',
+      text: 'Mit der Ableitung lässt sich der Verlauf eines Graphen beschreiben, ohne ihn zu zeichnen. Ist die erste Ableitung positiv, steigt die Funktion, ist sie negativ, fällt sie. An einer Stelle, an der der Graph einen Hoch- oder Tiefpunkt hat, ist die Tangente waagrecht und die erste Ableitung null; diese Bedingung ist notwendig, aber nicht hinreichend, denn auch ein Sattelpunkt hat eine waagrechte Tangente. Entscheiden lässt sich mit der zweiten Ableitung: Ist sie an dieser Stelle negativ, ist der Graph nach unten gekrümmt und es liegt ein Hochpunkt vor; ist sie positiv, ein Tiefpunkt. Wendepunkte, an denen sich die Krümmung ändert, findet man über die Nullstellen der zweiten Ableitung. Bei Optimierungsaufgaben – größte Fläche, kleinster Materialverbrauch – sucht man genau diese Extremstellen.',
+      facts: [
+        'f′ > 0: steigend; f′ < 0: fallend',
+        'Extremstelle: f′(x) = 0 (notwendig)',
+        'f″ < 0: Hochpunkt; f″ > 0: Tiefpunkt',
+        'Wendepunkt: f″(x) = 0 mit Krümmungswechsel',
+        'Sattelpunkt: waagrechte Tangente ohne Extremum',
+      ],
+      formulas: ['Extremum: f′(x) = 0', 'Hochpunkt: f″(x) < 0; Tiefpunkt: f″(x) > 0'],
+      related: ['mat-analysis-ableitung', 'mat-funktion-quadratisch', 'mat-analysis-integral'],
+    },
+    {
+      id: 'mat-analysis-integral',
+      title: 'Stammfunktion und Integral',
+      text: 'Das Integrieren ist die Umkehrung des Ableitens: Eine Stammfunktion F von f ist eine Funktion, deren Ableitung wieder f ergibt. Da beim Ableiten jede Konstante wegfällt, gibt es zu jeder Funktion unendlich viele Stammfunktionen, die sich nur um eine additive Konstante C unterscheiden. Für Potenzen gilt die umgekehrte Potenzregel: Der Exponent wird um eins erhöht und man teilt durch den neuen Exponenten. Das bestimmte Integral von a bis b berechnet man als F(b) − F(a); es gibt die orientierte Fläche zwischen Graph und x-Achse an, wobei Flächen unterhalb der Achse negativ zählen. In der Physik ist der Weg das Integral der Geschwindigkeit über die Zeit – die Fläche unter dem v-t-Diagramm – und die Arbeit das Integral der Kraft über den Weg.',
+      facts: [
+        'F′(x) = f(x); Stammfunktionen unterscheiden sich um eine Konstante C',
+        '∫ xⁿ dx = xⁿ⁺¹ / (n + 1) + C für n ≠ −1',
+        'Bestimmtes Integral: F(b) − F(a)',
+        'Flächen unterhalb der x-Achse zählen negativ',
+        'Fläche unter dem v-t-Diagramm = zurückgelegter Weg',
+      ],
+      formulas: ['∫ xⁿ dx = xⁿ⁺¹ / (n + 1) + C', '∫ₐᵇ f(x) dx = F(b) − F(a)'],
+      related: ['mat-analysis-ableitung', 'mat-analysis-kurven', 'mat-geo-flaechen'],
+    },
+  ],
+};
+
+export const QUESTIONS = [
+  {
+    id: 'mat-ana-q1', topicId: 'mat-analysis', entryId: 'mat-analysis-ableitung', kind: 'single',
+    prompt: 'Wie lautet die Ableitung von f(x) = 3x⁴?',
+    options: [
+      { text: 'f′(x) = 12x³', correct: true, why: 'Potenzregel: 3 · 4 · x³.' },
+      { text: 'f′(x) = 3x³', correct: false, why: 'Der Exponent muss als Faktor vor den Term.' },
+      { text: 'f′(x) = 12x⁴', correct: false, why: 'Der Exponent muss um eins verringert werden.' },
+      { text: 'f′(x) = 7x³', correct: false, why: 'Exponent und Vorfaktor werden multipliziert, nicht addiert.' },
+      { text: 'f′(x) = 3x⁵ / 5', correct: false, why: 'Das wäre eine Stammfunktion, nicht die Ableitung.' },
+    ],
+    explanation: 'Ableiten: Exponent nach vorne, Exponent minus eins. Integrieren geht genau umgekehrt.',
+  },
+  {
+    id: 'mat-ana-q2', topicId: 'mat-analysis', entryId: 'mat-analysis-ableitung', kind: 'single',
+    prompt: 'Wie lautet die Ableitung von f(x) = x² − 6x + 5?',
+    options: [
+      { text: 'f′(x) = 2x − 6', correct: true, why: 'Gliedweise: 2x, −6, und die Konstante 5 fällt weg.' },
+      { text: 'f′(x) = 2x − 6 + 5', correct: false, why: 'Eine additive Konstante hat die Ableitung null.' },
+      { text: 'f′(x) = 2x', correct: false, why: 'Auch −6x muss abgeleitet werden und ergibt −6.' },
+      { text: 'f′(x) = x − 6', correct: false, why: 'Die Ableitung von x² ist 2x, nicht x.' },
+      { text: 'f′(x) = 2x − 6x', correct: false, why: 'Die Ableitung von −6x ist die Konstante −6.' },
+    ],
+    explanation: 'Summen werden Glied für Glied abgeleitet; Konstanten verschwinden.',
+  },
+  {
+    id: 'mat-ana-q3', topicId: 'mat-analysis', entryId: 'mat-analysis-ableitung', kind: 'single',
+    prompt: 'Welche Steigung hat der Graph von f(x) = x³ an der Stelle x = 2?',
+    options: [
+      { text: '12', correct: true, why: 'f′(x) = 3x², also f′(2) = 3 · 4 = 12.' },
+      { text: '8', correct: false, why: 'Das ist der Funktionswert f(2), nicht die Steigung.' },
+      { text: '6', correct: false, why: 'Hier wurde 3 · 2 gerechnet und das Quadrat vergessen.' },
+      { text: '4', correct: false, why: 'Hier wurde nur x² eingesetzt, ohne den Faktor 3.' },
+      { text: '36', correct: false, why: 'Hier wurde (3 · 2)² gerechnet.' },
+    ],
+    explanation: 'Erst ableiten, dann einsetzen – nicht umgekehrt.',
+  },
+  {
+    id: 'mat-ana-q4', topicId: 'mat-analysis', entryId: 'mat-analysis-ableitung', kind: 'single',
+    prompt: 'Der Weg eines Körpers ist s(t) = 5t² (s in m, t in s). Wie groß ist seine Geschwindigkeit nach 3 s?',
+    options: [
+      { text: '30 m/s', correct: true, why: 'v(t) = s′(t) = 10t, also v(3) = 30.' },
+      { text: '45 m/s', correct: false, why: 'Das ist der Zahlenwert des Weges s(3) = 45 m.' },
+      { text: '15 m/s', correct: false, why: 'Hier wurde 45 m durch 3 s geteilt – das ist die mittlere Geschwindigkeit.' },
+      { text: '10 m/s', correct: false, why: 'Das ist die Beschleunigung in m/s², die zweite Ableitung.' },
+      { text: '90 m/s', correct: false, why: 'Hier wurde 10t² statt 10t eingesetzt.' },
+    ],
+    explanation: 'Die Geschwindigkeit ist die Ableitung des Weges, die Beschleunigung die der Geschwindigkeit.',
+  },
+  {
+    id: 'mat-ana-q5', topicId: 'mat-analysis', entryId: 'mat-analysis-kurven', kind: 'single',
+    prompt: 'An welcher Stelle hat f(x) = x² − 6x + 5 einen Extrempunkt, und welcher Art ist er?',
+    options: [
+      { text: 'Bei x = 3, Tiefpunkt', correct: true, why: 'f′(x) = 2x − 6 = 0 bei x = 3; f″(x) = 2 > 0, also Tiefpunkt.' },
+      { text: 'Bei x = 3, Hochpunkt', correct: false, why: 'f″ = 2 ist positiv – die Parabel ist nach oben geöffnet.' },
+      { text: 'Bei x = −3, Tiefpunkt', correct: false, why: 'Das Vorzeichen stimmt nicht: 2x − 6 = 0 ergibt x = 3.' },
+      { text: 'Bei x = 1 und x = 5', correct: false, why: 'Das sind die Nullstellen der Funktion, nicht der Ableitung.' },
+      { text: 'Bei x = 6, Tiefpunkt', correct: false, why: 'Hier wurde 2x − 6 = 0 nicht durch 2 geteilt.' },
+    ],
+    explanation: 'Notwendig: f′ = 0. Hinreichend: f″ ≠ 0 – positiv bedeutet Tiefpunkt.',
+  },
+  {
+    id: 'mat-ana-q6', topicId: 'mat-analysis', entryId: 'mat-analysis-kurven', kind: 'single',
+    prompt: 'An einer Stelle x₀ gilt f′(x₀) = 0 und f″(x₀) < 0. Was liegt dort vor?',
+    options: [
+      { text: 'Ein Hochpunkt', correct: true, why: 'Waagrechte Tangente und Rechtskrümmung (nach unten gekrümmt).' },
+      { text: 'Ein Tiefpunkt', correct: false, why: 'Dafür müsste f″ positiv sein.' },
+      { text: 'Eine Nullstelle', correct: false, why: 'Über den Funktionswert sagen die Ableitungen nichts aus.' },
+      { text: 'Ein Wendepunkt', correct: false, why: 'Dort wäre f″ null.' },
+      { text: 'Eine Polstelle', correct: false, why: 'An einer Polstelle ist f gar nicht definiert.' },
+    ],
+    explanation: 'Merke: f″ negativ – Graph wie ein umgedrehtes U – Hochpunkt.',
+  },
+  {
+    id: 'mat-ana-q7', topicId: 'mat-analysis', entryId: 'mat-analysis-kurven', kind: 'single',
+    prompt: 'Was bedeutet es, wenn die Ableitung f′ in einem ganzen Intervall negativ ist?',
+    options: [
+      { text: 'f fällt in diesem Intervall streng monoton', correct: true, why: 'Negative Tangentensteigung bedeutet überall Gefälle.' },
+      { text: 'f ist in diesem Intervall negativ', correct: false, why: 'Das Vorzeichen von f′ sagt nichts über das Vorzeichen von f.' },
+      { text: 'f steigt in diesem Intervall', correct: false, why: 'Steigen hieße f′ > 0.' },
+      { text: 'f ist in diesem Intervall nach unten gekrümmt', correct: false, why: 'Die Krümmung beschreibt die zweite Ableitung.' },
+      { text: 'f hat in diesem Intervall einen Hochpunkt', correct: false, why: 'An einem Hochpunkt wäre f′ = 0.' },
+    ],
+    explanation: 'f′ beschreibt das Steigen und Fallen, f″ die Krümmung.',
+  },
+  {
+    id: 'mat-ana-q8', topicId: 'mat-analysis', entryId: 'mat-analysis-integral', kind: 'single',
+    prompt: 'Welche Funktion ist eine Stammfunktion von f(x) = 6x²?',
+    options: [
+      { text: 'F(x) = 2x³', correct: true, why: 'Ableiten ergibt 3 · 2x² = 6x².' },
+      { text: 'F(x) = 12x', correct: false, why: 'Das ist die Ableitung von f, nicht die Stammfunktion.' },
+      { text: 'F(x) = 6x³', correct: false, why: 'Hier fehlt die Division durch den neuen Exponenten 3.' },
+      { text: 'F(x) = 3x³', correct: false, why: 'Hier wurde durch 2 statt durch 3 geteilt.' },
+      { text: 'F(x) = 2x²', correct: false, why: 'Der Exponent muss um eins steigen.' },
+    ],
+    explanation: 'Probe durch Ableiten – sie ist schneller als jede Formel.',
+  },
+  {
+    id: 'mat-ana-q9', topicId: 'mat-analysis', entryId: 'mat-analysis-integral', kind: 'single',
+    prompt: 'Wie groß ist das bestimmte Integral von f(x) = 2x im Intervall von 1 bis 3?',
+    options: [
+      { text: '8', correct: true, why: 'F(x) = x², also F(3) − F(1) = 9 − 1 = 8.' },
+      { text: '9', correct: false, why: 'Hier wurde die untere Grenze nicht abgezogen.' },
+      { text: '10', correct: false, why: 'Hier wurden F(3) und F(1) addiert.' },
+      { text: '4', correct: false, why: 'Das ist f(3) − f(1) – es wurde die Funktion statt der Stammfunktion eingesetzt.' },
+      { text: '2', correct: false, why: 'Das ist nur die Breite des Intervalls.' },
+    ],
+    explanation: 'Geometrisch ist es die Trapezfläche unter der Geraden: (2 + 6) / 2 · 2 = 8.',
+  },
+  {
+    id: 'mat-ana-q10', topicId: 'mat-analysis', entryId: 'mat-analysis-integral', kind: 'single',
+    prompt: 'Ein Auto fährt 10 s lang mit konstant 20 m/s. Welche Größe entspricht der Fläche unter dem v-t-Diagramm, und wie groß ist sie?',
+    options: [
+      { text: 'Der zurückgelegte Weg, 200 m', correct: true, why: 'Das Integral der Geschwindigkeit über die Zeit ist der Weg: 20 · 10.' },
+      { text: 'Die Beschleunigung, 2 m/s²', correct: false, why: 'Die Beschleunigung ist die Steigung des v-t-Diagramms, hier null.' },
+      { text: 'Die Durchschnittsgeschwindigkeit, 20 m/s', correct: false, why: 'Die Fläche hat die Einheit m/s · s = m.' },
+      { text: 'Der zurückgelegte Weg, 2 m', correct: false, why: 'Hier wurde dividiert statt multipliziert.' },
+      { text: 'Die Bewegungsenergie, 200 J', correct: false, why: 'Für eine Energie fehlt die Masse; die Fläche ist ein Weg.' },
+    ],
+    explanation: 'Steigung im v-t-Diagramm: Beschleunigung. Fläche darunter: Weg.',
+  },
+  {
+    id: 'mat-ana-q11', topicId: 'mat-analysis', entryId: 'mat-analysis-integral', kind: 'single',
+    prompt: 'Warum gibt man bei einer Stammfunktion „+ C“ an?',
+    options: [
+      { text: 'Weil eine additive Konstante beim Ableiten wegfällt und daher beliebig sein kann', correct: true, why: 'x² und x² + 7 haben dieselbe Ableitung 2x.' },
+      { text: 'Weil C die Fläche unter dem Graphen ist', correct: false, why: 'Die Fläche ergibt erst das bestimmte Integral F(b) − F(a).' },
+      { text: 'Weil C die Steigung der Stammfunktion angibt', correct: false, why: 'Die Steigung von F ist f selbst.' },
+      { text: 'Weil jede Funktion genau eine Stammfunktion hat, die C heißt', correct: false, why: 'Es gibt unendlich viele Stammfunktionen.' },
+      { text: 'Weil C immer null ist und nur der Form halber steht', correct: false, why: 'C kann jeden reellen Wert annehmen.' },
+    ],
+    explanation: 'Beim bestimmten Integral fällt C heraus, weil es in F(b) und F(a) gleichermaßen steckt.',
+  },
+  {
+    id: 'mat-ana-q12', topicId: 'mat-analysis', entryId: 'mat-analysis-ableitung', kind: 'single',
+    prompt: 'Wie lautet die Ableitung von f(x) = 4x³ − 2x + 7?',
+    options: [
+      { text: 'Keine der angegebenen Antwortmöglichkeiten ist korrekt', correct: true, why: 'Richtig wäre f′(x) = 12x² − 2 – dieser Term steht nicht zur Auswahl.' },
+      { text: 'f′(x) = 12x² − 2 + 7', correct: false, why: 'Die additive Konstante 7 fällt beim Ableiten weg.' },
+      { text: 'f′(x) = 12x³ − 2', correct: false, why: 'Der Exponent muss um eins verringert werden.' },
+      { text: 'f′(x) = 4x² − 2', correct: false, why: 'Der alte Exponent 3 muss als Faktor vor den Term.' },
+      { text: 'f′(x) = 12x²', correct: false, why: 'Auch −2x muss abgeleitet werden und ergibt −2.' },
+    ],
+    explanation: 'Gliedweise ableiten: 4 · 3x² − 2 + 0. Erst selbst rechnen, dann die Antworten lesen.',
+  },
+];

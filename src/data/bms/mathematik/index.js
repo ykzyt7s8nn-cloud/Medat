@@ -8,12 +8,16 @@ import { TOPIC as grundlagen, QUESTIONS as grundlagenQuestions } from './grundla
 import { TOPIC as funktionen, QUESTIONS as funktionenQuestions } from './funktionen.js';
 import { TOPIC as geometrie, QUESTIONS as geometrieQuestions } from './geometrie.js';
 import { TOPIC as statistik, QUESTIONS as statistikQuestions } from './statistik.js';
+import { TOPIC as vektoren, QUESTIONS as vektorenQuestions } from './vektoren.js';
+import { TOPIC as analysis, QUESTIONS as analysisQuestions } from './analysis.js';
 
-export const TOPICS = [grundlagen, funktionen, geometrie, statistik];
+export const TOPICS = [grundlagen, funktionen, geometrie, vektoren, analysis, statistik];
 
 export const QUESTIONS = [
   ...grundlagenQuestions,
   ...funktionenQuestions,
   ...geometrieQuestions,
+  ...vektorenQuestions,
+  ...analysisQuestions,
   ...statistikQuestions,
 ];
