@@ -34,7 +34,7 @@ export const TOPIC = {
     {
       id: 'che-bindung-metall',
       title: 'Metallbindung',
-      text: 'In einem Metall geben die Atome ihre Valenzelektronen ab; zurück bleiben Metallkationen in einem regelmäßigen Gitter, umgeben von frei beweglichen Elektronen, dem Elektronengas. Diese frei beweglichen Ladungsträger erklären die typischen Metalleigenschaften: gute elektrische und thermische Leitfähigkeit, metallischer Glanz und vor allem Verformbarkeit. Verschiebt man Gitterebenen gegeneinander, bleibt die Bindung erhalten, weil das Elektronengas mitwandert – deshalb sind Metalle duktil, während Salze bei derselben Belastung zerbrechen, weil dort gleichnamige Ladungen aufeinandertreffen. Legierungen sind Gemische von Metallen und meist härter als die reinen Ausgangsstoffe.',
+      text: 'In einem Metall geben die Atome ihre Valenzelektronen ab; zurück bleiben Metallkationen in einem regelmäßigen Gitter, umgeben von frei beweglichen Elektronen, dem Elektronengas. Diese frei beweglichen Ladungsträger erklären die typischen Metalleigenschaften: gute elektrische und thermische Leitfähigkeit, metallischer Glanz und vor allem Verformbarkeit. Verschiebt man Gitterebenen gegeneinander, bleibt die Bindung erhalten, weil das Elektronengas mitwandert – deshalb sind Metalle duktil, während Salze bei derselben Belastung zerbrechen, weil dort gleichnamige Ladungen aufeinandertreffen. Legierungen sind Gemische eines Metalls mit weiteren Metallen oder auch Nichtmetallen – Stahl etwa ist Eisen mit wenig Kohlenstoff – und meist härter als die reinen Ausgangsstoffe.',
       facts: [
         'Metallkationen im Gitter, Valenzelektronen frei beweglich',
         'Leitfähigkeit und Glanz beruhen auf dem Elektronengas',
@@ -70,6 +70,19 @@ export const TOPIC = {
         'Die Dichteanomalie des Wassers beruht auf Wasserstoffbrücken',
       ],
       related: ['che-bindung-polaritaet', 'che-stoffe-aggregat', 'che-natur-proteine'],
+    },
+    {
+      id: 'che-bindung-geometrie',
+      title: 'Molekülgestalt (Elektronenpaar-Abstoßung)',
+      text: 'Die räumliche Gestalt eines Moleküls folgt aus einem einfachen Prinzip: Die Elektronenpaare um ein Zentralatom stoßen einander ab und ordnen sich so an, dass sie möglichst weit voneinander entfernt sind. Gezählt werden dabei bindende und freie Elektronenpaare; eine Doppel- oder Dreifachbindung zählt wie ein einziger Bindungsbereich. Vier Bereiche ergeben ein Tetraeder mit rund 109,5 Grad wie im Methan, drei eine ebene Dreiecksform mit 120 Grad wie im Bortrifluorid, zwei eine lineare Anordnung mit 180 Grad wie im Kohlendioxid. Freie Elektronenpaare beanspruchen mehr Raum als bindende und drücken die Bindungen zusammen: Ammoniak mit einem freien Paar ist eine dreiseitige Pyramide mit etwa 107 Grad, Wasser mit zweien gewinkelt mit etwa 104,5 Grad. Aus der Gestalt folgt die Polarität – Ammoniak und Wasser sind Dipole, das symmetrische Methan und Tetrachlormethan nicht.',
+      facts: [
+        'Elektronenpaare stoßen sich ab und gehen maximal auseinander',
+        'Vier Bereiche: Tetraeder (CH4, 109,5°); drei: eben (BF3, 120°); zwei: linear (CO2, 180°)',
+        'Mehrfachbindungen zählen als ein Bindungsbereich',
+        'Freie Paare verkleinern den Winkel: NH3 etwa 107°, H2O etwa 104,5°',
+        'Symmetrische Moleküle wie CH4 und CCl4 sind unpolar',
+      ],
+      related: ['che-bindung-atom', 'che-bindung-polaritaet', 'che-atombau-orbitale'],
     },
   ],
 };
@@ -218,5 +231,77 @@ export const QUESTIONS = [
       { text: 'MgCl3', correct: false, why: 'Magnesium gibt nur zwei Elektronen ab.' },
     ],
     explanation: 'Regel: Die Summe aller Ladungen im Salz muss null ergeben.',
+  },
+  {
+    id: 'che-bin-q13', topicId: 'che-bindung', entryId: 'che-bindung-geometrie', kind: 'single',
+    prompt: 'Welche räumliche Gestalt hat das Methanmolekül CH4?',
+    options: [
+      { text: 'Tetraedrisch mit Winkeln von etwa 109,5°', correct: true, why: 'Vier bindende Elektronenpaare gehen räumlich maximal auseinander.' },
+      { text: 'Quadratisch-eben mit Winkeln von 90°', correct: false, why: 'Im Raum kommen sich die Paare weniger nahe als in der Ebene.' },
+      { text: 'Linear mit 180°', correct: false, why: 'Linear sind Moleküle mit zwei Bindungsbereichen wie CO2.' },
+      { text: 'Trigonal-eben mit 120°', correct: false, why: 'Das gilt für drei Bindungsbereiche wie in BF3.' },
+      { text: 'Gewinkelt mit 104,5°', correct: false, why: 'Das ist Wasser mit zwei freien Elektronenpaaren.' },
+    ],
+    explanation: 'Methan, Ammoniak und Wasser haben alle vier Elektronenpaare am Zentralatom – die Zahl der freien Paare entscheidet, was man als Gestalt sieht.',
+  },
+  {
+    id: 'che-bin-q14', topicId: 'che-bindung', entryId: 'che-bindung-geometrie', kind: 'single',
+    prompt: 'Welches der folgenden Moleküle ist ein Dipol?',
+    options: [
+      { text: 'Ammoniak NH3', correct: true, why: 'Das freie Elektronenpaar macht das Molekül pyramidal und damit unsymmetrisch.' },
+      { text: 'Methan CH4', correct: false, why: 'Die Bindungen sind kaum polar, und der Tetraeder ist symmetrisch.' },
+      { text: 'Kohlendioxid CO2', correct: false, why: 'Die beiden Bindungsdipole heben sich im linearen Molekül auf.' },
+      { text: 'Tetrachlormethan CCl4', correct: false, why: 'Vier gleiche polare Bindungen im Tetraeder heben sich gegenseitig auf.' },
+      { text: 'Bortrifluorid BF3', correct: false, why: 'Die ebene Dreiecksform ist symmetrisch, die Dipole heben sich auf.' },
+    ],
+    explanation: 'Polares Molekül = polare Bindungen plus unsymmetrischer Bau. Bei NH3 und H2O liefern die freien Paare die Unsymmetrie.',
+  },
+  {
+    id: 'che-bin-q15', topicId: 'che-bindung', entryId: 'che-bindung-geometrie', kind: 'single',
+    prompt: 'Wie viele bindende und wie viele freie Elektronenpaare besitzt das Stickstoffatom im Ammoniak NH3?',
+    options: [
+      { text: '3 bindende und 1 freies', correct: true, why: 'Stickstoff hat 5 Valenzelektronen: 3 in Bindungen zu H, 2 als freies Paar.' },
+      { text: '4 bindende und 0 freie', correct: false, why: 'Das trifft auf das Ammonium-Ion NH4+ zu.' },
+      { text: '3 bindende und 0 freie', correct: false, why: 'Dann hätte Stickstoff nur 6 Elektronen um sich und kein Oktett.' },
+      { text: '2 bindende und 2 freie', correct: false, why: 'Das ist der Sauerstoff im Wasser.' },
+      { text: '3 bindende und 2 freie', correct: false, why: 'Das ergäbe 10 Elektronen um den Stickstoff – mehr als das Oktett.' },
+    ],
+    explanation: 'Gerade dieses freie Paar nimmt ein Proton auf – deshalb reagiert Ammoniak als Base und bildet NH4+.',
+  },
+  {
+    id: 'che-bin-q16', topicId: 'che-bindung', entryId: 'che-bindung-kraefte', kind: 'single',
+    prompt: 'Welcher der folgenden Stoffe bildet zwischen seinen Molekülen Wasserstoffbrücken aus?',
+    options: [
+      { text: 'Keine der angegebenen Antwortmöglichkeiten ist korrekt', correct: true, why: 'In keinem der vier Stoffe ist Wasserstoff an F, O oder N gebunden.' },
+      { text: 'Methan CH4', correct: false, why: 'Wasserstoff sitzt am wenig elektronegativen Kohlenstoff.' },
+      { text: 'Kohlendioxid CO2', correct: false, why: 'Das Molekül enthält gar keinen Wasserstoff.' },
+      { text: 'Wasserstoff H2', correct: false, why: 'Die H-H-Bindung ist unpolar; es wirken nur Van-der-Waals-Kräfte.' },
+      { text: 'Tetrachlormethan CCl4', correct: false, why: 'Auch hier fehlt Wasserstoff im Molekül.' },
+    ],
+    explanation: 'Wasserstoffbrücken brauchen H an F, O oder N – Beispiele sind Wasser, Ammoniak, Fluorwasserstoff und Alkohole.',
+  },
+  {
+    id: 'che-bin-q17', topicId: 'che-bindung', entryId: 'che-bindung-ionen', kind: 'single',
+    prompt: 'Welche Verhältnisformel hat Aluminiumoxid?',
+    options: [
+      { text: 'Al2O3', correct: true, why: 'Zwei Al³⁺ (+6) und drei O²⁻ (−6) gleichen sich aus.' },
+      { text: 'AlO', correct: false, why: 'Al³⁺ und O²⁻ im Verhältnis 1 : 1 ergäben eine Restladung von +1.' },
+      { text: 'Al3O2', correct: false, why: 'Die Indizes sind vertauscht: +9 und −4 gleichen sich nicht aus.' },
+      { text: 'AlO2', correct: false, why: '+3 und −4 ergeben keine neutrale Verbindung.' },
+      { text: 'Al2O', correct: false, why: '+6 und −2 ergeben keine neutrale Verbindung.' },
+    ],
+    explanation: 'Über Kreuz: Die Ladung des einen Ions wird zum Index des anderen – Al³⁺ und O²⁻ ergeben Al2O3.',
+  },
+  {
+    id: 'che-bin-q18', topicId: 'che-bindung', entryId: 'che-bindung-metall', kind: 'multi',
+    prompt: 'Welche zwei Stoffe leiten den elektrischen Strom im festen Zustand? (2 aus 5)',
+    options: [
+      { text: 'Kupfer', correct: true, why: 'Als Metall besitzt es frei bewegliche Elektronen.' },
+      { text: 'Graphit', correct: true, why: 'In seinen ebenen Kohlenstoffschichten ist je Atom ein Elektron delokalisiert und beweglich.' },
+      { text: 'Festes Kochsalz', correct: false, why: 'Die Ionen sitzen fest im Gitter – erst Schmelze oder Lösung leiten.' },
+      { text: 'Zucker', correct: false, why: 'Ein Molekülkristall ohne bewegliche Ladungsträger.' },
+      { text: 'Eis', correct: false, why: 'Wassermoleküle sind ungeladen; Eis ist praktisch ein Isolator.' },
+    ],
+    explanation: 'Leitfähigkeit braucht bewegliche Ladungsträger: Elektronen in Metallen und Graphit, Ionen in Schmelzen und Lösungen.',
   },
 ];

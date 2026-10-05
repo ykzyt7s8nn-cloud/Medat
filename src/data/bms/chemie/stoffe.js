@@ -8,7 +8,7 @@ export const TOPIC = {
     {
       id: 'che-stoffe-einteilung',
       title: 'Einteilung der Stoffe',
-      text: 'Reinstoffe haben eine feste Zusammensetzung und feste Kennwerte wie Schmelz- und Siedepunkt. Sie gliedern sich in Elemente, die aus nur einer Atomsorte bestehen, und Verbindungen, in denen mehrere Elemente in einem festen Verhältnis chemisch gebunden sind. Stoffgemische enthalten dagegen mehrere Reinstoffe in beliebigem Verhältnis, die ihre Eigenschaften behalten; ihre Bestandteile lassen sich mit physikalischen Verfahren trennen. Homogene Gemische wie Lösungen, Legierungen und Gasgemische erscheinen einheitlich, heterogene wie Suspensionen, Emulsionen und Gemenge zeigen erkennbar mehrere Phasen. Entscheidend ist der Unterschied zwischen der chemischen Verbindung, die nur durch eine chemische Reaktion zu zerlegen ist, und dem Gemisch, das ein Trennverfahren genügt.',
+      text: 'Reinstoffe haben eine feste Zusammensetzung und feste Kennwerte wie Schmelz- und Siedepunkt. Sie gliedern sich in Elemente, die aus nur einer Atomsorte bestehen, und Verbindungen, in denen mehrere Elemente in einem festen Verhältnis chemisch gebunden sind. Stoffgemische enthalten dagegen mehrere Reinstoffe in beliebigem Verhältnis, die ihre Eigenschaften behalten; ihre Bestandteile lassen sich mit physikalischen Verfahren trennen. Homogene Gemische wie Lösungen, Legierungen und Gasgemische erscheinen einheitlich, heterogene wie Suspensionen, Emulsionen und Gemenge zeigen erkennbar mehrere Phasen. Entscheidend ist der Unterschied zwischen der chemischen Verbindung, die nur durch eine chemische Reaktion zu zerlegen ist, und dem Gemisch, bei dem ein physikalisches Trennverfahren genügt.',
       facts: [
         'Reinstoff: feste Zusammensetzung und feste Kennwerte',
         'Element = eine Atomsorte, Verbindung = mehrere in festem Verhältnis',
@@ -40,7 +40,7 @@ export const TOPIC = {
         'Sublimieren: fest direkt zu gasförmig',
         'Während des Übergangs bleibt die Temperatur konstant',
         'Schmelz- und Siedepunkt sind Kennwerte von Reinstoffen',
-        'Beim Übergang werden nur zwischenmolekulare Kräfte überwunden',
+        'Beim Übergang werden Anziehungskräfte zwischen den Teilchen überwunden, Moleküle bleiben ganz',
       ],
       related: ['che-bindung-kraefte', 'che-stoffe-einteilung', 'phy-waerme-waermelehre'],
     },
@@ -204,5 +204,53 @@ export const QUESTIONS = [
       { text: 'Der Stoff hat sich vollständig zersetzt', correct: false, why: 'Beim Lösen findet keine Zersetzung statt.' },
     ],
     explanation: 'Erhöht man die Temperatur, lässt sich bei den meisten Feststoffen wieder mehr lösen.',
+  },
+  {
+    id: 'che-stf-q13', topicId: 'che-stoffe', entryId: 'che-stoffe-einteilung', kind: 'single',
+    prompt: 'Wie nennt man ein heterogenes Gemisch aus zwei nicht mischbaren Flüssigkeiten?',
+    options: [
+      { text: 'Emulsion', correct: true, why: 'Feine Tröpfchen der einen Flüssigkeit verteilen sich in der anderen, etwa Fett in Milch.' },
+      { text: 'Suspension', correct: false, why: 'In einer Suspension ist ein Feststoff in einer Flüssigkeit verteilt.' },
+      { text: 'Lösung', correct: false, why: 'Eine Lösung ist homogen.' },
+      { text: 'Legierung', correct: false, why: 'Eine Legierung ist ein Gemisch von Metallen.' },
+      { text: 'Rauch', correct: false, why: 'Rauch ist ein Feststoff fein verteilt in einem Gas.' },
+    ],
+    explanation: 'Emulsion: flüssig in flüssig; Suspension: fest in flüssig; Rauch: fest in gasförmig; Nebel: flüssig in gasförmig; Schaum: gasförmig in flüssig.',
+  },
+  {
+    id: 'che-stf-q14', topicId: 'che-stoffe', entryId: 'che-stoffe-trennung', kind: 'single',
+    prompt: 'Mit welchem Verfahren trennt man die Farbstoffe einer Filzstiftfarbe?',
+    options: [
+      { text: 'Chromatographie', correct: true, why: 'Die Farbstoffe wandern unterschiedlich schnell über das Trägermaterial.' },
+      { text: 'Filtration', correct: false, why: 'Gelöste Farbstoffe gehen alle gemeinsam durch den Filter.' },
+      { text: 'Sieben', correct: false, why: 'Sieben trennt grobe Feststoffe nach der Korngröße.' },
+      { text: 'Zentrifugieren', correct: false, why: 'Gelöste Teilchen setzen sich auch in der Zentrifuge nicht ab.' },
+      { text: 'Dekantieren', correct: false, why: 'Es gibt keinen Bodensatz, den man abgießen könnte.' },
+    ],
+    explanation: 'Bei der Papierchromatographie trennt sich ein schwarzer Filzstiftstrich in mehrere farbige Banden auf.',
+  },
+  {
+    id: 'che-stf-q15', topicId: 'che-stoffe', entryId: 'che-stoffe-trennung', kind: 'single',
+    prompt: 'Ein Gemenge aus Sand und Kochsalz soll in seine Bestandteile getrennt werden. Welche Abfolge ist sinnvoll?',
+    options: [
+      { text: 'In Wasser lösen, filtrieren, das Filtrat eindampfen', correct: true, why: 'Das Salz geht in Lösung, der Sand bleibt im Filter, das Salz kehrt beim Eindampfen zurück.' },
+      { text: 'Filtrieren, dann in Wasser lösen, dann destillieren', correct: false, why: 'Trocken lässt sich ein Feststoffgemenge nicht filtrieren.' },
+      { text: 'Destillieren, dann filtrieren', correct: false, why: 'Beide Feststoffe sieden erst bei sehr hohen Temperaturen.' },
+      { text: 'Trocken zentrifugieren', correct: false, why: 'Ohne Flüssigkeit trennt die Zentrifuge zwei Pulver nicht.' },
+      { text: 'Mit Öl extrahieren', correct: false, why: 'Weder Sand noch Kochsalz lösen sich in Öl.' },
+    ],
+    explanation: 'Der Unterschied, der hier genutzt wird, ist die Löslichkeit in Wasser – daraus folgt die Reihenfolge.',
+  },
+  {
+    id: 'che-stf-q16', topicId: 'che-stoffe', entryId: 'che-stoffe-einteilung', kind: 'multi',
+    prompt: 'Welche zwei der folgenden Stoffe sind chemische Verbindungen? (2 aus 5)',
+    options: [
+      { text: 'Wasser', correct: true, why: 'Wasserstoff und Sauerstoff sind im festen Verhältnis 2 : 1 gebunden.' },
+      { text: 'Kohlendioxid', correct: true, why: 'Kohlenstoff und Sauerstoff sind im festen Verhältnis 1 : 2 gebunden.' },
+      { text: 'Ozon O3', correct: false, why: 'Ozon besteht nur aus Sauerstoffatomen und ist damit ein Element.' },
+      { text: 'Messing', correct: false, why: 'Messing ist eine Legierung, also ein Gemisch.' },
+      { text: 'Stickstoff N2', correct: false, why: 'Zwei gleiche Atome ergeben ein Elementmolekül, keine Verbindung.' },
+    ],
+    explanation: 'Ein Molekül ist nicht automatisch eine Verbindung: O3 und N2 sind Moleküle, aber Elemente – für eine Verbindung braucht es mindestens zwei Atomsorten.',
   },
 ];
