@@ -20,13 +20,16 @@ import { formatDuration, formatPoints } from '../lib/format.js';
 
 function StatCard({ icon, label, value, tint }) {
   return (
-    <div className="ios-card flex flex-1 items-center gap-3 px-3.5 py-3">
+    // min-w-0: Sonst hält das Etikett die Karte auf voller Breite fest, und auf
+    // 320 px schiebt die zweite Karte über den Bildschirmrand. Das Etikett
+    // bricht dort um, statt zu „Tage a…“ gekürzt zu werden.
+    <div className="ios-card flex min-w-0 flex-1 items-center gap-3 px-3.5 py-3">
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: `${tint}1A`, color: tint }}>
         <Icon name={icon} className="h-5 w-5" />
       </span>
       <span className="min-w-0">
         <span className="block tabular text-[17px] font-bold leading-tight">{value}</span>
-        <span className="block truncate text-[12px] text-black/50 dark:text-white/50">{label}</span>
+        <span className="block text-[12px] leading-tight text-black/50 dark:text-white/50">{label}</span>
       </span>
     </div>
   );
@@ -92,7 +95,7 @@ export default function StatsScreen() {
   return (
     <Screen
       title="Statistik"
-      subtitle={`${activity.sessions} abgeschlossene Übungen – KFF und BMS`}
+      subtitle={`${activity.sessions} abgeschlossene ${activity.sessions === 1 ? 'Übung' : 'Übungen'} – alle Testteile`}
     >
       <div className="space-y-4">
         <div className="flex gap-3">

@@ -81,24 +81,25 @@ function LearnGallery({ cards }) {
         ))}
       </div>
 
+      {/* Unter 360 px schmaler gepolstert, sonst ragt „Weiter“ über den Rand. */}
       <div className="flex gap-2">
         <Button
           variant="neutral"
           size="sm"
-          className="flex-1 whitespace-nowrap"
+          className="flex-1 whitespace-nowrap max-[359px]:px-3"
           onClick={() => setIndex((i) => Math.max(0, i - 1))}
           disabled={index === 0}
         >
           <Icon name="chevronLeft" className="h-4 w-4" />
           Zurück
         </Button>
-        <Button variant="secondary" size="sm" className="whitespace-nowrap" onClick={() => setShowAll(true)}>
+        <Button variant="secondary" size="sm" className="whitespace-nowrap max-[359px]:px-3" onClick={() => setShowAll(true)}>
           Alle
         </Button>
         <Button
           variant="neutral"
           size="sm"
-          className="flex-1 whitespace-nowrap"
+          className="flex-1 whitespace-nowrap max-[359px]:px-3"
           onClick={() => setIndex((i) => Math.min(cards.length - 1, i + 1))}
           disabled={index === cards.length - 1}
         >

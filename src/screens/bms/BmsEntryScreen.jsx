@@ -121,14 +121,12 @@ export default function BmsEntryScreen({ subjectId, entryId }) {
               Formeln
             </h2>
             <ul className="space-y-2.5">
+              {/* Formeln sind schlichte Strings (siehe Datenschema in data/bms/index.js). */}
               {entry.formulas.map((formula) => (
-                <li key={formula.text}>
+                <li key={formula}>
                   <p className="tabular rounded-lg bg-black/[0.05] px-3 py-2 text-[15px] font-medium dark:bg-white/10">
-                    {formula.text}
+                    {formula}
                   </p>
-                  {formula.note && (
-                    <p className="mt-1 px-1 text-[13px] text-black/55 dark:text-white/55">{formula.note}</p>
-                  )}
                 </li>
               ))}
             </ul>
