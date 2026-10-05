@@ -71,6 +71,25 @@ ob er auch am Rand einer Antwortfläche auslöst. Falls nur die Mitte trägt, li
 es daran, wie Safari den Schalter zeichnet; dann ist an der Größe des Schalters
 nachzujustieren, nicht am Verfahren.
 
+**Zielkonflikt mit dem Scrollen.** Der Schalter wertet Berührungen selbst aus
+und schaltete am Ende einer Scrollbewegung um – so kam beim Scrollen eine
+Antwort durch. Seit dem Tipp-Wächter (`src/lib/tapGuard.js`) wählt eine
+Scrollbewegung nichts mehr; im Browser mit nachgebautem Schalter geprüft
+(Scrollgeste von 40 px wählt in keinem Untertest etwas, ein Tipp weiterhin).
+Am iPhone zu klären bleibt:
+
+* Wählt beim Scrollen über die Antworten wirklich nichts mehr – auch bei sehr
+  kurzen, schnellen Wischern und beim Anhalten einer auslaufenden Bewegung?
+* Gibt es beim Scrollen über eine Antwort trotzdem einen Impuls? Das wäre der
+  bekannte Zielkonflikt (der Impuls lässt sich nicht zurücknehmen) – störend,
+  aber harmlos. Falls er sehr lästig ist: Haptik nur noch auf Knöpfen statt auf
+  Antwortflächen, oder Haptik standardmäßig aus.
+* Lässt sich überhaupt flüssig scrollen, wenn der Finger auf einer Antwort
+  aufsetzt, oder hält der Schalter die Bewegung fest? Falls er sie festhält,
+  sind die Schalter auf großen Flächen nicht zu halten; dann dort entfernen.
+* Fühlen sich normale Tipps unverändert an, also keine verschluckten Tipps
+  (Toleranz 10 px, Sperre 120 ms nach dem letzten Scrollschritt)?
+
 ## 4. Folgeaufgaben aus dem Niveau-Vergleich
 
 Begründung und Quellen stehen in `docs/recherche/niveau-vergleich.md`
@@ -97,26 +116,19 @@ aktuellen Liste im VMC prüfen (kostenloses Konto).
   und Dreieck angekündigt. Heute sind sie in `figures.js` reine Distraktoren.
   Teilezahl der MedAT-Stufe auf 3–7 erweitern.
 
-**BMS-Stoff nach Stichwortliste:**
-
-* **Mathematik:** Themen Vektorrechnung und Differential/Integral fehlen
-  ganz. „Statistik und Wahrscheinlichkeit“ steht vermutlich nicht auf der
-  Liste – prüfen, ggf. kürzen.
-* **Physik:** Schwingungen und Wellen, Elektrostatik, Impuls und
-  Erhaltungssätze, Gravitation, Bernoulli, Kernspaltung/-fusion,
-  Antiteilchen, kosmische Strahlung ergänzen.
-* **Biologie:** „Der menschliche Körper“ von 14 auf rund ein Drittel der
-  Bio-Fragen aufstocken (Histologie, Hormone, Niere, Herz, Fortpflanzung).
-  Stichworte 2026 ergänzen: genetischer Fingerabdruck, GVO, Genomanalyse.
-* **Chemie:** Orbitale und Quantenzahlen, „Mikrokosmos“ (Welle-Teilchen,
-  Unschärfe), Elementgruppen H/O/N/C/Halogene/S, Thiole, Ether, Anhydride,
-  Nomenklatur, MWG-Rechnung, Energiediagramme deuten.
+**BMS-Stoff nach Stichwortliste:** Die genannten Lücken sind inzwischen
+geschlossen (Vektoren, Analysis, Fluide, Schwingungen, Elektrostatik, Impuls,
+Kernphysik, Orbitale, Elementgruppen, „Der menschliche Körper“ mit 60 Fragen,
+genetischer Fingerabdruck/GVO). Offen bleibt der Abgleich mit der aktuellen
+Stichwortliste im VMC – vor allem, ob „Statistik“ in Mathe überhaupt verlangt
+wird und ob Analysis dazugehört.
 
 **Formate:**
 
-* **BMS:** „x aus 5“ gibt es im Test nicht (ein Kreuz je Aufgabe) – in
-  Aussagenkombinationen („nur 1 und 3“) umwandeln. Negativfragen und
-  gelegentlich E „keine richtig“ als Lösung ergänzen (heute 1 von 338).
+* **BMS:** „x aus 5“ gibt es im Test nicht (ein Kreuz je Aufgabe). Chemie ist
+  umgestellt; in Biologie (zelle-q11, gen-q4, hum-q8, entw-q6, evo-q8,
+  imm-q8) und je eine Frage `*-q12` in Physik und Mathe stehen noch im alten
+  Format und sind in Aussagenkombinationen umzubauen.
 * **Zahlenfolgen:** MC-Modus mit Zahlenpaaren A–D und E anbieten. Primzahl-
   und Quadratzahlregeln aus der MedAT-Stufe nehmen (Test: nur
   Grundrechenarten), dreifach verschachtelte Folgen und die rekursiven

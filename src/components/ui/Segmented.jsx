@@ -16,7 +16,7 @@ export function Segmented({ options, value, onChange, className = '', ariaLabel 
             role="radio"
             aria-checked={active}
             onClick={() => onChange(option.value)}
-            className={`flex-1 rounded-[10px] px-2 py-1.5 text-[13px] font-medium ${
+            className={`min-h-[36px] flex-1 rounded-[10px] px-2 py-1.5 text-[13px] font-medium ${
               active ? 'bg-white text-black shadow-sm dark:bg-night-tertiary dark:text-white' : 'text-black/60 dark:text-white/60'
             }`}
           >

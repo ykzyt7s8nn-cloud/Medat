@@ -30,7 +30,7 @@ export function Screen({
             <Tappable
               onClick={onClose}
               aria-label={closeLabel}
-              className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black/5 text-black/60 dark:bg-white/10 dark:text-white/70"
+              className="relative -ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black/5 after:absolute after:-inset-1 after:content-[''] text-black/60 dark:bg-white/10 dark:text-white/70"
             >
               <Icon name="close" className="h-5 w-5" />
             </Tappable>
@@ -43,7 +43,14 @@ export function Screen({
         {headerExtra && <div className="px-4 pb-3">{headerExtra}</div>}
       </header>
 
-      <main className={`scroll-area flex-1 ${padded ? 'px-4 py-4' : ''}`}>{children}</main>
+      {/* Ohne Footer reicht der Inhalt bis an den Home-Indikator – der letzte
+          Knopf bekommt dann den Abstand, den sonst der Footer hält. */}
+      <main
+        className={`scroll-area flex-1 ${padded ? 'px-4 py-4' : ''}`}
+        style={footer ? undefined : { paddingBottom: `calc(var(--safe-bottom) + ${padded ? '1rem' : '0px'})` }}
+      >
+        {children}
+      </main>
 
       {footer && (
         <div

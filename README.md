@@ -137,6 +137,26 @@ löst dieselbe Haptik aus wie jede Antwort im Untertest und zeigt darunter den
 genutzten Weg. Wo das Gerät nichts anbietet, ist der Regler abgeschaltet und
 sagt das auch.
 
+**Tipp oder Scrollen** – Der Schalter unter dem Finger hat eine Kehrseite: Er
+wertet Berührungen selbst aus, lässt sich ziehen und schaltet beim Loslassen,
+auch wenn der Finger eigentlich die Seite gescrollt hat. Bis Oktober 2026 wurde
+dadurch beim Scrollen über die Antworten immer wieder eine gewählt – im
+Übungsmodus samt sofortiger, nicht mehr änderbarer Auflösung. Seitdem
+entscheidet jede tappbare Fläche selbst, ob ein Klick ein Tipp war
+(`src/lib/tapGuard.js`, eingebunden in `ui/Tappable.jsx`): Er zählt nur, wenn
+der Finger weniger als 10 px vom Aufsetzpunkt abgewichen ist, der Browser die
+Berührung nicht zum Scrollen übernommen hat, kein umgebender Bereich dabei
+gescrollt hat und der Tipp nicht in eine noch auslaufende Scrollbewegung fiel
+(120 ms). Sonst wird der Klick verworfen und das Umschalten des Schalters
+zurückgenommen. Klicks ohne Berührung – Tastatur, VoiceOver – prüft das nicht.
+
+Der Zielkonflikt, der dabei bleibt: Den Impuls, den iOS beim Umschalten des
+Schalters gibt, kann die App nicht zurückholen. Wer auf einer Antwort zum
+Scrollen ansetzt, spürt deshalb womöglich einen Impuls, obwohl nichts gewählt
+wird. Sicheres Scrollen hat Vorrang; die Haptik bleibt, weil sie nur so unter
+den Finger kommt. Wen das stört, stellt die Haptik auf „Aus“ – dann liegt
+überhaupt kein Schalter mehr über den Flächen.
+
 **Fehlerarchiv mit Wiedervorlage** – Eine falsch beantwortete BMS-Frage kommt
 nach einem Tag wieder, bei erneut richtiger Antwort nach drei, dann nach sieben
 Tagen; dreimal in Folge richtig heißt gelernt. Ein Fehler zwischendurch setzt
@@ -177,7 +197,7 @@ npm install
 npm run dev        # Entwicklungsserver
 npm run build      # Icons + Produktionsbuild nach dist/ + Precache-Liste
 npm run preview    # Produktionsbuild lokal ansehen
-npm run selftest   # Daten- und Engine-Prüfungen (273 Checks)
+npm run selftest   # Daten- und Engine-Prüfungen (285 Checks)
 npm run icons      # PWA-Icons neu generieren
 ```
 
