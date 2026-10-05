@@ -70,3 +70,56 @@ fehlt, ist die Bestätigung am echten iPhone** – ob der Impuls dort ankommt un
 ob er auch am Rand einer Antwortfläche auslöst. Falls nur die Mitte trägt, liegt
 es daran, wie Safari den Schalter zeichnet; dann ist an der Größe des Schalters
 nachzujustieren, nicht am Verfahren.
+
+## 4. Folgeaufgaben aus dem Niveau-Vergleich
+
+Begründung und Quellen stehen in `docs/recherche/niveau-vergleich.md`
+(Abschnitt 5). Die Recherche stützt sich nur auf Suchergebnis-Auszüge, weil
+alle Seiten aus der Arbeitsumgebung gesperrt waren. Was auf
+Anbieter-Abschriften der Stichwortliste beruht, vor dem Umsetzen an der
+aktuellen Liste im VMC prüfen (kostenloses Konto).
+
+**Testtreue – zuerst:**
+
+* **Figuren: 20 statt 15 Minuten.** Offiziell sind es 15 Aufgaben in 20 min.
+  `TESTS.figures.testSeconds` steht auf 15 min, die README-Tabelle ebenso;
+  die KFF-Simulation ist dadurch 5 min zu kurz. Der Selbsttest schreibt die
+  15 min derzeit fest („Figuren zusammensetzen: 15 Aufgaben, 15 Min“) und
+  muss mitgezogen werden. Prozentrang-Schätzung danach prüfen.
+* **Allergieausweis: Ausweisnummer und Ausstellungsland statt Blutdruck und
+  Brille.** Die offizielle Beschreibung nennt eine fünfstellige Nummer und
+  einen existierenden Staat. `src/engines/memory.js` (Kopfkommentar
+  „exakt die acht MedAT-Felder“ ist falsch), Ausweiskarte, Fragetypen
+  (Nummer ↔ Person, Teilziffern, Land ↔ Person), README und Selbsttest
+  anpassen. Fantasienamen statt realer Namen erwägen.
+* **Figuren: Vierecke als Lösung zulassen.** Seit 2024 kommen Quadrat,
+  Rechteck und Trapez als richtige Antwort vor, 2025 wurden Parallelogramm
+  und Dreieck angekündigt. Heute sind sie in `figures.js` reine Distraktoren.
+  Teilezahl der MedAT-Stufe auf 3–7 erweitern.
+
+**BMS-Stoff nach Stichwortliste:**
+
+* **Mathematik:** Themen Vektorrechnung und Differential/Integral fehlen
+  ganz. „Statistik und Wahrscheinlichkeit“ steht vermutlich nicht auf der
+  Liste – prüfen, ggf. kürzen.
+* **Physik:** Schwingungen und Wellen, Elektrostatik, Impuls und
+  Erhaltungssätze, Gravitation, Bernoulli, Kernspaltung/-fusion,
+  Antiteilchen, kosmische Strahlung ergänzen.
+* **Biologie:** „Der menschliche Körper“ von 14 auf rund ein Drittel der
+  Bio-Fragen aufstocken (Histologie, Hormone, Niere, Herz, Fortpflanzung).
+  Stichworte 2026 ergänzen: genetischer Fingerabdruck, GVO, Genomanalyse.
+* **Chemie:** Orbitale und Quantenzahlen, „Mikrokosmos“ (Welle-Teilchen,
+  Unschärfe), Elementgruppen H/O/N/C/Halogene/S, Thiole, Ether, Anhydride,
+  Nomenklatur, MWG-Rechnung, Energiediagramme deuten.
+
+**Formate:**
+
+* **BMS:** „x aus 5“ gibt es im Test nicht (ein Kreuz je Aufgabe) – in
+  Aussagenkombinationen („nur 1 und 3“) umwandeln. Negativfragen und
+  gelegentlich E „keine richtig“ als Lösung ergänzen (heute 1 von 338).
+* **Zahlenfolgen:** MC-Modus mit Zahlenpaaren A–D und E anbieten. Primzahl-
+  und Quadratzahlregeln aus der MedAT-Stufe nehmen (Test: nur
+  Grundrechenarten), dreifach verschachtelte Folgen und die rekursiven
+  Mischsysteme seit 2024 ergänzen.
+* **Implikationen:** einen Teil der Begriffstripel absurd bzw.
+  weltwissenswidrig wählen, damit die Glaubensfalle geübt wird.
