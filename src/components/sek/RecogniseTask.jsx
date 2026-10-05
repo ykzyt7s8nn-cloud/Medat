@@ -23,7 +23,7 @@ function Choice({ label, active, tone, disabled, onClick }) {
       onClick={onClick}
       disabled={disabled}
       aria-pressed={active}
-      className={`shrink-0 rounded-full px-3 py-1.5 text-[13px] font-semibold ${
+      className={`min-h-[44px] shrink-0 rounded-full px-3.5 py-2 text-[13px] font-semibold ${
         active ? activeClass : 'bg-black/[0.06] text-black/55 dark:bg-white/10 dark:text-white/60'
       } ${disabled ? 'active:scale-100' : ''}`}
     >
@@ -64,7 +64,7 @@ export default function RecogniseTask({ task, value = [], revealed, onChange }) 
                   {emotion.likely ? 'wahrscheinlich' : 'unwahrscheinlich'}
                 </span>
               ) : (
-                <span className="flex shrink-0 gap-1.5">
+                <span className="flex shrink-0 gap-2">
                   <Choice
                     label="eher ja"
                     tone="yes"

@@ -57,6 +57,13 @@ import { formatPoints } from '../src/lib/format.js';
 import { isAnswered } from '../src/hooks/useTaskSession.js';
 import { crossedMarks, marksFor } from '../src/lib/timeWarnings.js';
 import {
+  GESTURE_MAX_AGE_MS,
+  SCROLL_SETTLE_MS,
+  TAP_SLOP_PX,
+  exceedsTapSlop,
+  isDeliberateTap,
+} from '../src/lib/tapGuard.js';
+import {
   BMS_TOTAL,
   NO_ANSWER_LABEL as BMS_NO_ANSWER_LABEL,
   SUBJECTS,
@@ -1236,6 +1243,36 @@ check('Eine Marke löst genau beim Unterschreiten aus',
 check('Ein Sprung über mehrere Marken meldet alle',
   crossedMarks(70, 5, 900).join() === '60,10');
 check('Zurücklaufende Zeit meldet nichts', crossedMarks(50, 80, 900).length === 0);
+
+/* ------------------------------------------------------ Tipp oder Scrollen */
+section('Tipp oder Scrollen');
+{
+  const origin = { x: 100, y: 400 };
+  const tap = { downAt: 1000, endedAt: 1080, moved: false, cancelled: false };
+  check('Toleranz liegt im üblichen Bereich von 8–10 px', TAP_SLOP_PX >= 8 && TAP_SLOP_PX <= 10);
+  check('Ein ruhiger Finger bleibt ein Tipp',
+    !exceedsTapSlop(origin, { x: 103, y: 405 }));
+  check('40 px nach oben sind kein Tipp mehr',
+    exceedsTapSlop(origin, { x: 100, y: 360 }));
+  check('Schräg zählt der Abstand, nicht eine Achse',
+    exceedsTapSlop(origin, { x: 108, y: 408 }) && !exceedsTapSlop(origin, { x: 107, y: 407 }));
+  check('Ein Tipp ohne Bewegung und ohne Scrollen zählt',
+    isDeliberateTap(tap, { now: 1090, lastScrollAt: 0 }));
+  check('Bewegter Finger wählt nichts',
+    !isDeliberateTap({ ...tap, moved: true }, { now: 1090 }));
+  check('Hat der Browser zum Scrollen übernommen, wählt nichts',
+    !isDeliberateTap({ ...tap, cancelled: true }, { now: 1090 }));
+  check('Während der Berührung gescrollt: kein Tipp',
+    !isDeliberateTap(tap, { now: 1090, lastScrollAt: 1040 }));
+  check('Tipp in die auslaufende Scrollbewegung hält nur an',
+    !isDeliberateTap(tap, { now: 1090, lastScrollAt: 1000 - SCROLL_SETTLE_MS + 10 }));
+  check('Länger zurückliegendes Scrollen stört einen Tipp nicht',
+    isDeliberateTap(tap, { now: 1090, lastScrollAt: 1000 - SCROLL_SETTLE_MS - 500 }));
+  check('Klick ohne Berührung (Tastatur, VoiceOver) zählt immer',
+    isDeliberateTap(null, { now: 5000, lastScrollAt: 4990 }));
+  check('Eine alte, verworfene Berührung sperrt keinen späteren Klick',
+    isDeliberateTap({ ...tap, moved: true }, { now: 1080 + GESTURE_MAX_AGE_MS + 1 }));
+}
 
 /* ---------------------------------------------------------- Konfiguration */
 section('Konfiguration (MedAT-Vorgaben)');

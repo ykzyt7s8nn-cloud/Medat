@@ -70,3 +70,22 @@ fehlt, ist die Bestätigung am echten iPhone** – ob der Impuls dort ankommt un
 ob er auch am Rand einer Antwortfläche auslöst. Falls nur die Mitte trägt, liegt
 es daran, wie Safari den Schalter zeichnet; dann ist an der Größe des Schalters
 nachzujustieren, nicht am Verfahren.
+
+**Zielkonflikt mit dem Scrollen.** Der Schalter wertet Berührungen selbst aus
+und schaltete am Ende einer Scrollbewegung um – so kam beim Scrollen eine
+Antwort durch. Seit dem Tipp-Wächter (`src/lib/tapGuard.js`) wählt eine
+Scrollbewegung nichts mehr; im Browser mit nachgebautem Schalter geprüft
+(Scrollgeste von 40 px wählt in keinem Untertest etwas, ein Tipp weiterhin).
+Am iPhone zu klären bleibt:
+
+* Wählt beim Scrollen über die Antworten wirklich nichts mehr – auch bei sehr
+  kurzen, schnellen Wischern und beim Anhalten einer auslaufenden Bewegung?
+* Gibt es beim Scrollen über eine Antwort trotzdem einen Impuls? Das wäre der
+  bekannte Zielkonflikt (der Impuls lässt sich nicht zurücknehmen) – störend,
+  aber harmlos. Falls er sehr lästig ist: Haptik nur noch auf Knöpfen statt auf
+  Antwortflächen, oder Haptik standardmäßig aus.
+* Lässt sich überhaupt flüssig scrollen, wenn der Finger auf einer Antwort
+  aufsetzt, oder hält der Schalter die Bewegung fest? Falls er sie festhält,
+  sind die Schalter auf großen Flächen nicht zu halten; dann dort entfernen.
+* Fühlen sich normale Tipps unverändert an, also keine verschluckten Tipps
+  (Toleranz 10 px, Sperre 120 ms nach dem letzten Scrollschritt)?
