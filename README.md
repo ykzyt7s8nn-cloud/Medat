@@ -81,7 +81,7 @@ falsch ist, und verlinkt den passenden Lexikoneintrag.
 
 | Fach | Themen | Einträge | Fragen | Simulation |
 |---|---|---|---|---|
-| Biologie | 9 | 65 | 110 | 40 Fragen / 30 min |
+| Biologie | 9 | 76 | 261 | 40 Fragen / 30 min |
 | Chemie | 10 | 43 | 120 | 24 Fragen / 18 min |
 | Physik | 5 | 19 | 60 | 18 Fragen / 16 min |
 | Mathematik | 4 | 13 | 48 | 12 Fragen / 11 min |
