@@ -857,6 +857,165 @@ check('Mischen verliert und erfindet keine Antwortmöglichkeit',
 check('Mischen lässt die Quelldaten unberührt',
   bmsSubjects.biologie.questions[0].options[0].correct === true);
 
+/* ------------------------------------------------------------ BMS Chemie */
+section('BMS Chemie');
+
+// Eigener Block, damit die Namen hier nicht mit anderen Abschnitten kollidieren.
+{
+  const { topics: cheTopics, questions: cheQuestions } = bmsSubjects.chemie;
+  const cheNeed = SUBJECTS.chemie.questionCount;
+
+  // Fünf Simulationen à 24 Fragen ohne Wiederholung, dazu ein Puffer.
+  check(`Chemie: mindestens 150 Fragen für fünf Simulationen à ${cheNeed} plus Puffer (${cheQuestions.length})`,
+    cheQuestions.length >= 150 && cheQuestions.length >= 5 * cheNeed + 30);
+
+  const cheThin = cheTopics
+    .map((topic) => [topic.title, cheQuestions.filter((q) => q.topicId === topic.id).length])
+    .filter(([, count]) => count < 12);
+  check('Chemie: jedes Thema hat mindestens 12 Fragen',
+    cheThin.length === 0, cheThin.map(([title, count]) => `${title} (${count})`).join(', '));
+
+  // Der Lexikonverweis muss ins eigene Thema zeigen, und jedes Stichwort soll
+  // mindestens eine Frage tragen – sonst wird es im Quiz nie verlinkt.
+  const cheEntryTopic = new Map(cheTopics.flatMap((t) => t.entries.map((e) => [e.id, t.id])));
+  const cheWrongTopic = cheQuestions.filter((q) => cheEntryTopic.get(q.entryId) !== q.topicId);
+  check('Chemie: Lexikonverweis jeder Frage liegt im eigenen Thema',
+    cheWrongTopic.length === 0, cheWrongTopic.map((q) => q.id).join(', '));
+  const cheUsedEntries = new Set(cheQuestions.map((q) => q.entryId));
+  const cheUnused = [...cheEntryTopic.keys()].filter((id) => !cheUsedEntries.has(id));
+  check('Chemie: jeder Lexikoneintrag wird von mindestens einer Frage verlinkt',
+    cheUnused.length === 0, cheUnused.join(', '));
+
+  const cheBadRelated = cheTopics.flatMap((t) => t.entries)
+    .filter((e) => (e.related ?? []).length < 2 || e.related.includes(e.id)
+      || new Set(e.related).size !== e.related.length);
+  check('Chemie: jeder Eintrag hat mindestens 2 Querverweise, keine Dubletten, keinen auf sich selbst',
+    cheBadRelated.length === 0, cheBadRelated.map((e) => e.id).join(', '));
+
+  // "x aus 5" steht im Fragetext und muss zur Zahl der richtigen Optionen passen.
+  const cheMultiMismatch = cheQuestions.filter((q) => {
+    const correct = q.options.filter((o) => o.correct).length;
+    const stated = q.prompt.match(/\((\d) aus 5\)/);
+    if (q.kind === 'multi') return !stated || Number(stated[1]) !== correct || correct > 4;
+    return Boolean(stated) || q.kind !== 'single';
+  });
+  check('Chemie: "(x aus 5)" im Fragetext stimmt mit den richtigen Optionen überein',
+    cheMultiMismatch.length === 0, cheMultiMismatch.map((q) => q.id).join(', '));
+  // Im MedAT gibt es kein „x aus 5“ – mehrere zutreffende Aussagen werden als
+  // Aussagenkombination („Nur I und III“) mit genau einem Kreuz gefragt.
+  const cheMulti = cheQuestions.filter((q) => q.kind === 'multi');
+  check('Chemie: keine Mehrfachauswahl, nur 1 aus 5',
+    cheMulti.length === 0, cheMulti.map((q) => q.id).join(', '));
+
+  // Aussagenkombinationen: Die Aussagen (I)–(IV) stehen im Fragetext, `holds`
+  // nennt die zutreffenden. Genau die richtige Option muss diese Menge treffen.
+  const roman = { I: 1, II: 2, III: 3, IV: 4 };
+  const numerals = (text) => (/^Alle vier$/.test(text) ? [1, 2, 3, 4]
+    : (text.match(/\b(IV|I{1,3})\b/g) ?? []).map((r) => roman[r]));
+  const sameSet = (a, b) => a.length === b.length && [...a].sort().join() === [...b].sort().join();
+  const cheCombos = cheQuestions.filter((q) => q.holds || /\(I\) /.test(q.prompt));
+  const cheComboIssues = cheCombos.filter((q) => {
+    if (!Array.isArray(q.holds) || q.holds.length === 0) return true;
+    if (!['(I) ', '(II) ', '(III) ', '(IV) '].every((tag) => q.prompt.split(tag).length === 2)) return true;
+    const sets = q.options.map((o) => numerals(o.text));
+    if (sets.some((set) => set.length === 0)) return true;
+    if (new Set(sets.map((set) => [...set].sort().join())).size !== sets.length) return true;
+    return q.options.some((o, i) => sameSet(sets[i], q.holds) !== o.correct);
+  });
+  check(`Chemie: ${cheCombos.length} Aussagenkombinationen – Lösung trifft genau die zutreffenden Aussagen`,
+    cheCombos.length >= 15 && cheComboIssues.length === 0, cheComboIssues.map((q) => q.id).join(', '));
+
+  // "Keine der angegebenen …": exakter Wortlaut (nur dann bleibt sie beim Mischen
+  // als e) stehen), nur bei 1 aus 5, und sie kommt als Lösung wie als Falle vor.
+  const cheNoneVariants = cheQuestions.filter((q) => q.options.some(
+    (o) => /^keine der/i.test(o.text) && o.text !== BMS_NO_ANSWER_LABEL));
+  check('Chemie: "Keine der angegebenen …" steht immer im exakten Wortlaut',
+    cheNoneVariants.length === 0, cheNoneVariants.map((q) => q.id).join(', '));
+  const cheWithNone = cheQuestions.filter((q) => q.options.some((o) => o.text === BMS_NO_ANSWER_LABEL));
+  const cheNoneCorrect = cheWithNone.filter((q) => q.options.find((o) => o.text === BMS_NO_ANSWER_LABEL).correct);
+  check('Chemie: "Keine der angegebenen …" nur bei 1-aus-5-Fragen',
+    cheWithNone.every((q) => q.kind === 'single'));
+  check(`Chemie: "Keine der angegebenen …" ist mal Lösung (${cheNoneCorrect.length}), mal Falle (${cheWithNone.length - cheNoneCorrect.length})`,
+    cheNoneCorrect.length >= 5 && cheWithNone.length - cheNoneCorrect.length >= 3);
+
+  const cheDupPrompts = cheQuestions.length - new Set(cheQuestions.map((q) => q.prompt)).size;
+  check('Chemie: keine Frage doppelt', cheDupPrompts === 0, `${cheDupPrompts} Dubletten`);
+  const cheDupOptions = cheQuestions.filter((q) => new Set(q.options.map((o) => o.text)).size !== q.options.length);
+  check('Chemie: keine Antwortmöglichkeit innerhalb einer Frage doppelt',
+    cheDupOptions.length === 0, cheDupOptions.map((q) => q.id).join(', '));
+
+  // Rechenaufgaben unabhängig nachrechnen: Die Lösung muss genau dem
+  // berechneten Wert entsprechen, und kein Distraktor darf ihn ebenfalls treffen.
+  // Bei "Keine der angegebenen …" als Lösung darf der Wert gar nicht auftauchen.
+  const num = (x) => String(Number(x.toFixed(6))).replace('.', ',');
+  const oxz = (x) => (x > 0 ? `+${x}` : x < 0 ? `−${-x}` : '0');
+  // Oxidationszahl x eines Elements: n · x + Summe der übrigen = Ladung
+  const oxFor = (others, n = 1, charge = 0) => (charge - others) / n;
+  const avogadro = 6.022e23;
+  const cheExpected = {
+    'che-atb-q1': num(37 - 17),
+    'che-atb-q15': num(2 * 3 ** 2),
+    'che-atb-q16': num(56 - 26),
+    'che-atb-q21': num(2 * 2 + 1),
+    'che-sto-q2': `${num(36 / 18)} mol`,
+    'che-sto-q3': `${num(12 + 2 * 16)} g/mol`,
+    'che-sto-q6': `${num(0.5 / 0.25)} mol/L`,
+    'che-sto-q7': `${num((2 * 0.1) / 0.5)} mol/L`,
+    'che-sto-q9': `${num(2 * 2)} mol`,
+    'che-sto-q11': `${num(0.25 * 40)} g`,
+    'che-sto-q13': `${num(6 * 12 + 12 * 1 + 6 * 16)} g/mol`,
+    'che-sto-q14': `${num(0.2 * 0.5 * 58.5)} g`,
+    'che-sto-q15': `${num(2 * 22.4)} L`,
+    'che-sto-q16': `Etwa ${((9 / 18) * avogadro / 1e23).toFixed(1).replace('.', ',')} · 10^23`,
+    'che-sto-q17': `${num(Math.min((4 / 2) * 2, (1 / 1) * 2))} mol`,
+    'che-sto-q18': `${num((20 / (20 + 180)) * 100)} %`,
+    'che-rea-q14': num(0.8 / 0.2),
+    'che-rea-q19': `EA = ${num(120 - 50)} kJ/mol, ΔH = ${oxz(20 - 50)} kJ/mol`,
+    'che-sae-q7': `${num(((2 * 0.05) / 1) * 1000)} mL`,
+    'che-sae-q13': `pH ${num(-Math.log10(0.001))}`,
+    'che-sae-q14': `pH ${num(14 - -Math.log10(0.01))}`,
+    'che-sae-q15': `10^−${num(14 - 4)} mol/L`,
+    'che-sae-q17': num(4.75 + Math.log10(1)),
+    'che-sae-q18': num(6 + Math.log10(10 / 1)),
+    'che-sae-q21': `${num((0.1 * 0.04) / 2 / 0.02)} mol/L`,
+    'che-red-q3': oxz(oxFor(2 * 1 + 4 * -2)),
+    'che-red-q13': oxz(oxFor(1 + 4 * -2)),
+    'che-red-q14': oxz(oxFor(4 * 1, 1, 1)),
+    'che-red-q15': oxz(oxFor(7 * -2, 2, -2)),
+    'che-red-q16': oxz(oxFor(2 * 1, 2)),
+    'che-red-q17': num(7 - 2),
+    'che-kw-q1': `C5H${2 * 5 + 2}`,
+    'che-kw-q14': `C${3 + 2}H${2 * (3 + 2) + 2}`,
+    'che-nat-q14': num(3 - 1),
+  };
+  const cheCalcIssues = [];
+  for (const [id, expected] of Object.entries(cheExpected)) {
+    const question = cheQuestions.find((q) => q.id === id);
+    if (!question) { cheCalcIssues.push(`${id} fehlt`); continue; }
+    const hits = question.options.filter((o) => o.text === expected);
+    const noneIsAnswer = question.options.some((o) => o.text === BMS_NO_ANSWER_LABEL && o.correct);
+    const fine = noneIsAnswer ? hits.length === 0 : hits.length === 1 && hits[0].correct;
+    if (!fine) cheCalcIssues.push(`${id}: erwartet „${expected}“`);
+  }
+  check(`Chemie: ${Object.keys(cheExpected).length} Rechenaufgaben nachgerechnet`,
+    cheCalcIssues.length === 0, cheCalcIssues.join('; '));
+
+  // Gemischt soll die richtige Antwort über alle fünf Plätze verteilt liegen,
+  // nicht gehäuft auf einem – auch mit „Keine …“ fest auf e).
+  const chePositions = [0, 0, 0, 0, 0];
+  let cheMarks = 0;
+  for (let round = 0; round < 40; round += 1) {
+    for (const question of cheQuestions) {
+      withShuffledOptions(question).options.forEach((option, index) => {
+        if (option.correct) { chePositions[index] += 1; cheMarks += 1; }
+      });
+    }
+  }
+  const cheShares = chePositions.map((count) => count / cheMarks);
+  check(`Chemie: richtige Antworten gemischt gleichmäßig auf a–e (${cheShares.map((s) => `${Math.round(s * 100)} %`).join(' / ')})`,
+    cheShares.every((share) => share >= 0.12 && share <= 0.28));
+}
+
 /* ------------------------------------------------------- Wiedervorlage */
 section('Fehlerarchiv: Wiedervorlage');
 
