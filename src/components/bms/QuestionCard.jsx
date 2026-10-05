@@ -24,14 +24,38 @@ export function isAnswerCorrect(question, selection = []) {
   return question.options.every((option, index) => option.correct === chosen.has(index));
 }
 
+/**
+ * Zerlegt "Welche Aussagen …? (I) … (II) … (III) …" in Fragestamm und
+ * Aussagen, damit sie untereinander stehen statt in einem Absatz.
+ * Ohne römisch nummerierte Aussagen bleibt der Text, wie er ist.
+ */
+export function splitStatements(prompt) {
+  const parts = prompt.split(/\s*\((I{1,3}|IV|V)\)\s+/);
+  if (parts.length < 5) return { stem: prompt, statements: [] };
+  const statements = [];
+  for (let i = 1; i < parts.length; i += 2) statements.push({ numeral: parts[i], text: parts[i + 1].trim() });
+  return { stem: parts[0].trim(), statements };
+}
+
 export function QuestionCard({ question, selection = [], onToggle, revealed = false }) {
   const multi = question.kind === 'multi';
   const needed = correctCount(question);
+  const { stem, statements } = splitStatements(question.prompt);
 
   return (
     <div className="space-y-4">
       <div className="space-y-1.5">
-        <h2 className="text-[17px] font-semibold leading-snug">{question.prompt}</h2>
+        <h2 className="text-[17px] font-semibold leading-snug">{stem}</h2>
+        {statements.length > 0 && (
+          <ol className="space-y-1.5 pt-1">
+            {statements.map((statement) => (
+              <li key={statement.numeral} className="flex gap-3 text-[15px] leading-snug">
+                <span className="w-7 shrink-0 font-semibold text-black/45 dark:text-white/45">{statement.numeral}.</span>
+                <span>{statement.text}</span>
+              </li>
+            ))}
+          </ol>
+        )}
         {multi && (
           <p className="text-[13px] font-medium text-ios-orange">
             Genau {needed} Antworten auswählen
