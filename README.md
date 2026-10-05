@@ -47,7 +47,10 @@ die vier BMS-Fächer am Stück.
 
 Aufgabenzahlen, Zeitlimits, Formate und Gewichte folgen den offiziellen
 MedAT-H-Vorgaben. Die Aufgaben selbst sind sämtlich eigens geschrieben; die App
-enthält keine Originalaufgaben und keine Originaltexte.
+enthält keine Originalaufgaben und keine Originaltexte. Unter `docs/recherche/`
+liegen ein Quellenverzeichnis (offizielle Stellen, ÖH, Altfragen-Sammlungen,
+Übungsbücher), die Aufgabenmuster je Untertest in eigenen Worten und ein
+Niveau-Vergleich zwischen Test und App. Sie sind nicht Teil der App.
 
 Bei den sozial-emotionalen Untertests gibt es keinen objektiven Lösungsschlüssel,
 sondern nur den, den der Test erwartet. Deshalb folgt hier jede Aufgabe einem
