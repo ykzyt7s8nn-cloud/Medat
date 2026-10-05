@@ -21,10 +21,10 @@ export const TOPIC = {
     {
       id: 'mat-stat-streuung',
       title: 'Streuung und Darstellung',
-      text: 'Die Spannweite ist die Differenz aus größtem und kleinstem Wert und damit das einfachste Streuungsmaß, allerdings sehr anfällig für Ausreißer. Die Standardabweichung beschreibt, wie stark die Werte im Mittel vom arithmetischen Mittel abweichen; ein kleiner Wert bedeutet eine eng um den Mittelwert liegende Verteilung. Zwei Datenreihen können denselben Mittelwert haben und sich in der Streuung dennoch stark unterscheiden – deshalb sagt ein Mittelwert allein wenig aus. Zur Darstellung dienen Balken- und Säulendiagramme für Häufigkeiten, Kreisdiagramme für Anteile an einem Ganzen und Liniendiagramme für Verläufe über die Zeit. Bei der Bewertung von Grafiken ist auf die Achsenskalierung zu achten, denn eine abgeschnittene Achse übertreibt Unterschiede optisch.',
+      text: 'Die Spannweite ist die Differenz aus größtem und kleinstem Wert und damit das einfachste Streuungsmaß, allerdings sehr anfällig für Ausreißer. Die Standardabweichung beschreibt, wie stark die Werte typischerweise vom arithmetischen Mittel abweichen – berechnet als Wurzel aus dem Mittel der quadrierten Abweichungen, der Varianz; ein kleiner Wert bedeutet eine eng um den Mittelwert liegende Verteilung. Zwei Datenreihen können denselben Mittelwert haben und sich in der Streuung dennoch stark unterscheiden – deshalb sagt ein Mittelwert allein wenig aus. Zur Darstellung dienen Balken- und Säulendiagramme für Häufigkeiten, Kreisdiagramme für Anteile an einem Ganzen und Liniendiagramme für Verläufe über die Zeit. Bei der Bewertung von Grafiken ist auf die Achsenskalierung zu achten, denn eine abgeschnittene Achse übertreibt Unterschiede optisch.',
       facts: [
         'Spannweite = Maximum minus Minimum',
-        'Standardabweichung misst die mittlere Abweichung vom Mittelwert',
+        'Standardabweichung: Wurzel aus der mittleren quadratischen Abweichung (Varianz)',
         'Gleicher Mittelwert bedeutet nicht gleiche Verteilung',
         'Kreisdiagramm für Anteile, Liniendiagramm für Verläufe',
         'Abgeschnittene Achsen übertreiben Unterschiede',
@@ -129,7 +129,7 @@ export const QUESTIONS = [
       { text: '1/2', correct: false, why: 'Das gilt für einen einzelnen Wurf.' },
       { text: '1', correct: false, why: 'Sicher ist das Ergebnis keineswegs.' },
       { text: '1/3', correct: false, why: 'Die drei Ausgänge sind nicht gleich wahrscheinlich.' },
-      { text: '2/2', correct: false, why: 'Das ergäbe eine Wahrscheinlichkeit von 1.' },
+      { text: '1/8', correct: false, why: 'Das wäre die Wahrscheinlichkeit für dreimal Kopf in Folge.' },
     ],
     explanation: 'Bei "und" wird multipliziert, bei einander ausschließenden "oder"-Fällen addiert.',
   },

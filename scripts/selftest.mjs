@@ -857,6 +857,101 @@ check('Mischen verliert und erfindet keine Antwortmöglichkeit',
 check('Mischen lässt die Quelldaten unberührt',
   bmsSubjects.biologie.questions[0].options[0].correct === true);
 
+/* -------------------------------------------- BMS Physik und Mathematik */
+section('BMS Physik und Mathematik');
+
+{
+  const phyMat = ['physik', 'mathematik'];
+  const minQuestions = { physik: 110, mathematik: 75 };
+  for (const subjectId of phyMat) {
+    const { topics, questions } = bmsSubjects[subjectId];
+    const name = SUBJECTS[subjectId].name;
+    check(`${name}: mindestens ${minQuestions[subjectId]} Fragen (${questions.length})`,
+      questions.length >= minQuestions[subjectId]);
+    // Fünf Simulationsdurchgänge sollen ohne Wiederholung möglich sein.
+    const need = 5 * SUBJECTS[subjectId].questionCount;
+    check(`${name}: Fragen für fünf Durchgänge ohne Wiederholung (${questions.length} ≥ ${need})`,
+      questions.length >= need);
+
+    // Jedes Stichwort wird von mindestens einer Frage abgefragt – sonst fehlt
+    // der Weg vom Quiz ins Lexikon und zurück.
+    const linked = new Set(questions.map((q) => q.entryId));
+    const unlinked = topics.flatMap((t) => t.entries).filter((e) => !linked.has(e.id)).map((e) => e.id);
+    check(`${name}: jedes Stichwort hat mindestens eine Frage`, unlinked.length === 0, unlinked.join(', '));
+
+    // Formeln sind Text; ein leerer Eintrag fiele in der Ansicht als Lücke auf.
+    const badFormulas = topics.flatMap((t) => t.entries)
+      .filter((e) => (e.formulas ?? []).some((f) => typeof f !== 'string' || f.trim() === ''));
+    check(`${name}: alle Formeln sind ausgefüllt`, badFormulas.length === 0,
+      badFormulas.map((e) => e.id).join(', '));
+
+    const prompts = questions.map((q) => q.prompt);
+    check(`${name}: keine Frage steht doppelt`, new Set(prompts).size === prompts.length);
+    const dupOptions = questions.filter((q) => new Set(q.options.map((o) => o.text)).size !== q.options.length);
+    check(`${name}: keine Antwortmöglichkeit steht doppelt in einer Frage`, dupOptions.length === 0,
+      dupOptions.map((q) => q.id).join(', '));
+
+    // Zahlenantworten: Zwei Optionen mit gleichem Wert und gleicher Einheit
+    // (etwa „0,5 A“ und „1/2 A“) machten eine Frage mehrdeutig.
+    const numeric = (text) => {
+      const m = text.replace(/−/g, '-').replace(/(\d) (?=\d{3}\b)/g, '$1')
+        .match(/^(?:Etwa |Um |Nach )?(-?\d+(?:,\d+)?)(?:\/(\d+))?\s*(.*)$/);
+      if (!m) return null;
+      const value = Number(m[1].replace(',', '.')) / (m[2] ? Number(m[2]) : 1);
+      return `${Math.round(value * 1e6) / 1e6} ${m[3].trim()}`;
+    };
+    const ambiguous = questions.filter((q) => {
+      const values = q.options.map((o) => numeric(o.text)).filter(Boolean);
+      return new Set(values).size !== values.length;
+    });
+    check(`${name}: keine zwei Zahlenantworten mit demselben Wert`, ambiguous.length === 0,
+      ambiguous.map((q) => q.id).join(', '));
+
+    // MedAT-Format: „Keine der Antwortmöglichkeiten“ ist manchmal die Lösung,
+    // manchmal ein Distraktor – beides soll geübt werden.
+    const noneOptions = questions.flatMap((q) => q.options).filter((o) => o.text === BMS_NO_ANSWER_LABEL);
+    check(`${name}: „Keine der Antwortmöglichkeiten“ kommt als Lösung und als Distraktor vor`,
+      noneOptions.some((o) => o.correct) && noneOptions.some((o) => !o.correct));
+
+    // Aussagenkombinationen („Nur I und II“) haben genau ein Kreuz, jede
+    // Kombination nennt nur Aussagen, die im Prompt vorkommen, und die
+    // richtige nennt genau die Aussagen aus `holds`.
+    const roman = { I: 1, II: 2, III: 3, IV: 4 };
+    const named = (text) => (/^Alle /.test(text) ? [1, 2, 3, 4]
+      : text.replace(/^Nur /, '').split(/,\s*|\s+und\s+/).map((n) => roman[n]));
+    const combos = questions.filter((q) => /\(I\) /.test(q.prompt));
+    const badCombos = combos.filter((q) => {
+      if (q.kind !== 'single' || q.options.filter((o) => o.correct).length !== 1) return true;
+      const solution = q.options.find((o) => o.correct);
+      if (!Array.isArray(q.holds) || named(solution.text).join() !== [...q.holds].sort().join()) return true;
+      return q.options.some((o) => {
+        if (/^Alle /.test(o.text)) return false;
+        const numerals = o.text.replace(/^Nur /, '').split(/,\s*|\s+und\s+/);
+        return !/^Nur /.test(o.text) || numerals.some((n) => !q.prompt.includes(`(${n}) `));
+      });
+    });
+    check(`${name}: Aussagenkombinationen sind wohlgeformt (${combos.length})`,
+      combos.length > 0 && badCombos.length === 0, badCombos.map((q) => q.id).join(', '));
+  }
+
+  // In den Quellen steht die Lösung vorn; gezogen wird gemischt. Über viele
+  // Ziehungen muss jede Position etwa gleich oft die richtige sein, sonst
+  // ließe sich die Lage der Lösung erraten.
+  const singles = phyMat.flatMap((id) => bmsSubjects[id].questions)
+    .filter((q) => q.kind === 'single' && !q.options.some((o) => o.text === BMS_NO_ANSWER_LABEL));
+  const positions = [0, 0, 0, 0, 0];
+  const rounds = 40;
+  for (const question of singles) {
+    for (let i = 0; i < rounds; i += 1) {
+      positions[withShuffledOptions(question).options.findIndex((o) => o.correct)] += 1;
+    }
+  }
+  const total = singles.length * rounds;
+  const shares = positions.map((n) => n / total);
+  check(`Physik/Mathe: Lösung gleichmäßig auf a–e verteilt (${shares.map((s) => `${Math.round(s * 100)} %`).join(' / ')})`,
+    shares.every((s) => s > 0.15 && s < 0.25));
+}
+
 /* ------------------------------------------------------- Wiedervorlage */
 section('Fehlerarchiv: Wiedervorlage');
 

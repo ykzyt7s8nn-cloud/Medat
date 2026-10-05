@@ -83,8 +83,8 @@ falsch ist, und verlinkt den passenden Lexikoneintrag.
 |---|---|---|---|---|
 | Biologie | 9 | 65 | 110 | 40 Fragen / 30 min |
 | Chemie | 10 | 43 | 120 | 24 Fragen / 18 min |
-| Physik | 5 | 19 | 60 | 18 Fragen / 16 min |
-| Mathematik | 4 | 13 | 48 | 12 Fragen / 11 min |
+| Physik | 6 | 35 | 133 | 18 Fragen / 16 min |
+| Mathematik | 6 | 23 | 97 | 12 Fragen / 11 min |
 | **Gesamt** | **28** | **140** | **338** | **94 Fragen / 75 min** |
 
 Trainieren lässt sich ein einzelnes Fach, ein einzelnes Thema oder die komplette
