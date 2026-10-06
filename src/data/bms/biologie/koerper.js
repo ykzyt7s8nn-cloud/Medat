@@ -154,7 +154,7 @@ export const TOPIC = {
     {
       id: 'bio-koerper-blut',
       title: 'Blut, Gastransport und Blutgerinnung',
-      text: 'Ein Erwachsener hat etwa 5 bis 6 Liter Blut. Das Plasma besteht überwiegend aus Wasser mit gelösten Salzen, Nährstoffen und Plasmaproteinen wie Albumin (hält Wasser in den Gefäßen) und Fibrinogen (Gerinnung); Serum ist Plasma ohne Gerinnungsfaktoren. Alle Blutzellen entstehen beim Erwachsenen im roten Knochenmark. Erythrozyten leben etwa 120 Tage und werden vor allem in der Milz abgebaut; ihre Bildung fördert das in der Niere gebildete Hormon Erythropoetin. Sauerstoff wird fast vollständig an das Eisen des Hämoglobins gebunden transportiert, Kohlendioxid dagegen größtenteils als Hydrogencarbonat (HCO₃⁻) im Plasma – die Umwandlung beschleunigt das Enzym Carboanhydrase in den Erythrozyten. Bei einer Gefäßverletzung ziehen sich die Gefäße zusammen, Thrombozyten lagern sich an und bilden einen ersten Pfropf; die Gerinnungskaskade endet damit, dass Thrombin das lösliche Fibrinogen in unlösliches Fibrin umwandelt, das den Pfropf als Netz verfestigt. Mehrere Gerinnungsfaktoren benötigen zu ihrer Bildung in der Leber Vitamin K.',
+      text: 'Ein Erwachsener hat etwa 4,5 bis 6 Liter Blut. Das Plasma besteht überwiegend aus Wasser mit gelösten Salzen, Nährstoffen und Plasmaproteinen wie Albumin (hält Wasser in den Gefäßen) und Fibrinogen (Gerinnung); Serum ist Plasma ohne Gerinnungsfaktoren. Alle Blutzellen entstehen beim Erwachsenen im roten Knochenmark. Erythrozyten leben etwa 120 Tage und werden vor allem in der Milz abgebaut; ihre Bildung fördert das in der Niere gebildete Hormon Erythropoetin. Sauerstoff wird fast vollständig an das Eisen des Hämoglobins gebunden transportiert, Kohlendioxid dagegen größtenteils als Hydrogencarbonat (HCO₃⁻) im Plasma – die Umwandlung beschleunigt das Enzym Carboanhydrase in den Erythrozyten. Bei einer Gefäßverletzung ziehen sich die Gefäße zusammen, Thrombozyten lagern sich an und bilden einen ersten Pfropf; die Gerinnungskaskade endet damit, dass Thrombin das lösliche Fibrinogen in unlösliches Fibrin umwandelt, das den Pfropf als Netz verfestigt. Mehrere Gerinnungsfaktoren benötigen zu ihrer Bildung in der Leber Vitamin K.',
       facts: [
         'Erythrozyten: ca. 120 Tage Lebensdauer, Abbau v. a. in der Milz, Bildung durch Erythropoetin aus der Niere gefördert',
         'O₂-Transport an Hämoglobin, CO₂-Transport überwiegend als Hydrogencarbonat im Plasma',
@@ -565,7 +565,7 @@ export const QUESTIONS = [
       { text: 'Natriumionen', correct: false, why: 'Kleine Ionen passieren den Filter ungehindert.' },
       { text: 'Wasser', correct: false, why: 'Wasser ist der Hauptbestandteil des Primärharns.' },
     ],
-    explanation: 'Blut oder Eiweiß im Harn deutet daher auf einen Schaden am Filter hin.',
+    explanation: 'Größere Mengen Eiweiß oder Erythrozyten im Harn können daher auf einen Schaden am Filter hinweisen.',
   },
   {
     id: 'bio-koerper-q33', topicId: 'bio-koerper', entryId: 'bio-koerper-harn', kind: 'single',

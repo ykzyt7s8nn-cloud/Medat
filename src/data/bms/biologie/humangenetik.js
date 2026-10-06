@@ -74,7 +74,7 @@ export const TOPIC = {
     {
       id: 'bio-humangen-krankheiten',
       title: 'Monogene Erbkrankheiten',
-      text: 'Viele bekannte Erbkrankheiten beruhen auf der Veränderung eines einzigen Gens. Autosomal-rezessiv vererbt werden etwa die Mukoviszidose (zystische Fibrose), bei der ein defekter Chloridkanal zähen Schleim in Lunge und Bauchspeicheldrüse verursacht, die Phenylketonurie, bei der Phenylalanin wegen eines Enzymdefekts nicht abgebaut wird und die durch das Neugeborenenscreening früh erkannt und mit einer phenylalaninarmen Diät behandelt wird, sowie die Sichelzellanämie. Bei ihr sind Heterozygote vor schwerer Malaria besser geschützt – ein Heterozygotenvorteil, der die Häufigkeit des Allels in Malariagebieten erklärt. Autosomal-dominant sind die Chorea Huntington, die typischerweise erst im mittleren Erwachsenenalter ausbricht, und das Marfan-Syndrom. X-chromosomal-rezessiv vererbt werden die Hämophilie A, die Muskeldystrophie Duchenne und die Rot-Grün-Sehschwäche; deshalb sind fast ausschließlich Männer betroffen. Ein seltenes Beispiel für X-chromosomal-dominante Vererbung ist die Vitamin-D-resistente Rachitis.',
+      text: 'Viele bekannte Erbkrankheiten beruhen auf der Veränderung eines einzigen Gens. Autosomal-rezessiv vererbt werden etwa die Mukoviszidose (zystische Fibrose), bei der ein defekter Chloridkanal zähen Schleim in Lunge und Bauchspeicheldrüse verursacht, die Phenylketonurie, bei der Phenylalanin wegen eines Enzymdefekts nicht abgebaut wird und die durch das Neugeborenenscreening früh erkannt und mit einer phenylalaninarmen Diät behandelt wird, sowie die Sichelzellanämie. Bei ihr sind Heterozygote vor schwerer Malaria besser geschützt – ein Heterozygotenvorteil, der die Häufigkeit des Allels in Malariagebieten erklärt. Autosomal-dominant sind die Chorea Huntington, die typischerweise erst im mittleren Erwachsenenalter ausbricht, und das Marfan-Syndrom. X-chromosomal-rezessiv vererbt werden die Hämophilie A, die Muskeldystrophie Duchenne und die Rot-Grün-Sehschwäche; deshalb sind ganz überwiegend Männer betroffen. Ein seltenes Beispiel für X-chromosomal-dominante Vererbung ist die Vitamin-D-resistente Rachitis.',
       facts: [
         'Autosomal-rezessiv: Mukoviszidose, Phenylketonurie, Sichelzellanämie',
         'Autosomal-dominant: Chorea Huntington (später Ausbruch), Marfan-Syndrom',
@@ -186,14 +186,14 @@ export const QUESTIONS = [
     explanation: 'Das Y-Chromosom entscheidet über das männliche Geschlecht – unabhängig davon, wie viele X vorhanden sind.',
   },
   {
-    id: 'bio-hum-q8', topicId: 'bio-humangen', entryId: 'bio-humangen-trisomie', kind: 'multi',
-    prompt: 'Welche zwei Aussagen zu Chromosomenstörungen sind zutreffend? (2 aus 5)',
+    id: 'bio-hum-q8', topicId: 'bio-humangen', entryId: 'bio-humangen-trisomie', kind: 'single', holds: [1, 3],
+    prompt: 'Welche Aussagen zu Chromosomenstörungen sind zutreffend? (I) Autosomale Monosomien sind beim Menschen nicht lebensfähig. (II) Ein Karyogramm deckt Punktmutationen auf. (III) Das Risiko für eine Trisomie 21 steigt mit dem Alter der Mutter. (IV) Trisomien entstehen durch Rasterschubmutationen.',
     options: [
-      { text: 'Autosomale Monosomien sind beim Menschen nicht lebensfähig', correct: true, why: 'Der Verlust eines ganzen Autosoms ist letal.' },
-      { text: 'Das Risiko für eine Trisomie 21 steigt mit dem Alter der Mutter', correct: true, why: 'Die Eizellen verharren jahrzehntelang in der Meiose I.' },
-      { text: 'Ein Karyogramm deckt Punktmutationen auf', correct: false, why: 'Dafür ist die Auflösung viel zu grob.' },
-      { text: 'Beim Turner-Syndrom liegt ein zusätzliches X-Chromosom vor', correct: false, why: 'Dort fehlt ein Gonosom (45,X).' },
-      { text: 'Trisomien entstehen durch Rasterschubmutationen', correct: false, why: 'Sie entstehen durch Nondisjunction in der Meiose.' },
+      { text: 'Nur I und III', correct: true, why: 'Der Verlust eines ganzen Autosoms ist letal; die Eizellen verharren jahrzehntelang in der Meiose I, was Fehlverteilungen begünstigt.' },
+      { text: 'Nur I', correct: false, why: 'Auch III ist richtig: Das Trisomie-21-Risiko steigt mit dem mütterlichen Alter.' },
+      { text: 'Nur III', correct: false, why: 'Auch I ist richtig: Autosomale Monosomien führen zum frühen Absterben des Keims.' },
+      { text: 'Nur I, II und III', correct: false, why: 'II ist falsch: Für Punktmutationen ist die Auflösung des Karyogramms viel zu grob.' },
+      { text: 'Nur I, III und IV', correct: false, why: 'IV ist falsch: Trisomien entstehen durch Nondisjunction, nicht durch Rasterschub.' },
     ],
     explanation: 'Genommutationen betreffen die Chromosomenzahl, Genmutationen die Basenfolge – zwei verschiedene Ebenen.',
   },
@@ -273,7 +273,7 @@ export const QUESTIONS = [
     id: 'bio-hum-q15', topicId: 'bio-humangen', entryId: 'bio-humangen-krankheiten', kind: 'single',
     prompt: 'Wie wird die Phenylketonurie behandelt, wenn sie im Neugeborenenscreening erkannt wird?',
     options: [
-      { text: 'Mit einer phenylalaninarmen Diät', correct: true, why: 'Ohne Zufuhr reichert sich das nicht abbaubare Phenylalanin nicht an und das Gehirn entwickelt sich normal.' },
+      { text: 'Mit einer phenylalaninarmen Diät', correct: true, why: 'Bei knapper Zufuhr reichert sich das nicht abbaubare Phenylalanin nicht an, und das Gehirn entwickelt sich normal.' },
       { text: 'Mit Insulinspritzen', correct: false, why: 'Insulin behandelt Diabetes, nicht einen Aminosäure-Abbaudefekt.' },
       { text: 'Mit Antibiotika', correct: false, why: 'Es liegt keine Infektion vor.' },
       { text: 'Mit einer Bluttransfusion', correct: false, why: 'Sie behebt den Enzymdefekt der Leber nicht.' },

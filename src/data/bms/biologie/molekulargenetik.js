@@ -506,7 +506,7 @@ export const QUESTIONS = [
     id: 'bio-mol-q32', topicId: 'bio-molgen', entryId: 'bio-molgen-anwendungen', kind: 'single',
     prompt: 'In einem Vaterschaftstest besitzt das Kind eine STR-Bande, die weder bei der Mutter noch beim mutmaßlichen Vater vorkommt. Was folgt daraus am ehesten?',
     options: [
-      { text: 'Der Mann ist wahrscheinlich nicht der biologische Vater', correct: true, why: 'Jedes Allel des Kindes muss von einem Elternteil stammen; die Bande wurde vom Vater geerbt, der nicht dieser Mann ist.' },
+      { text: 'Der Mann ist wahrscheinlich nicht der biologische Vater', correct: true, why: 'Jedes Allel des Kindes stammt von einem Elternteil; passt eine Bande weder zur Mutter noch zu diesem Mann, spricht das gegen seine Vaterschaft.' },
       { text: 'Der Mann ist sicher der Vater', correct: false, why: 'Gerade die fremde Bande spricht gegen ihn.' },
       { text: 'Das Kind ist ein eineiiger Zwilling', correct: false, why: 'Zwillingsschaft erklärt keine Bande, die keiner der Eltern hat.' },
       { text: 'Die Mutter ist nicht die biologische Mutter', correct: false, why: 'Eine einzelne Bande kann vom Vater stammen; das Muster der Mutter passt im Übrigen.' },
@@ -516,7 +516,7 @@ export const QUESTIONS = [
   },
   {
     id: 'bio-mol-q33', topicId: 'bio-molgen', entryId: 'bio-molgen-anwendungen', kind: 'single', holds: [1, 2, 3],
-    prompt: 'Welche Aussagen über gentechnisch veränderte Organismen sind richtig? (I) Bakterien können nach Einbau des menschlichen Gens Insulin herstellen. (II) Ein Organismus mit einem Gen einer anderen Art heißt transgen. (III) Die Übertragung funktioniert, weil der genetische Code nahezu universell ist. (IV) Ein eingebautes Gen verändert immer das Erbgut aller Wildpopulationen der Art.',
+    prompt: 'Welche Aussagen über gentechnisch veränderte Organismen sind richtig? (I) Bakterien können nach Einbau der menschlichen Insulin-Erbinformation (als intronfreie cDNA) Insulin herstellen. (II) Ein Organismus mit einem Gen einer anderen Art heißt transgen. (III) Die Übertragung funktioniert, weil der genetische Code nahezu universell ist. (IV) Ein eingebautes Gen verändert immer das Erbgut aller Wildpopulationen der Art.',
     options: [
       { text: 'Nur I, II und III', correct: true, why: 'Insulinproduktion in Bakterien, Begriff „transgen“ und universeller Code stimmen; IV ist eine Übertreibung.' },
       { text: 'Nur I und II', correct: false, why: 'Auch III ist richtig: Erst der universelle Code macht das fremde Gen in Bakterien lesbar.' },
