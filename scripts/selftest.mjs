@@ -1186,6 +1186,10 @@ section('BMS Biologie');
   }
   check('Biologie: bei x aus 5 nennt die Frage genau die Zahl der richtigen Antworten',
     bioMultiMismatch.length === 0, bioMultiMismatch.join(', '));
+  // Mehrfachauswahl ist in Biologie durch Aussagenkombinationen (ein Kreuz) ersetzt.
+  const bioMulti = bioQuestions.filter((q) => q.kind !== 'single').map((q) => q.id);
+  check('Biologie: alle Fragen haben genau ein Kreuz (keine „x aus 5“ mehr)',
+    bioMulti.length === 0, bioMulti.join(', '));
 
   // Aussagenkombinationen („Nur I und III“): jede genannte Aussage steht in der Frage.
   const bioCombinationIssues = [];
