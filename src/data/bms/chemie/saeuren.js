@@ -268,7 +268,7 @@ export const QUESTIONS = [
       { text: '10^−10 mol/L', correct: true, why: 'pOH = 14 − 4 = 10, also c(OH−) = 10^−10 mol/L.' },
       { text: '10^−4 mol/L', correct: false, why: 'Das ist die Konzentration der H3O+-Ionen.' },
       { text: '10^−7 mol/L', correct: false, why: 'Das gilt nur für neutrale Lösungen.' },
-      { text: '10^−14 mol/L', correct: false, why: 'Das ist das Ionenprodukt ohne Einheit, keine Einzelkonzentration.' },
+      { text: '10^−14 mol/L', correct: false, why: 'Das ist der Zahlenwert des Ionenprodukts Kw (Einheit mol²/L²), keine Einzelkonzentration.' },
       { text: '10^4 mol/L', correct: false, why: 'Eine so hohe Konzentration ist unmöglich – das Vorzeichen fehlt.' },
     ],
     explanation: 'c(H3O+) · c(OH−) = 10^−14: Ist die eine Konzentration 10^−4, muss die andere 10^−10 sein.',

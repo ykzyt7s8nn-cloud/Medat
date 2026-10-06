@@ -228,7 +228,7 @@ export const QUESTIONS = [
       { text: 'Peptidbindung', correct: false, why: 'Sie verknüpft Aminosäuren in Proteinen.' },
       { text: 'Phosphodiesterbindung', correct: false, why: 'Sie verbindet die Nukleotide im Rückgrat der Nukleinsäuren.' },
       { text: 'Disulfidbrücke', correct: false, why: 'Sie verbindet zwei Cysteinreste in Proteinen.' },
-      { text: 'Wasserstoffbrücke', correct: false, why: 'Sie ist keine Atombindung, sondern eine zwischenmolekulare Kraft.' },
+      { text: 'Wasserstoffbrücke', correct: false, why: 'Sie ist keine Atombindung, sondern eine schwache Wechselwirkung – sie hält etwa die DNA-Basenpaare zusammen, verknüpft aber keine Zucker.' },
     ],
     explanation: 'Ob die glykosidische Bindung α oder β ist, entscheidet über die Verdaulichkeit: Stärke (α) ja, Cellulose (β) nein.',
   },

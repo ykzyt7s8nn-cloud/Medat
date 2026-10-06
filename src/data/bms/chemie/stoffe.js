@@ -212,7 +212,7 @@ export const QUESTIONS = [
       { text: 'Emulsion', correct: true, why: 'Feine Tröpfchen der einen Flüssigkeit verteilen sich in der anderen, etwa Fett in Milch.' },
       { text: 'Suspension', correct: false, why: 'In einer Suspension ist ein Feststoff in einer Flüssigkeit verteilt.' },
       { text: 'Lösung', correct: false, why: 'Eine Lösung ist homogen.' },
-      { text: 'Legierung', correct: false, why: 'Eine Legierung ist ein Gemisch von Metallen.' },
+      { text: 'Legierung', correct: false, why: 'Eine Legierung ist ein homogenes, meist festes Gemisch eines Metalls mit weiteren Metallen oder Nichtmetallen.' },
       { text: 'Rauch', correct: false, why: 'Rauch ist ein Feststoff fein verteilt in einem Gas.' },
     ],
     explanation: 'Emulsion: flüssig in flüssig; Suspension: fest in flüssig; Rauch: fest in gasförmig; Nebel: flüssig in gasförmig; Schaum: gasförmig in flüssig.',
