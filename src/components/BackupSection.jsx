@@ -148,6 +148,9 @@ export function BackupSection() {
             {pending.summary.bmsQuizzes > 0
               && `, ${pending.summary.bmsQuizzes} ${pending.summary.bmsQuizzes === 1 ? 'BMS-Durchgang' : 'BMS-Durchgänge'}`}
             {pending.summary.bmsRead > 0 && ` und ${pending.summary.bmsRead} gelesene Lexikoneinträge`}
+            {pending.summary.bmsArchive > 0
+              && `, ${pending.summary.bmsArchive} ${pending.summary.bmsArchive === 1 ? 'Frage' : 'Fragen'} im Fehlerarchiv`
+              + (pending.summary.bmsLearned > 0 ? ` (${pending.summary.bmsLearned} gelernt)` : '')}
             {pending.summary.hasSettings && ', dazu die Einstellungen'}. Erstellt am{' '}
             {formatDate(pending.summary.exportedAt)}.
           </p>

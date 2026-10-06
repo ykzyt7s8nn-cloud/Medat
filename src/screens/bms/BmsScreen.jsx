@@ -12,6 +12,7 @@ import ProgressRing from '../../components/ui/ProgressRing.jsx';
 import Segmented from '../../components/ui/Segmented.jsx';
 import Tappable from '../../components/ui/Tappable.jsx';
 import Button from '../../components/ui/Button.jsx';
+import ArchiveList from '../../components/bms/ArchiveList.jsx';
 import { BMS_TOTAL, MIXED_SOURCES, SUBJECTS, SUBJECT_ORDER, loadAllSubjects, loadSubject } from '../../data/bms/index.js';
 import { formatTime } from '../../hooks/useCountdown.js';
 import { useNavigation } from '../../store/useNavigation.js';
@@ -249,12 +250,15 @@ function QuizView() {
           subtitle={
             counts.total === 0
               ? 'Noch leer – falsch beantwortete Fragen sammeln sich hier'
-              : counts.due === 0
-                ? `${counts.total} ${counts.total === 1 ? 'Frage wartet' : 'Fragen warten'} – heute ist nichts fällig`
-                : `${counts.due} von ${counts.total} ${counts.total === 1 ? 'Frage' : 'Fragen'} zur Wiederholung fällig`
+              : counts.active === 0
+                ? `Alle ${counts.learned} ${counts.learned === 1 ? 'Frage' : 'Fragen'} gelernt – nichts zu wiederholen`
+                : counts.due === 0
+                  ? `${counts.active} in Wiederholung – heute ist nichts fällig`
+                  : `Heute ${counts.due} fällig · ${counts.active} in Wiederholung`
           }
           onOpen={() => openScreen('bmsQuiz', { subjectId: 'archiv' })}
         />
+        <ArchiveList />
       </section>
 
       <Tappable

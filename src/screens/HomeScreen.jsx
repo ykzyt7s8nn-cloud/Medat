@@ -15,10 +15,12 @@ import Icon from '../components/ui/Icon.jsx';
 import ProgressRing from '../components/ui/ProgressRing.jsx';
 import Tappable from '../components/ui/Tappable.jsx';
 import { SECTIONS, TESTS, TEST_ORDER, testsInSection } from '../data/testConfig.js';
+import { archiveSummary } from '../lib/spacedRepetition.js';
 import { daysUntilExam } from '../lib/examDate.js';
 import { formatPoints } from '../lib/format.js';
 import { useActivity } from '../hooks/useActivity.js';
 import { useNavigation } from '../store/useNavigation.js';
+import { useBmsProgress } from '../store/useBmsProgress.js';
 import { useProgress } from '../store/useProgress.js';
 import { useSettings } from '../store/useSettings.js';
 
@@ -69,6 +71,10 @@ export default function HomeScreen() {
   const examDate = useSettings((state) => state.examDate);
   // Strähne und Gesamtzeit zählen beide Testteile – wer BMS übt, übt.
   const activity = useActivity();
+  // Fällige Archivfragen auch hier, damit die Wiedervorlage nicht übersehen
+  // wird – sonst sieht man sie erst im BMS-Bereich.
+  const bmsArchive = useBmsProgress((state) => state.archive);
+  const archiveDue = archiveSummary(bmsArchive, Date.now()).due;
 
   const testsWithData = TEST_ORDER.filter((id) => history.some((item) => item.testId === id));
   const overall = testsWithData.length === 0
@@ -89,6 +95,19 @@ export default function HomeScreen() {
           seconds={activity.seconds}
           onOpenSettings={() => setTab('settings')}
         />
+
+        {archiveDue > 0 && (
+          <Tappable
+            onClick={() => openScreen('bmsQuiz', { subjectId: 'archiv' })}
+            className="ios-card flex w-full items-center gap-3 px-4 py-3 text-left"
+          >
+            <Icon name="refresh" className="h-5 w-5 shrink-0 text-ios-red" />
+            <span className="min-w-0 flex-1 text-[15px]">
+              {archiveDue} BMS-{archiveDue === 1 ? 'Frage' : 'Fragen'} heute zur Wiederholung fällig
+            </span>
+            <Icon name="chevronRight" className="h-4 w-4 shrink-0 text-black/25 dark:text-white/25" />
+          </Tappable>
+        )}
 
         <section className="ios-card flex items-center gap-4 px-4 py-4">
           <ProgressRing value={overall / 100} size={78} strokeWidth={7} color="#007AFF" label={`Gesamtschnitt ${Math.round(overall)} Prozent`}>

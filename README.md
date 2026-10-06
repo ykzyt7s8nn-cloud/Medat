@@ -158,11 +158,30 @@ wird. Sicheres Scrollen hat Vorrang; die Haptik bleibt, weil sie nur so unter
 den Finger kommt. Wen das stört, stellt die Haptik auf „Aus“ – dann liegt
 überhaupt kein Schalter mehr über den Flächen.
 
-**Fehlerarchiv mit Wiedervorlage** – Eine falsch beantwortete BMS-Frage kommt
-nach einem Tag wieder, bei erneut richtiger Antwort nach drei, dann nach sieben
-Tagen; dreimal in Folge richtig heißt gelernt. Ein Fehler zwischendurch setzt
-zurück. Die Abstände sind bewusst kurz – längere Ketten bringen erst über
-Monate etwas und wären vor einem Aufnahmetest in wenigen Wochen verschenkt.
+**Fehlerarchiv mit Wiedervorlage** – Abstandswiederholung nach dem
+Leitner-Prinzip. Eine falsch beantwortete BMS-Frage – gleich ob im Fach-Quiz,
+in der Täglichen 10 oder in der Simulation – kommt auf Stufe 1 ins Archiv und
+ist am nächsten Tag fällig. Wer sie bei Fälligkeit richtig beantwortet, rückt
+eine Stufe vor; die Abstände wachsen über fünf Stufen von 1 über 3, 7 und 14
+auf 30 Tage. Nach der fünften gilt sie als gelernt: Sie verlässt die
+Wiedervorlage, bleibt aber im Archiv stehen und zählt in der Statistik. Ein
+Fehler setzt jederzeit auf Stufe 1 zurück, auch bei einer schon gelernten
+Frage. Eine richtige Antwort vor dem Termin – etwa wenn die Frage im normalen
+Quiz zufällig wieder auftaucht – zählt dagegen nicht; sonst ließe sich eine
+Frage an einem Nachmittag durch alle Stufen klicken, und die Abstände fielen
+weg. Fällig ist tageweise: Was für heute ansteht, ist ab Mitternacht dran.
+
+Die Startseite meldet, wie viele Fragen heute fällig sind; im BMS-Quiz zeigt
+die Karte „Wiederholung" je Stufe die Zahl der Fragen, „x gelernt · y in
+Wiederholung" und auf Wunsch die Liste aller Archivfragen mit Stufe und
+nächstem Termin. Die Regeln stehen als reine Funktionen in
+`src/lib/spacedRepetition.js` (die Uhrzeit wird übergeben, nicht gelesen) und
+sind im Selbsttest samt vorgespulter Zeit abgedeckt. Gespeichert wird je Frage
+nur `{ subjectId, topicId, stage, due, wrongAt, learnedAt? }`. Ältere Stände
+(Store-Version 2 mit drei Stufen, auch aus einer eingespielten Sicherung)
+werden beim Laden übernommen, wie sie sind – Stufe und Termin behalten ihre
+Bedeutung, es liegen nur zwei Stufen mehr vor ihnen. Früher gelernte Fragen
+wurden damals gelöscht und tauchen deshalb in der Zählung „gelernt" nicht auf.
 
 **Tägliche 10** – Zehn Fragen quer über alle vier BMS-Fächer: erst das heute
 Fällige, dann die schwächsten Themen, notfalls aufgefüllt, damit die Zehn auch

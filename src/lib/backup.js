@@ -12,6 +12,12 @@
  *
  * Version 2 sichert zusätzlich den BMS-Fortschritt. Ältere Dateien lassen sich
  * weiterhin einspielen – der BMS-Teil bleibt dann unangetastet.
+ *
+ * Der BMS-Teil wird so gesichert, wie der Store ihn ablegt – samt eigener
+ * Versionsnummer. Das Fehlerarchiv mit Stufen, Terminen und gelernten Fragen
+ * steckt darin. Eine Sicherung aus einem älteren Store-Stand (etwa noch mit
+ * drei Stufen) wird nach dem Einspielen beim Neuladen vom Store migriert;
+ * diese Datei muss dafür nichts umrechnen.
  */
 import { BMS_PROGRESS_KEY } from '../store/useBmsProgress.js';
 import { PROGRESS_KEY } from '../store/useProgress.js';
@@ -74,6 +80,10 @@ export function parseBackup(text) {
   const tagStats = data.progress?.state?.tagStats ?? {};
   const bmsHistory = data.bms?.state?.history ?? [];
   const readEntries = data.bms?.state?.readEntries ?? {};
+  const archive = data.bms?.state?.archive;
+  const archiveEntries = archive && typeof archive === 'object' && !Array.isArray(archive)
+    ? Object.values(archive).filter((entry) => entry && typeof entry === 'object')
+    : [];
   return {
     ok: true,
     data,
@@ -82,6 +92,8 @@ export function parseBackup(text) {
       tests: Object.keys(tagStats).length,
       bmsQuizzes: Array.isArray(bmsHistory) ? bmsHistory.length : 0,
       bmsRead: Object.values(readEntries).filter(Boolean).length,
+      bmsArchive: archiveEntries.length,
+      bmsLearned: archiveEntries.filter((entry) => entry.learnedAt).length,
       exportedAt: data.exportedAt ?? null,
       hasSettings: Boolean(data.settings),
     },

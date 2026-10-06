@@ -90,10 +90,15 @@ import {
 } from '../src/lib/examDate.js';
 import {
   INTERVALS_DAYS,
+  STAGE_COUNT,
   afterCorrect,
   afterWrong,
+  archiveSummary,
   daysUntilDue,
   isDue,
+  isLearned,
+  migrateArchive,
+  reviewEntry,
   startOfDay,
   streakFrom,
 } from '../src/lib/spacedRepetition.js';
@@ -1267,13 +1272,16 @@ section('Fehlerarchiv: Wiedervorlage');
 const heute = new Date(2026, 0, 15, 14, 30).getTime();
 const tagMs = 24 * 60 * 60 * 1000;
 
-check('Abstände sind 1, 3 und 7 Tage', INTERVALS_DAYS.join() === '1,3,7');
+check('Abstände sind 1, 3, 7, 14 und 30 Tage', INTERVALS_DAYS.join() === '1,3,7,14,30');
 
 const frisch = afterWrong(heute);
 check('Eine falsche Antwort kommt morgen wieder',
   frisch.stage === 0 && daysUntilDue(frisch, heute) === 1);
 check('Heute ist sie noch nicht fällig', !isDue(frisch, heute));
-check('Morgen ist sie fällig', isDue(frisch, heute + tagMs));
+check('Morgen ist sie fällig – schon kurz nach Mitternacht',
+  isDue(frisch, startOfDay(heute + tagMs) + 60 * 1000));
+check('Am Vorabend um 23:59 noch nicht fällig',
+  !isDue(frisch, startOfDay(heute + tagMs) - 60 * 1000));
 
 const stufe1 = afterCorrect(frisch, heute + tagMs);
 check('Richtig beantwortet: nächste Vorlage in 3 Tagen',
@@ -1281,13 +1289,184 @@ check('Richtig beantwortet: nächste Vorlage in 3 Tagen',
 const stufe2 = afterCorrect(stufe1, heute + 4 * tagMs);
 check('Danach in 7 Tagen',
   stufe2.stage === 2 && daysUntilDue(stufe2, heute + 4 * tagMs) === 7);
-check('Dreimal richtig heißt gelernt – die Frage verlässt das Archiv',
-  afterCorrect(stufe2, heute + 11 * tagMs) === null);
 check('Ein Fehler setzt auf die erste Stufe zurück',
   afterWrong(heute + 11 * tagMs).stage === 0);
 check('Überfälliges bleibt fällig',
   isDue({ ...frisch, due: startOfDay(heute) - 5 * tagMs }, heute));
 
+/* ------------------------------------- Fehlerarchiv: Leitner-Durchlauf */
+section('Fehlerarchiv: Leitner-Stufen');
+{
+  const meta = { subjectId: 'biologie', topicId: 'zelle' };
+  check('Richtig und nie falsch gewesen: kommt nicht ins Archiv',
+    reviewEntry(undefined, true, heute, meta) === undefined);
+  const neu = reviewEntry(undefined, false, heute, meta);
+  check('Falsch: neu im Archiv, Stufe 1, mit Fach und Thema',
+    neu.stage === 0 && neu.subjectId === 'biologie' && neu.topicId === 'zelle');
+
+  // Ganzer Durchlauf: an jedem Fälligkeitstag richtig beantworten.
+  let entry = neu;
+  let t = heute;
+  const abstaende = [];
+  for (let i = 0; i < STAGE_COUNT; i += 1) {
+    const tage = daysUntilDue(entry, t);
+    abstaende.push(tage);
+    t = startOfDay(entry.due) + 9 * 3600 * 1000; // am Fälligkeitstag um 9 Uhr
+    check(`Stufe ${i + 1} ist am Fälligkeitstag fällig, am Vortag nicht`,
+      isDue(entry, t) && !isDue(entry, t - tagMs));
+    entry = reviewEntry(entry, true, t);
+  }
+  check('Die Abstände wachsen 1 → 3 → 7 → 14 → 30 Tage',
+    abstaende.join() === '1,3,7,14,30', abstaende.join());
+  check('Nach der letzten Stufe gelernt: bleibt im Archiv, ohne Termin',
+    isLearned(entry) && entry.due === null && entry.learnedAt === t);
+  check('Gelernte Fragen sind nie fällig', !isDue(entry, t + 400 * tagMs));
+  check('Gelernt, richtig beantwortet: bleibt unverändert',
+    reviewEntry(entry, true, t + tagMs) === entry);
+  const rueckfall = reviewEntry(entry, false, t + tagMs);
+  check('Gelernt, aber falsch beantwortet: zurück auf Stufe 1, wieder in der Wiedervorlage',
+    rueckfall.stage === 0 && !isLearned(rueckfall) && rueckfall.subjectId === 'biologie');
+
+  // Richtige Antworten vor dem Termin zählen nicht.
+  const vorzeitig = reviewEntry(neu, true, heute + 2 * 3600 * 1000);
+  check('Richtig, aber noch nicht fällig: kein Aufstieg, derselbe Termin',
+    vorzeitig === neu);
+  const s3 = { ...neu, stage: 2, due: startOfDay(heute) + 5 * tagMs };
+  check('Auch auf höherer Stufe: vor dem Termin keine Änderung',
+    reviewEntry(s3, true, heute) === s3);
+  check('Falsch vor dem Termin setzt trotzdem zurück',
+    reviewEntry(s3, false, heute).stage === 0 && daysUntilDue(reviewEntry(s3, false, heute), heute) === 1);
+  const spaet = reviewEntry(s3, true, heute + 20 * tagMs);
+  check('Überfällig und richtig: eine Stufe weiter, Abstand ab dem Antworttag',
+    spaet.stage === 3 && daysUntilDue(spaet, heute + 20 * tagMs) === 14);
+
+  // Zeitumstellung (Ende März): Termin bleibt ein Kalendertag.
+  const vorUmstellung = new Date(2026, 2, 28, 22, 0).getTime();
+  const ueber = afterWrong(vorUmstellung);
+  check('Über die Zeitumstellung: fällig ist der nächste Kalendertag um 0 Uhr',
+    new Date(ueber.due).getDate() === 29 && new Date(ueber.due).getHours() === 0);
+
+  const archiv = {
+    a: neu,
+    b: { ...s3 },
+    c: entry,
+    d: { ...neu, stage: 4, due: startOfDay(heute) },
+  };
+  const summe = archiveSummary(archiv, heute);
+  check('Zusammenfassung: fällig, in Wiederholung, gelernt',
+    summe.due === 1 && summe.active === 3 && summe.learned === 1 && summe.total === 4,
+    JSON.stringify(summe));
+  check('Zusammenfassung je Stufe', summe.byStage.join() === '1,0,1,0,1', summe.byStage.join());
+}
+
+/* ------------------------------------------- Fehlerarchiv: Migration */
+section('Fehlerarchiv: Migration alter Stände');
+{
+  const v2 = {
+    q1: { subjectId: 'chemie', topicId: 'atombau', stage: 2, due: startOfDay(heute) + 3 * tagMs, wrongAt: heute - 4 * tagMs },
+    q2: { subjectId: 'physik', topicId: 'mechanik', stage: 0, due: startOfDay(heute) - 2 * tagMs, wrongAt: heute - 3 * tagMs },
+  };
+  const m = migrateArchive(v2, heute);
+  check('v2-Einträge behalten Stufe, Termin und Fach',
+    m.q1.stage === 2 && m.q1.due === v2.q1.due && m.q1.subjectId === 'chemie'
+    && m.q2.stage === 0 && m.q2.due === v2.q2.due);
+  check('Ein v2-Eintrag auf Stufe 3 hat noch zwei Stufen vor sich',
+    !isLearned(afterCorrect(m.q1, m.q1.due)) && afterCorrect(m.q1, m.q1.due).stage === 3);
+  check('Migration ändert die Eingabe nicht', v2.q1.stage === 2 && !('learnedAt' in v2.q1));
+  check('Migration zweimal angewandt ergibt dasselbe',
+    JSON.stringify(migrateArchive(m, heute)) === JSON.stringify(m));
+  const kaputt = migrateArchive({ x: { subjectId: 'biologie', topicId: 't' }, y: null, z: { stage: 99, due: 'morgen' } }, heute);
+  check('Fehlende Stufe und Termin: Stufe 1, heute fällig',
+    kaputt.x.stage === 0 && isDue(kaputt.x, heute));
+  check('Unbrauchbare Einträge fallen weg, zu hohe Stufen werden gekappt',
+    !('y' in kaputt) && kaputt.z.stage === STAGE_COUNT - 1 && typeof kaputt.z.due === 'number');
+  check('Kein oder kaputtes Archiv wird zu einem leeren',
+    Object.keys(migrateArchive(undefined, heute)).length === 0
+    && Object.keys(migrateArchive([1, 2], heute)).length === 0);
+  const gelernt = migrateArchive({ g: { stage: 5, due: 123, learnedAt: heute } }, heute);
+  check('Gelernte Einträge bleiben gelernt und ohne Termin',
+    isLearned(gelernt.g) && gelernt.g.due === null && !isDue(gelernt.g, heute));
+}
+
+/* ------------------------------------ Fehlerarchiv: Store und Sicherung */
+section('Fehlerarchiv: Store und Sicherung');
+{
+  // Node kennt kein localStorage; ohne Speicher hängt zustand die
+  // persist-Schnittstelle (Version, Migration) gar nicht erst an.
+  if (!globalThis.localStorage) {
+    const speicher = new Map();
+    globalThis.localStorage = {
+      getItem: (key) => (speicher.has(key) ? speicher.get(key) : null),
+      setItem: (key, value) => { speicher.set(key, String(value)); },
+      removeItem: (key) => { speicher.delete(key); },
+    };
+  }
+  const { useBmsProgress } = await import('../src/store/useBmsProgress.js');
+  const { parseBackup, BACKUP_FORMAT } = await import('../src/lib/backup.js');
+  const options = useBmsProgress.persist.getOptions();
+  check('Store-Version ist auf 3 angehoben', options.version === 3);
+
+  const v2State = {
+    readEntries: {}, topicStats: {}, history: [],
+    archive: { q1: { subjectId: 'chemie', topicId: 'atombau', stage: 2, due: startOfDay(heute), wrongAt: heute - 8 * tagMs } },
+  };
+  const migriert = options.migrate(structuredClone(v2State), 2);
+  check('Gespeicherter v2-Stand: Archiv bleibt mit Stufe und Termin erhalten',
+    migriert.archive.q1.stage === 2 && migriert.archive.q1.due === startOfDay(heute));
+  check('Gespeicherter v1-Stand ohne Archiv: leeres Archiv',
+    Object.keys(options.migrate({ readEntries: {}, topicStats: {}, history: [] }, 1).archive).length === 0);
+
+  // Durchgänge über den echten Store, mit vorgespulter Uhr.
+  const echteUhr = Date.now;
+  let uhr = heute;
+  Date.now = () => uhr;
+  try {
+    const store = useBmsProgress;
+    store.getState().resetBms();
+    const runde = (correct) => store.getState().addQuizResult({
+      subjectId: 'biologie', mode: 'fach', score: correct ? 1 : 0, max: 1, seconds: 10,
+      breakdown: [{ questionId: 'bio-x', subjectId: 'biologie', topicId: 'zelle', title: 'Zelle', correct }],
+    });
+    runde(false);
+    check('Store: falsch beantwortet landet im Archiv auf Stufe 1',
+      store.getState().archive['bio-x']?.stage === 0 && store.getState().archiveCounts(uhr).due === 0);
+    runde(true);
+    check('Store: am selben Tag richtig beantwortet bleibt auf Stufe 1',
+      store.getState().archive['bio-x'].stage === 0);
+    uhr = heute + tagMs;
+    check('Store: am nächsten Tag fällig und in dueQuestions',
+      store.getState().dueQuestions(uhr).map((row) => row.questionId).join() === 'bio-x');
+    runde(true);
+    check('Store: bei Fälligkeit richtig – Stufe 2, nicht mehr fällig',
+      store.getState().archive['bio-x'].stage === 1 && store.getState().dueQuestions(uhr).length === 0);
+    for (const tage of [3, 7, 14, 30]) {
+      uhr += tage * tagMs;
+      runde(true);
+    }
+    const counts = store.getState().archiveCounts(uhr);
+    check('Store: nach allen Stufen gelernt, gezählt, aber nie mehr fällig',
+      counts.learned === 1 && counts.active === 0 && counts.due === 0
+      && store.getState().dueQuestions(uhr + 365 * tagMs).length === 0);
+    store.getState().resetBms();
+  } finally {
+    Date.now = echteUhr;
+  }
+
+  const alteSicherung = JSON.stringify({
+    format: BACKUP_FORMAT, version: 2,
+    bms: { state: v2State, version: 2 },
+  });
+  const geprueft = parseBackup(alteSicherung);
+  check('Alte Sicherung mit v2-Archiv wird angenommen und gezählt',
+    geprueft.ok && geprueft.summary.bmsArchive === 1 && geprueft.summary.bmsLearned === 0);
+  const neueSicherung = parseBackup(JSON.stringify({
+    format: BACKUP_FORMAT, version: 2,
+    bms: { state: { ...v2State, archive: { ...v2State.archive, q2: { stage: 5, due: null, learnedAt: heute } } }, version: 3 },
+  }));
+  check('Neue Sicherung zählt gelernte Fragen mit', neueSicherung.ok && neueSicherung.summary.bmsLearned === 1);
+}
+
+section('Strähne');
 check('Ohne Aktivität keine Strähne', streakFrom([], heute) === 0);
 check('Heute und gestern geübt ergibt zwei Tage',
   streakFrom([heute, heute - tagMs], heute) === 2);

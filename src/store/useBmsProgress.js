@@ -5,7 +5,8 @@
  *   readEntries – welche Lexikon-Einträge als gelesen markiert sind
  *   topicStats  – Trefferquote je Thema, aufsummiert
  *   history     – ein schlanker Eintrag je abgeschlossenem Quiz
- *   archive     – falsch beantwortete Fragen samt Termin der Wiedervorlage
+ *   archive     – falsch beantwortete Fragen samt Stufe und Termin der
+ *                 Wiedervorlage (Regeln in lib/spacedRepetition.js)
  *
  * Alles Abgeleitete (Prozentwerte, Schwächen, Verlauf) wird beim Lesen
  * berechnet – wie im KFF-Teil, damit es keine widersprüchlichen Doppeldaten
@@ -13,7 +14,12 @@
  */
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { afterCorrect, afterWrong, isDue } from '../lib/spacedRepetition.js';
+import {
+  archiveSummary,
+  isDue,
+  migrateArchive,
+  reviewEntry,
+} from '../lib/spacedRepetition.js';
 
 export const BMS_PROGRESS_KEY = 'medat-bms.progress.v1';
 
@@ -29,9 +35,11 @@ export const useBmsProgress = create()(
       /** [{ id, subjectId, mode, score, max, seconds, at }] */
       history: [],
       /**
-       * Fehlerarchiv: { [questionId]: { subjectId, topicId, stage, due, wrongAt } }
+       * Fehlerarchiv: { [questionId]: { subjectId, topicId, stage, due, wrongAt, learnedAt? } }
        * Der Schlüssel ist die Frage-ID, damit dieselbe Frage nie zweimal im
-       * Archiv liegt – sie rückt nur eine Stufe vor oder zurück.
+       * Archiv liegt – sie rückt nur eine Stufe vor oder zurück. Gelernte
+       * Fragen bleiben mit `learnedAt` stehen (ohne Termin), damit die
+       * Statistik sie zählen kann.
        */
       archive: {},
 
@@ -89,18 +97,13 @@ export const useBmsProgress = create()(
             topicStats[subjectId] = forSubject;
 
             if (!item.questionId) continue;
-            if (!item.correct) {
-              // Falsch: neu ins Archiv oder wieder auf die erste Stufe zurück.
-              archive[item.questionId] = {
-                subjectId,
-                topicId: item.topicId,
-                ...afterWrong(now),
-              };
-            } else if (archive[item.questionId]) {
-              const next = afterCorrect(archive[item.questionId], now);
-              if (next) archive[item.questionId] = next;
-              else delete archive[item.questionId]; // gelernt
-            }
+            // Falsch: neu ins Archiv bzw. zurück auf Stufe 1. Richtig: eine
+            // Stufe weiter – aber nur, wenn die Frage heute fällig war.
+            const next = reviewEntry(archive[item.questionId], Boolean(item.correct), now, {
+              subjectId,
+              topicId: item.topicId,
+            });
+            if (next) archive[item.questionId] = next;
           }
 
           return {
@@ -117,14 +120,11 @@ export const useBmsProgress = create()(
           .sort((a, b) => a[1].due - b[1].due)
           .map(([questionId, entry]) => ({ questionId, ...entry })),
 
-      /** Kennzahlen des Archivs für die Anzeige. */
-      archiveCounts: (now = Date.now()) => {
-        const entries = Object.values(get().archive);
-        return {
-          total: entries.length,
-          due: entries.filter((entry) => isDue(entry, now)).length,
-        };
-      },
+      /**
+       * Kennzahlen des Archivs für die Anzeige:
+       * { due, active (in Wiederholung), learned, total, byStage }.
+       */
+      archiveCounts: (now = Date.now()) => archiveSummary(get().archive, now),
 
       /** Themen eines Fachs, schwächste zuerst. */
       topicsFor: (subjectId, { minAttempts = 3 } = {}) => {
@@ -174,11 +174,21 @@ export const useBmsProgress = create()(
     }),
     {
       name: BMS_PROGRESS_KEY,
-      version: 2,
+      version: 3,
       // v1 kannte kein Archiv; bestehende Installationen starten mit einem
-      // leeren und füllen es ab dem nächsten Durchgang.
-      migrate: (persisted) => ({ archive: {}, ...persisted }),
-      merge: (persisted, current) => ({ ...current, ...persisted, archive: persisted?.archive ?? {} }),
+      // leeren und füllen es ab dem nächsten Durchgang. v2 hatte drei Stufen
+      // und löschte Gelerntes – die Einträge gelten weiter, sie haben nur zwei
+      // Stufen mehr vor sich. Ältere Sicherungen laufen beim Einspielen
+      // denselben Weg, weil der Store sie nach dem Neuladen hier migriert.
+      migrate: (persisted) => ({
+        ...persisted,
+        archive: migrateArchive(persisted?.archive, Date.now()),
+      }),
+      merge: (persisted, current) => ({
+        ...current,
+        ...persisted,
+        archive: migrateArchive(persisted?.archive, Date.now()),
+      }),
     },
   ),
 );

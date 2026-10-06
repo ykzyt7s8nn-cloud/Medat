@@ -140,9 +140,14 @@ export default function BmsStatsSection({ onOpenQuiz }) {
         <span className="min-w-0 flex-1 text-[13px]">
           {counts.due > 0
             ? `${counts.due} ${counts.due === 1 ? 'Frage ist' : 'Fragen sind'} zur Wiederholung fällig`
-            : counts.total > 0
-              ? `Nichts fällig – ${counts.total} ${counts.total === 1 ? 'Frage wartet' : 'Fragen warten'} im Archiv`
-              : 'Archiv leer – üb die Tägliche 10'}
+            : counts.active > 0
+              ? `Nichts fällig – ${counts.active} ${counts.active === 1 ? 'Frage' : 'Fragen'} in Wiederholung`
+              : 'Nichts fällig – üb die Tägliche 10'}
+          {counts.total > 0 && (
+            <span className="block text-[11px] text-black/45 dark:text-white/45">
+              Fehlerarchiv: {counts.learned} gelernt · {counts.active} in Wiederholung
+            </span>
+          )}
         </span>
         <Icon name="chevronRight" className="h-4 w-4 shrink-0 text-black/25 dark:text-white/25" />
       </Tappable>
