@@ -217,7 +217,7 @@ npm install
 npm run dev        # Entwicklungsserver
 npm run build      # Icons + Produktionsbuild nach dist/ + Precache-Liste
 npm run preview    # Produktionsbuild lokal ansehen
-npm run selftest   # Daten- und Engine-Prüfungen (286 Checks)
+npm run selftest   # Daten- und Engine-Prüfungen (323 Checks)
 npm run icons      # PWA-Icons neu generieren
 node scripts/smoketest.mjs   # Klicktest der ganzen App im Browser (Playwright)
 ```
