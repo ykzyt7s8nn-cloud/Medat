@@ -125,10 +125,6 @@ wird und ob Analysis dazugehört.
 
 **Formate:**
 
-* **BMS:** „x aus 5“ gibt es im Test nicht (ein Kreuz je Aufgabe). Chemie ist
-  umgestellt; in Biologie (zelle-q11, gen-q4, hum-q8, entw-q6, evo-q8,
-  imm-q8) und je eine Frage `*-q12` in Physik und Mathe stehen noch im alten
-  Format und sind in Aussagenkombinationen umzubauen.
 * **Zahlenfolgen:** MC-Modus mit Zahlenpaaren A–D und E anbieten. Primzahl-
   und Quadratzahlregeln aus der MedAT-Stufe nehmen (Test: nur
   Grundrechenarten), dreifach verschachtelte Folgen und die rekursiven

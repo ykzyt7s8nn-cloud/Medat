@@ -77,8 +77,9 @@ mehreren Sätzen, Schlüsselfakten als Stichpunkte, bei Bedarf Formeln und eine
 Merkhilfe sowie Querverweise auf verwandte Stichwörter. Gelesene Einträge werden
 mitgezählt.
 
-**Quiz** – Fragen im MedAT-Format (1 aus 5, gelegentlich x aus 5, letzte Option
-teilweise „Keine der angegebenen Antwortmöglichkeiten ist korrekt"). Nach jeder
+**Quiz** – Fragen im MedAT-Format: immer genau ein Kreuz aus 5, teils als
+Aussagenkombination („Nur I und III“), letzte Option teilweise „Keine der
+angegebenen Antwortmöglichkeiten ist korrekt". Nach jeder
 Antwort erklärt die App, warum die richtige Antwort richtig und die gewählte
 falsch ist, und verlinkt den passenden Lexikoneintrag.
 
@@ -197,7 +198,7 @@ npm install
 npm run dev        # Entwicklungsserver
 npm run build      # Icons + Produktionsbuild nach dist/ + Precache-Liste
 npm run preview    # Produktionsbuild lokal ansehen
-npm run selftest   # Daten- und Engine-Prüfungen (285 Checks)
+npm run selftest   # Daten- und Engine-Prüfungen (286 Checks)
 npm run icons      # PWA-Icons neu generieren
 node scripts/smoketest.mjs   # Klicktest der ganzen App im Browser (Playwright)
 ```
